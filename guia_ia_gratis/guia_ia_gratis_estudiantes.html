@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Guía: modelos de IA gratis para estudiantes</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 18mm 20mm 18mm;
+    @top-left { content: "AI Student Collective Madrid"; color: #EB178E; font-family: Arial, sans-serif; font-weight: bold; font-size: 9.5pt; padding-bottom: 3px; border-bottom: 1.5px solid #EB178E; }
+    @top-right { content: "Universidad Carlos III de Madrid"; color: #EB178E; font-family: Arial, sans-serif; font-weight: bold; font-size: 9.5pt; padding-bottom: 3px; border-bottom: 1.5px solid #EB178E; }
+    @bottom-left { content: "Guía: modelos de IA gratis para estudiantes"; color: #EB178E; font-family: Arial, sans-serif; font-size: 9pt; padding-top: 3px; border-top: 1px solid #EB178E; }
+    @bottom-right { content: counter(page) " de " counter(pages); color: #EB178E; font-family: Arial, sans-serif; font-size: 9pt; padding-top: 3px; border-top: 1px solid #EB178E; }
+  }
+  @page :first {
+    margin: 0;
+    @top-left { content: ""; border-bottom: none; }
+    @top-right { content: ""; border-bottom: none; }
+    @bottom-left { content: ""; border-top: none; }
+    @bottom-right { content: ""; border-top: none; }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1a1a1a;
+    font-size: 10.3pt;
+    line-height: 1.45;
+  }
+
+  /* ---- Portada ---- */
+  .cover {
+    page-break-after: always;
+    height: 297mm;
+    display: flex;
+    flex-direction: column;
+  }
+  .cover-top {
+    flex: 0 0 62%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 20mm;
+  }
+  .cover-top img { width: 42mm; margin-bottom: 8mm; }
+  .cover-eyebrow { color: #22C3E6; font-weight: bold; letter-spacing: 1.5px; font-size: 12pt; margin-bottom: 6mm; }
+  .cover-title { font-size: 26pt; font-weight: bold; color: #1a1a1a; margin-bottom: 4mm; }
+  .cover-subtitle { font-size: 13pt; color: #555; margin-bottom: 5mm; }
+  .cover-underline { width: 70mm; height: 3px; background: #EB178E; margin: 0 auto; }
+  .cover-bottom {
+    flex: 1;
+    background: #242424;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .cover-bottom .name { font-size: 13pt; margin-bottom: 2mm; }
+  .cover-bottom .contact { color: #EB178E; font-size: 11pt; margin-bottom: 1mm; }
+  .cover-bottom .date { color: #22C3E6; font-size: 10.5pt; margin-top: 10mm; }
+
+  /* ---- Contenido ---- */
+  .content { padding-top: 2mm; }
+  h1 { font-size: 15pt; color: #EB178E; margin: 16px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 12.5pt; color: #EB178E; margin: 14px 0 5px; page-break-after: avoid; }
+  h3 { font-size: 11pt; color: #EB178E; margin: 10px 0 4px; page-break-after: avoid; }
+  p { margin: 6px 0; text-align: justify; orphans: 3; widows: 3; }
+  ul, ol { margin: 4px 0 10px 0; padding-left: 22px; }
+  li { margin-bottom: 3px; }
+  strong { color: #1a1a1a; }
+  code { font-size: 9.3pt; }
+  sup.note { color: #EB178E; font-weight: bold; }
+  .url { font-size: 8.8pt; word-break: break-all; color: #0F6B80; }
+
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 9.3pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #EB178E; padding: 5px 7px; text-align: left; vertical-align: top; }
+  th { background: #FCDCEE; color: #1a1a1a; }
+  table.breakable { page-break-inside: auto; }
+  table.breakable tr { page-break-inside: avoid; }
+
+  .diagram { text-align: center; margin: 14px 0 6px; page-break-inside: avoid; }
+  .box { display: inline-block; background: #FCDCEE; border: 2px solid #F166B5; border-radius: 6px; padding: 8px 12px; font-size: 9.3pt; font-weight: bold; margin: 0 1px; }
+  .arrow-cyan { color: #22C3E6; font-weight: bold; font-size: 13pt; margin: 0 3px; }
+  .fig-caption { font-size: 9.5pt; margin-top: 6px; }
+  .fig-caption strong { color: #EB178E; }
+
+  .callout { border-left: 3px solid #22C3E6; background: #E1F7FB; padding: 6px 10px; margin: 8px 0 12px; font-size: 9.8pt; page-break-inside: avoid; }
+  .callout.warn { border-left-color: #EB178E; background: #FCDCEE; }
+  .callout p { margin: 2px 0; }
+  .callout ul { margin: 2px 0 2px; }
+
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 8.8pt; font-weight: bold; white-space: nowrap; }
+  .tag-gratis { background: #FCDCEE; color: #9C1361; border: 1px solid #F166B5; }
+  .tag-info { background: #E1F7FB; color: #0F6B80; border: 1px solid #22C3E6; }
+  .tag-cerrada { background: #eee; color: #555; border: 1px solid #bbb; }
+
+  pre { background: #242424; color: #f5f5f5; border-left: 3px solid #EB178E; border-radius: 4px; padding: 7px 10px; margin: 6px 0 10px; font-size: 8.8pt; line-height: 1.4; white-space: pre-wrap; page-break-inside: avoid; }
+  pre .c { color: #22C3E6; }
+  .step { page-break-inside: avoid; }
+
+  .endnotes { margin-top: 6px; padding-top: 0; font-size: 9.5pt; line-height: 1.4; color: #444; }
+  .endnotes li { margin-bottom: 5px; }
+  .endnotes ol { margin: 0; }
+  .sources li { font-size: 9pt; margin-bottom: 2px; }
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="cover-top">
+    <img src="data:image/png;base64,__LOGO_B64__" alt="AISC">
+    <div class="cover-eyebrow">AI STUDENT COLLECTIVE MADRID</div>
+    <div class="cover-title">IA gratis para estudiantes</div>
+    <div class="cover-subtitle">Guía práctica · Modelos punteros a 0&nbsp;€ (curso 2026-27)</div>
+    <div class="cover-underline"></div>
+  </div>
+  <div class="cover-bottom">
+    <div class="name">Francisco Jimeno</div>
+    <div class="contact">100499080@alumnos.uc3m.es</div>
+    <div class="date">Madrid, 1 Octubre 2026</div>
+  </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="content">
+
+<h1>1. Resumen (TL;DR<sup class="note">1</sup>)</h1>
+<p>Siendo estudiante de la UC3M se puede montar un entorno de programación con IA de primer nivel <strong>sin pagar nada</strong>. La base es <strong>OpenCode</strong><sup class="note">2</sup>, un agente en la terminal al que se conectan dos proveedores gratuitos: <strong>GitHub Copilot Student</strong> y los <strong>modelos gratuitos de OpenCode Zen</strong>. Por parte de Google está <strong>Google AI Plus</strong>, gratis durante 12 meses. Como extra, al final se explica <strong>Google Antigravity</strong>.</p>
+
+<div class="diagram">
+  <span class="box">Copilot Student<br>(Auto)</span>
+  <span class="arrow-cyan">+</span>
+  <span class="box">OpenCode Zen<br>(modelos Free)</span>
+  <span class="arrow-cyan">&#8594;</span>
+  <span class="box">OpenCode<br>(CLI)</span>
+  <div class="fig-caption"><strong>Figura 1:</strong> Proveedores gratuitos que se conectan a OpenCode. Google AI Plus y Antigravity se usan aparte, con su propia app</div>
+</div>
+
+<h1>2. Mapa de ofertas</h1>
+<table>
+  <tr><th style="width:20%">Herramienta</th><th style="width:34%">Qué es</th><th>Modelos que ofrece</th></tr>
+  <tr><td><strong>OpenCode</strong></td><td>Agente de código open source para la terminal</td><td>Los del proveedor que conectes</td></tr>
+  <tr><td><strong>GitHub Copilot Student</strong></td><td>Copilot gratis para estudiantes</td><td>Modo <em>Auto</em>: GPT (OpenAI), Claude (Anthropic) y Gemini (Google)</td></tr>
+  <tr><td><strong>OpenCode Zen (Free)</strong></td><td>Modelos gratuitos servidos por OpenCode</td><td>Big Pickle, Nemotron 3 Ultra, MiMo-V2.6-Flash, Ling 3.0 Flash…</td></tr>
+  <tr><td><strong>Google AI Plus</strong></td><td>Plan de Google gratis 12 meses para estudiantes</td><td>Gemini en la app, con más uso, y Gemini Omni</td></tr>
+  <tr><td><strong>Google Antigravity</strong></td><td>App, IDE y CLI de agentes de Google</td><td>Gemini 3.1 Pro, Gemini 3.8 Flash, Claude Opus 4.6, Claude Sonnet 4.6, GPT-OSS-120b</td></tr>
+</table>
+
+<h1>3. OpenCode</h1>
+<p><strong>Qué es:</strong> un agente de programación de código abierto que funciona en la terminal (TUI<sup class="note">3</sup>). Lee y edita tu proyecto, ejecuta comandos y permite cambiar de modelo en cualquier momento con <code>/models</code>.</p>
+<p><strong>Modelos que te ofrece:</strong></p>
+<table>
+  <tr><th style="width:30%">Proveedor</th><th>Modelos</th></tr>
+  <tr><td><strong>GitHub Copilot Student</strong></td><td>Modo <strong>Auto</strong>: Copilot elige en cada petición el modelo más adecuado entre <strong>GPT</strong> (OpenAI), <strong>Claude</strong> (Anthropic) y <strong>Gemini</strong> (Google). Incluye una bolsa mensual de créditos de IA<sup class="note">4</sup></td></tr>
+  <tr><td><strong>OpenCode Zen (Free)</strong></td><td><strong>Big Pickle</strong>, <strong>Nemotron 3 Ultra Free</strong>, <strong>MiMo-V2.6-Flash Free</strong>, <strong>Ling 3.0 Flash Fin Free</strong>, <strong>LongCat 2.5 Preview Free</strong>, <strong>Muse Spark 1.3 Free</strong> (la lista cambia a menudo)</td></tr>
+</table>
+
+<h1>4. Google AI Plus</h1>
+<p><strong>Qué es:</strong> el plan de Google gratis durante 12 meses para universitarios en España. Se usa en la app de Gemini (web y móvil) e incluye 400&nbsp;GB de almacenamiento. No se conecta a OpenCode.</p>
+<p><strong>Modelos que te ofrece:</strong> <strong>Gemini</strong> con límites de uso 2 veces más altos que la cuenta gratuita, <strong>Gemini Omni</strong> (generación de vídeo) y uso ilimitado de los cuadernos de estudio y de Gemini Live.</p>
+
+<h1>5. Tutorial: instalarlo todo paso a paso</h1>
+<p>Los comandos están pensados para Windows (PowerShell); en macOS y Linux son equivalentes.</p>
+
+<div class="step">
+<h2>Paso 1. Activar Copilot Student</h2>
+<ol>
+  <li>Entra en <code>github.com/settings/education/benefits</code> y pulsa <strong>Start an application</strong>. Usa tu correo <code>@alumnos.uc3m.es</code> y, si te lo pide, sube un justificante de matrícula.</li>
+  <li>Cuando te aprueben, en el mismo panel busca Copilot y activa <strong>Copilot Student</strong>.</li>
+  <li>Si solo te aparece Copilot Free o una pantalla de pago, <strong>no pagues nada</strong>: prueba en <code>github.com/github-copilot/free_signup</code> o espera unos días.</li>
+</ol>
+</div>
+
+<div class="step">
+<h2>Paso 2. Instalar OpenCode</h2>
+<pre><span class="c"># Opción A: con Node.js</span>
+npm install -g opencode-ai
+<span class="c"># Opción B: con Scoop o Chocolatey</span>
+scoop install opencode
+choco install opencode
+<span class="c"># macOS / Linux / WSL</span>
+curl -fsSL https://opencode.ai/install | bash
+
+<span class="c"># Arrancar dentro de un proyecto y generar su AGENTS.md</span>
+cd C:\ruta\a\mi-proyecto
+opencode
+/init</pre>
+</div>
+
+<div class="step">
+<h2>Paso 3. Conectar Copilot Student</h2>
+<ol>
+  <li>Dentro de OpenCode, ejecuta <code>/connect</code> y elige <strong>GitHub Copilot</strong> → <strong>GitHub.com</strong>.</li>
+  <li>Abre <code>github.com/login/device</code>, introduce el código que muestra la terminal y autoriza.</li>
+  <li>Añade el plugin que activa el modo Auto en <code>~/.config/opencode/opencode.jsonc</code>:</li>
+</ol>
+<pre>{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["@opeoginni/opencode-copilot-auto"]
+}</pre>
+<ol start="4">
+  <li>Reinicia OpenCode, ejecuta <code>/models</code> y elige <strong>GitHub Copilot → Auto</strong> (<code>github-copilot/auto</code>).</li>
+</ol>
+</div>
+
+<div class="step">
+<h2>Paso 4. Activar los modelos gratuitos de OpenCode Zen</h2>
+<ol>
+  <li><code>/connect</code> → <strong>OpenCode Zen</strong> → inicia sesión en <code>opencode.ai/auth</code> y copia tu API key.</li>
+  <li><code>/models</code> → elige uno con la etiqueta <em>Free</em>, por ejemplo <code>opencode/big-pickle</code> o <code>opencode/nemotron-3-ultra-free</code>.</li>
+</ol>
+</div>
+
+<div class="step">
+<h2>Paso 5. Pedir Google AI Plus para estudiantes</h2>
+<ol>
+  <li>Con tu <strong>cuenta de Google personal</strong> (no la de la UC3M), entra en <code>one.google.com/ai-student</code>.</li>
+  <li>Verifica la matrícula con SheerID<sup class="note">5</sup> usando el correo <code>@alumnos.uc3m.es</code>.</li>
+  <li>Canjéalo <strong>antes del 31 de diciembre de 2026</strong>. Pide tarjeta: comprueba que sale a 0&nbsp;€ y <strong>apunta en el calendario cancelarlo antes de que pasen los 12 meses</strong>.</li>
+</ol>
+</div>
+
+<h1>6. Cómo combinarlo</h1>
+<table>
+  <tr><th style="width:30%">Tarea</th><th>Herramienta recomendada</th></tr>
+  <tr><td>Programar en el día a día desde la terminal</td><td>OpenCode con <strong>Copilot Auto</strong></td></tr>
+  <tr><td>Tareas mecánicas, scripts, tests repetitivos</td><td>OpenCode con un modelo <strong>Free de Zen</strong>, para no gastar créditos de Copilot</td></tr>
+  <tr><td>Planificar algo grande o usar Claude Opus / Gemini Pro</td><td><strong>Antigravity</strong> (Sección 8)</td></tr>
+  <tr><td>Estudiar, resumir apuntes, generar contenido</td><td>App de Gemini con <strong>Google AI Plus</strong></td></tr>
+</table>
+
+<h1>7. Avisos</h1>
+<ul>
+  <li><strong>Renovaciones automáticas:</strong> la oferta de Google pide tarjeta. Cancela antes de que acabe el periodo gratuito.</li>
+  <li><strong>Privacidad:</strong> lo que envías a los modelos Free de Zen puede usarse para mejorarlos. No metas datos personales ni código confidencial.</li>
+  <li><strong>Plugins de la comunidad:</strong> <code>opencode-copilot-auto</code> no es oficial y puede dejar de funcionar si GitHub cambia su API.</li>
+  <li><strong>Las ofertas cambian:</strong> antes de recomendar algo, comprueba la página oficial.</li>
+</ul>
+
+<h1>8. Extra: Google Antigravity</h1>
+<p><strong>Qué es:</strong> la plataforma de agentes de Google. Tiene app de escritorio, IDE y CLI (<code>agy</code>), y se puede usar <strong>gratis</strong> con cualquier cuenta de Google. <strong>Está muy bien aunque tenga modelos más antiguos</strong> que los de Copilot: da acceso gratuito a Claude Opus y Gemini Pro, que en otros sitios son de pago. La cuota es semanal, así que conviene reservarlo para las tareas importantes.</p>
+<p><strong>Modelos que te ofrece:</strong></p>
+<table>
+  <tr><th style="width:35%">Modelo</th><th>Para qué sirve</th></tr>
+  <tr><td>Gemini 3.1 Pro</td><td>El Gemini más potente</td></tr>
+  <tr><td>Gemini 3.8 / 3.7 / 3.6 Flash</td><td>Rápidos, para el día a día</td></tr>
+  <tr><td>Claude Opus 4.6 (thinking)</td><td>Planificar y hacer refactors grandes</td></tr>
+  <tr><td>Claude Sonnet 4.6 (thinking)</td><td>Buen equilibrio entre velocidad y calidad</td></tr>
+  <tr><td>GPT-OSS-120b</td><td>Modelo abierto de OpenAI</td></tr>
+</table>
+<div class="step">
+<h2>Instalación</h2>
+<pre><span class="c"># App de escritorio / IDE: descargar desde antigravity.google/download</span>
+
+<span class="c"># CLI en Windows (PowerShell)</span>
+irm https://antigravity.google/cli/install.ps1 | iex
+<span class="c"># CLI en macOS / Linux</span>
+curl -fsSL https://antigravity.google/cli/install.sh | bash
+
+agy          <span class="c"># abre el navegador para iniciar sesión con Google</span>
+/usage       <span class="c"># cuota restante</span></pre>
+<p>Inicia sesión con tu <strong>cuenta de Google personal</strong>, no con la de la UC3M, y elige el modelo en el selector que hay bajo la caja de texto.</p>
+</div>
+
+<h1>9. Trucos de OpenCode en la terminal</h1>
+<h2>Comandos dentro de OpenCode</h2>
+<table>
+  <tr><th style="width:24%">Comando</th><th>Para qué sirve</th></tr>
+  <tr><td><code>/models</code></td><td><strong>Cambiar de modelo</strong> en mitad de la conversación, por ejemplo de Copilot Auto a Big Pickle cuando se acaban los créditos</td></tr>
+  <tr><td><code>/connect</code></td><td>Añadir un proveedor nuevo o iniciar sesión otra vez</td></tr>
+  <tr><td><code>/new</code></td><td>Empezar una conversación nueva y limpia (alias <code>/clear</code>)</td></tr>
+  <tr><td><code>/sessions</code></td><td>Ver las conversaciones anteriores y volver a cualquiera (alias <code>/resume</code>)</td></tr>
+  <tr><td><code>/undo</code> · <code>/redo</code></td><td>Deshacer o rehacer el último mensaje, <strong>incluidos los cambios en los archivos</strong> (el proyecto tiene que ser un repositorio Git)</td></tr>
+  <tr><td><code>/compact</code></td><td>Resumir la conversación cuando se hace muy larga: gasta menos y el modelo no se pierde</td></tr>
+  <tr><td><code>/init</code></td><td>Crear o actualizar el <code>AGENTS.md</code> con la descripción del proyecto</td></tr>
+  <tr><td><code>/export</code></td><td>Guardar la conversación en Markdown</td></tr>
+  <tr><td><code>/thinking</code></td><td>Mostrar u ocultar el razonamiento del modelo</td></tr>
+  <tr><td><code>/themes</code> · <code>/help</code> · <code>/exit</code></td><td>Cambiar el tema de colores, ver la ayuda y salir</td></tr>
+</table>
+
+<h2>Atajos útiles</h2>
+<table>
+  <tr><th style="width:24%">Atajo</th><th>Para qué sirve</th></tr>
+  <tr><td><kbd>Tab</kbd></td><td>Alternar entre modo <strong>Plan</strong> (solo propone, no toca archivos) y modo <strong>Build</strong> (hace los cambios). Lo ideal es planificar primero y construir después</td></tr>
+  <tr><td><code>@archivo</code></td><td>Añadir un archivo a la conversación, con búsqueda aproximada: <code>¿qué hace @src/main.py?</code></td></tr>
+  <tr><td><code>!comando</code></td><td>Ejecutar un comando de terminal y pasarle la salida al modelo: <code>!pytest</code></td></tr>
+  <tr><td>Arrastrar una imagen</td><td>Pasarle capturas o diseños al modelo</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Paleta con todos los comandos</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>X</kbd> y luego <kbd>M</kbd></td><td>Abrir el selector de modelos sin escribir <code>/models</code>. Con <kbd>Ctrl</kbd>+<kbd>X</kbd> también funcionan <kbd>N</kbd> (nueva sesión), <kbd>U</kbd> (deshacer) y <kbd>L</kbd> (sesiones)</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd></td><td>Cambiar la variante de razonamiento del modelo (más o menos "thinking")</td></tr>
+</table>
+
+<h2>Desde la terminal, sin abrir la interfaz</h2>
+<pre>opencode -c                          <span class="c"># retomar la última conversación</span>
+opencode -m opencode/big-pickle      <span class="c"># arrancar directamente con un modelo</span>
+opencode run "explica este error"    <span class="c"># pregunta rápida sin abrir la interfaz</span>
+opencode models                      <span class="c"># listar los modelos disponibles</span>
+opencode upgrade                     <span class="c"># actualizar OpenCode</span></pre>
+<p style="text-align:left">Para no tener que elegir modelo cada vez, se puede fijar uno por defecto en <code>~/.config/opencode/opencode.jsonc</code> con la clave <code>"model": "github-copilot/auto"</code>.</p>
+<p><strong>En la CLI de Antigravity</strong> (<code>agy</code>) hay comandos parecidos: <code>/usage</code> para ver la cuota, <code>/plan</code> para planificar antes de tocar código, <code>/resume</code> para retomar conversaciones y <code>/diff</code> para revisar los cambios.</p>
+
+<h1>Notas</h1>
+<div class="endnotes">
+  <ol>
+    <li><strong>TL;DR:</strong> <em>Too long; didn't read</em>.</li>
+    <li><strong>Agente de código:</strong> programa que usa un modelo de lenguaje para leer, editar y ejecutar código en tu proyecto, no solo para chatear.</li>
+    <li><strong>TUI:</strong> <em>Terminal User Interface</em>, interfaz interactiva dentro de la terminal.</li>
+    <li><strong>Créditos de IA:</strong> bolsa mensual de uso de Copilot; cada petición gasta según el modelo y la longitud de la tarea.</li>
+    <li><strong>SheerID:</strong> servicio externo que verifica que eres estudiante, normalmente con el correo de la universidad.</li>
+  </ol>
+</div>
+
+</div>
+</body>
+</html>

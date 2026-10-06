@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Propuesta de proyecto: Buscador de Convalidaciones</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 18mm 20mm 18mm;
+    @top-left { content: "AI Student Collective Madrid"; color: #EB178E; font-family: Arial, sans-serif; font-weight: bold; font-size: 9.5pt; padding-bottom: 3px; border-bottom: 1.5px solid #EB178E; }
+    @top-right { content: "Universidad Carlos III de Madrid"; color: #EB178E; font-family: Arial, sans-serif; font-weight: bold; font-size: 9.5pt; padding-bottom: 3px; border-bottom: 1.5px solid #EB178E; }
+    @bottom-left { content: "Propuesta de proyecto: Buscador de Convalidaciones"; color: #EB178E; font-family: Arial, sans-serif; font-size: 9pt; padding-top: 3px; border-top: 1px solid #EB178E; }
+    @bottom-right { content: counter(page) " de " counter(pages); color: #EB178E; font-family: Arial, sans-serif; font-size: 9pt; padding-top: 3px; border-top: 1px solid #EB178E; }
+  }
+  @page :first {
+    margin: 0;
+    @top-left { content: ""; border-bottom: none; }
+    @top-right { content: ""; border-bottom: none; }
+    @bottom-left { content: ""; border-top: none; }
+    @bottom-right { content: ""; border-top: none; }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1a1a1a;
+    font-size: 10.3pt;
+    line-height: 1.45;
+  }
+
+  /* ---- Portada ---- */
+  .cover {
+    page-break-after: always;
+    height: 297mm;
+    display: flex;
+    flex-direction: column;
+  }
+  .cover-top {
+    flex: 0 0 62%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 20mm;
+  }
+  .cover-top img { width: 42mm; margin-bottom: 8mm; }
+  .cover-eyebrow { color: #22C3E6; font-weight: bold; letter-spacing: 1.5px; font-size: 12pt; margin-bottom: 6mm; }
+  .cover-title { font-size: 26pt; font-weight: bold; color: #1a1a1a; margin-bottom: 4mm; }
+  .cover-subtitle { font-size: 13pt; color: #555; margin-bottom: 5mm; }
+  .cover-underline { width: 70mm; height: 3px; background: #EB178E; margin: 0 auto; }
+  .cover-bottom {
+    flex: 1;
+    background: #242424;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .cover-bottom .name { font-size: 13pt; margin-bottom: 2mm; }
+  .cover-bottom .contact { color: #EB178E; font-size: 11pt; margin-bottom: 1mm; }
+  .cover-bottom .date { color: #22C3E6; font-size: 10.5pt; margin-top: 10mm; }
+
+  /* ---- Contenido ---- */
+  .content { padding-top: 2mm; }
+  h1 { font-size: 15pt; color: #EB178E; margin: 16px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 12.5pt; color: #EB178E; margin: 14px 0 5px; page-break-after: avoid; }
+  h3 { font-size: 11pt; color: #EB178E; margin: 10px 0 4px; page-break-after: avoid; }
+  h4 { color: #EB178E; font-size: 10.3pt; margin: 12px 0 4px; page-break-after: avoid; }
+  p { margin: 6px 0; text-align: justify; orphans: 3; widows: 3; }
+  ul, ol { margin: 4px 0 10px 0; padding-left: 22px; }
+  li { margin-bottom: 3px; }
+  strong { color: #1a1a1a; }
+  code { font-size: 9.3pt; }
+  .arrow { margin-left: 14px; }
+  sup.note { color: #EB178E; font-weight: bold; }
+  .url { font-size: 8.8pt; word-break: break-all; color: #0F6B80; }
+
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 9.5pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #EB178E; padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #FCDCEE; color: #1a1a1a; }
+  table.breakable { page-break-inside: auto; }
+  table.breakable tr { page-break-inside: avoid; }
+
+  .diagram { text-align: center; margin: 14px 0 6px; page-break-inside: avoid; }
+  .box { display: inline-block; background: #FCDCEE; border: 2px solid #F166B5; border-radius: 6px; padding: 8px 12px; font-size: 9.3pt; font-weight: bold; margin: 0 1px; }
+  .arrow-cyan { color: #22C3E6; font-weight: bold; font-size: 13pt; margin: 0 3px; }
+  .fig-caption { font-size: 9.5pt; margin-top: 6px; }
+  .fig-caption strong { color: #EB178E; }
+
+  .callout { border-left: 3px solid #22C3E6; background: #E1F7FB; padding: 6px 10px; margin: 8px 0 12px; font-size: 9.8pt; page-break-inside: avoid; }
+  .callout.warn { border-left-color: #EB178E; background: #FCDCEE; }
+  .callout p { margin: 2px 0; }
+
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 9pt; font-weight: bold; }
+  .tag-aprobado { background: #FCDCEE; color: #9C1361; border: 1px solid #F166B5; }
+  .tag-ia { background: #E1F7FB; color: #0F6B80; border: 1px solid #22C3E6; }
+  .tag-pendiente { background: #eee; color: #555; border: 1px solid #bbb; }
+
+  .endnotes { margin-top: 6px; padding-top: 0; font-size: 9.5pt; line-height: 1.4; color: #444; page-break-inside: avoid; }
+  .endnotes li { margin-bottom: 5px; }
+  .endnotes ol { margin: 0; }
+  .page-break { page-break-before: always; }
+  .appendix p { font-size: 9.8pt; line-height: 1.35; margin: 3px 0; }
+  .appendix h1 { margin-top: 4px; }
+  .appendix h2 { font-size: 11.5pt; margin: 8px 0 2px; }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="cover-top">
+    <img src="data:image/png;base64,__LOGO_B64__" alt="AISC">
+    <div class="cover-eyebrow">AI STUDENT COLLECTIVE MADRID</div>
+    <div class="cover-title">Buscador de Convalidaciones</div>
+    <div class="cover-subtitle">Propuesta de proyecto · Plan de trabajo</div>
+    <div class="cover-underline"></div>
+  </div>
+  <div class="cover-bottom">
+    <div class="name">Francisco Jimeno</div>
+    <div class="contact">100499080@alumnos.uc3m.es</div>
+    <div class="date">Madrid, 1 Octubre 2026</div>
+  </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="content">
+
+<h1>1. Título y resumen (TL;DR<sup class="note">1</sup>)</h1>
+<p>El <strong>Buscador de Convalidaciones</strong> sería un motor de búsqueda que, a partir del catálogo de asignaturas de la UC3M y del de la universidad de destino, encuentra las <strong>equivalencias más probables</strong> para un estudiante de movilidad no europea (MNE). Cada equivalencia lleva un score de similitud y una etiqueta que distingue lo que ya se aprobó en el pasado de lo que sugiere la IA. En el fondo es un problema de <strong>matching semántico</strong>: se comparan programas de asignaturas mediante embeddings<sup class="note">2</sup>, con un umbral calibrado a partir del histórico oficial de convalidaciones de la UC3M (~14.700 filas).</p>
+
+<h1>2. Introducción</h1>
+
+<h2>2.1. Motivación</h2>
+<p>Buscar a mano qué asignaturas se pueden convalidar en cada universidad de destino, revisando PDFs y guías docentes en varios idiomas, es lento y poco fiable. La decisión final siempre es del tutor, pero llegar a esa reunión con una propuesta razonada ahorra idas y vueltas.</p>
+
+<h2>2.2. Objetivo</h2>
+<p>Implementar un buscador que, dado un grado de la UC3M y una universidad de destino, devuelva una lista de equivalencias con score de similitud y etiqueta (<span class="tag tag-aprobado">✅ histórica aprobada</span> / <span class="tag tag-ia">🤖 sugerida por IA</span>) y que se pueda exportar como propuesta para el tutor. Todo ello con <strong>presupuesto 0&nbsp;€</strong>, ya que lo impulsa una asociación de estudiantes (ver Sección 6).</p>
+
+<h2>2.3. Flujo del usuario</h2>
+<ol>
+  <li>El alumno ya sabe cuál es su universidad de destino.</li>
+  <li>Selecciona su grado y esa universidad.</li>
+  <li>Ve qué asignaturas puede convalidar allí, con su score, su etiqueta y los ECTS de cada lado.</li>
+  <li>Exporta la propuesta en PDF y se la envía al tutor, que decide si la acepta.</li>
+</ol>
+
+<h1>3. Desarrollo</h1>
+
+<h2>3.1. Scope</h2>
+<p>El scope inicial (MVP<sup class="note">3</sup>) se limita a <strong>una universidad de destino y un grado de la UC3M</strong>, para validar el flujo completo antes de ampliarlo.</p>
+<p>¿Qué entra dentro del MVP?</p>
+<ul>
+  <li>Esquema común de datos: asignatura, créditos (convertidos a ECTS), contenidos, idioma y semestre.</li>
+  <li>Scraper<sup class="note">4</sup> de la UC3M para el grado piloto (guías docentes).</li>
+  <li>Un único conector para la universidad de destino elegida.</li>
+  <li>Carga del histórico oficial (XLS) y enlace de sus filas con el catálogo scrapeado del destino.</li>
+  <li>Matching semántico con un umbral calibrado con datos, no fijado a mano.</li>
+  <li>Interfaz mínima, publicada sin coste, con exportación de la propuesta en PDF.</li>
+</ul>
+<p>Quedan fuera de esta primera versión, como líneas futuras:</p>
+<ul>
+  <li>Todos los grados de la UC3M (Fase 2) y más universidades de destino (Fase 3).</li>
+  <li>Grafo de inferencia transitiva entre universidades y crowdsourcing de contratos de estudios (Fase 4).</li>
+  <li>Propuestas combinadas (p. ej. dos asignaturas de destino para convalidar una de la UC3M).</li>
+  <li><span style="text-decoration:line-through;color:#999;">Línea paralela de Erasmus</span>: descartada, para no dispersar al equipo mientras se construye MNE.</li>
+</ul>
+
+<h2>3.2. Funcionalidades</h2>
+<ul>
+  <li>Carga y normalización del catálogo de la UC3M y del de la universidad de destino.</li>
+  <li>Reconciliación de las asignaturas del plan antiguo (las que aparecen en el XLS histórico) con las del plan vigente, comparando temarios gracias a las fichas de años anteriores.</li>
+  <li>Embeddings multilingües de cada asignatura, usando campos comparables en ambos lados.</li>
+  <li>Calibración del umbral de similitud con los pares ya aprobados, filtrando outliers (la UC3M advierte de que esas convalidaciones son <em>orientativas y no vinculantes</em>).</li>
+  <li>Matching top-K por coseno, con etiquetado <span class="tag tag-aprobado">✅ precedente aprobado</span> / <span class="tag tag-ia">🤖 sugerencia IA</span>. Los precedentes se muestran siempre, aunque queden por debajo del umbral.</li>
+  <li>Aviso cuando los ECTS de los dos lados difieren mucho.</li>
+  <li>Exportación de la propuesta en PDF para el tutor.</li>
+</ul>
+
+<h2>3.3. Enfoque</h2>
+
+<h3>3.3.1. Definición del problema</h3>
+<p>El criterio de convalidación no se fija a mano en, por ejemplo, un 80&nbsp;% o un 50&nbsp;% de similitud coseno<sup class="note">5</sup>. En su lugar:</p>
+<ul>
+  <li>Los pares positivos son las convalidaciones ya aprobadas en los XLS oficiales de MNE cuya asignatura de destino se ha podido <strong>enlazar con el catálogo scrapeado</strong>. El XLS solo trae nombres y códigos, no temarios, así que sin ese enlace no se puede comparar el contenido.</li>
+  <li>Se calcula la similitud de cada par y se estudia su distribución. El umbral se fija en el percentil 5-10 tras filtrar outliers (Apéndice A).</li>
+  <li>En el MVP el umbral es el del grado piloto con la universidad piloto. Más adelante habrá umbral propio por grado solo cuando haya ≥&nbsp;20 pares enlazados; si no, se usa uno global.</li>
+</ul>
+<p>El histórico solo contiene positivos: que un par no aparezca no significa que no sea convalidable. Por eso la calidad se mide con <strong>métricas de ranking</strong> (¿aparece la asignatura aprobada entre las 5 primeras?) y con una <strong>revisión manual</strong> de las sugerencias, no con una "precisión" automática.</p>
+
+<h3>3.3.2. Sistema</h3>
+<p>Una propuesta de arquitectura para el pipeline completo sería la siguiente:</p>
+<div class="diagram">
+  <span class="box">Scrapers + XLS<br>+ enlace</span>
+  <span class="arrow-cyan">&#8594;</span>
+  <span class="box">Reconciliación<br>+ Embeddings</span>
+  <span class="arrow-cyan">&#8594;</span>
+  <span class="box">Calibración<br>+ Matching</span>
+  <span class="arrow-cyan">&#8594;</span>
+  <span class="box">Export JSON<br>+ UI + PDF</span>
+  <div class="fig-caption"><strong>Figura 1:</strong> Diseño del pipeline. Los tres primeros bloques se ejecutan offline; en producción solo se leen los JSON (detalle en <code>referencia_tecnica.md</code>)</div>
+</div>
+<p>Como el proyecto parte con <strong>presupuesto 0&nbsp;€</strong>, la arquitectura se basa en <strong>precalcular y servir estático</strong>. Las consultas posibles son finitas (grado × universidad), así que todo el matching se calcula de antemano en los portátiles del equipo o en GitHub Actions, y lo que se publica son ficheros JSON. En producción no hay modelo, base de datos ni servidor que mantener ni pagar.</p>
+
+<h4>3.3.2.1. Ingesta</h4>
+<p><strong>UC3M (estructura verificada sobre fichas reales).</strong> La aplicación pública de programas (<code>aplicaciones.uc3m.es/cpa</code>) permite enumerar planes y asignaturas mediante endpoints JSON. Cada ficha (<code>generaFicha?est=…&amp;plan=…&amp;asig=…&amp;anio=…&amp;idioma=1|2</code>) es HTML estático con la misma estructura: cabecera con tipo, créditos, curso y cuatrimestre, y secciones (Objetivos, Programa, Evaluación, Bibliografía…). Basta con <code>requests</code> + <code>BeautifulSoup4</code>. Dos detalles importan: algunas secciones son opcionales (Objetivos no siempre aparece; Programa sí) y el parámetro <code>anio</code> da fichas desde 2006, lo que permite recuperar el temario que tenía cada asignatura el año en que se aprobó una convalidación. El grado piloto son ~270 peticiones (ES y EN), unos 7 minutos.</p>
+<p><strong>Destino.</strong> Mismo stack, o <code>Playwright</code> si el catálogo es una SPA<sup class="note">6</sup>, con un YAML por universidad (selectores y factor de conversión a ECTS). El XLS histórico se carga con <code>pandas</code> + <code>xlrd</code> y cada fila se enlaza con el catálogo del destino por código normalizado o, si falla, por nombre aproximado (<code>rapidfuzz</code>).</p>
+
+<h4>3.3.2.2. Motor de matching</h4>
+<p>Se embeben el <strong>nombre, los Objetivos y el Programa</strong> (versión en inglés si existe). Las competencias, que son códigos genéricos del plan, la evaluación y la metodología se descartan porque solo añaden ruido. Embeddings con <code>sentence-transformers</code> y el modelo <code>intfloat/multilingual-e5-small</code> (384 dimensiones, hasta 512 tokens). Los textos largos se trocean y se promedian, y los vectores se normalizan L2 para que el producto escalar sea coseno real. En el MVP basta un producto matricial con <code>numpy</code>; <code>FAISS</code><sup class="note">7</sup> se incorpora cuando haya varias universidades.</p>
+<div class="callout"><p><strong>Por qué este modelo:</strong> en una ficha real, Objetivos + Programa rondan los 600-700 tokens. Un modelo con ventana de 128 tokens (como <code>paraphrase-multilingual-MiniLM-L12-v2</code>) solo leería en torno a una quinta parte. En el Bloque C se compararán ambos con datos reales y se elegirá el de mejor Recall@5.</p></div>
+
+<h4>3.3.2.3. Publicación</h4>
+<p>Un script (<code>build_static.py</code>) genera un JSON por combinación grado × universidad, con los resultados ya etiquetados, más un índice de grados y universidades. Ese JSON es el contrato entre el pipeline y la interfaz, y se cierra en el Bloque A. No hace falta API: solo tendría sentido si hubiera cálculo en el momento de la consulta.</p>
+
+<h4>3.3.2.4. Interfaz</h4>
+<p><code>Streamlit</code> para el MVP, desplegado gratis en <strong>Streamlit Community Cloud</strong>: selección de grado y destino, tabla de resultados con score, etiqueta y ECTS, resumen de créditos y PDF con <code>reportlab</code>. En la Fase 3, una web estática en <strong>GitHub Pages</strong> o dentro de la web de AISC puede leer los mismos JSON.</p>
+
+<h4>3.3.2.5. Almacenamiento</h4>
+<p>Solo en las máquinas que ejecutan el pipeline: <code>SQLite</code> (&lt;&nbsp;50&nbsp;MB), embeddings (~15&nbsp;MB), caché HTML (~200&nbsp;MB, nunca se sube al repo) y modelo (~470&nbsp;MB), unos <strong>~0,7&nbsp;GB</strong> (+300&nbsp;MB con <code>Playwright</code>). En producción solo están los JSON: <strong>menos de 10&nbsp;MB</strong> en el MVP.</p>
+
+<h2>3.4. Fuentes de datos</h2>
+<h3>3.4.1. Históricos oficiales MNE de la UC3M</h3>
+<p>Son públicos: tres XLS (uno por facultad) con los cursos 2023-24 a 2025-26 y ~14.700 filas brutas. Solo 2025-26 tiene 5.198 equivalencias de 25 países, 111 universidades y 41 titulaciones (2.494 de la EPS). Incluyen país, universidad, titulación, código y nombre de la asignatura UC3M, ECTS, curso, tipo, y código y nombre de la asignatura de destino.</p>
+<ul>
+  <li>Página oficial: <span class="url">https://www.uc3m.es/secretaria-virtual/convocatoria-movilidad-no-europea</span></li>
+  <li>EPS: <span class="url">https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-eps/asignaturas_eps.xls</span></li>
+  <li>CCSSJJ: <span class="url">https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-ccssjj/asignaturas_ccssjj.xls</span></li>
+  <li>Humanidades: <span class="url">https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-fachcd/asignaturas_hcd.xls</span></li>
+</ul>
+<h3>3.4.2. Plataformas existentes</h3>
+<ul>
+  <li><strong>Erappmus:</strong> convalidador para preparar el Learning Agreement, con 425 destinos (Erasmus, fuera de Europa y SICUE) y un precio de 20, 30 o 50&nbsp;€ por propuesta. No expone su banco de equivalencias ni tiene API: es un competidor de producto, no una fuente.</li>
+  <li><strong>Uvora:</strong> matching semántico B2B de guías docentes, con API solo en el plan grande. Es un competidor técnico.</li>
+</ul>
+<p>Conclusión: el MVP no depende de ninguna plataforma externa.</p>
+<h3>3.4.3. Crowdsourcing (Fase 4)</h3>
+<p>Pedir a los estudiantes que aporten sus contratos de estudios, con acceso anticipado como incentivo, anonimizando los datos personales y con consentimiento explícito (RGPD). Aporta precedentes de universidades que aún no están en el sistema, así que su valor crece con el número de universidades: por eso va en la Fase 4.</p>
+
+<h1>4. Plan de trabajo</h1>
+
+<h2>4.1. Roadmap por fases</h2>
+<table>
+  <tr><th>Fase</th><th>Alcance</th><th>Esfuerzo</th></tr>
+  <tr><td><strong>Fase 1 · MVP</strong></td><td>1 grado UC3M + 1 universidad destino</td><td>~8 semanas a tiempo parcial</td></tr>
+  <tr><td><strong>Fase 2</strong></td><td>Todos los grados UC3M + misma universidad</td><td>+3-4 semanas</td></tr>
+  <tr><td><strong>Fase 3</strong></td><td>Nuevas universidades, una a una; web estática (GitHub Pages o web de AISC)</td><td>~1-2 semanas/universidad (más si es SPA o PDF)</td></tr>
+  <tr><td><strong>Fase 4</strong></td><td>Grafo de convalidaciones e inferencia transitiva; crowdsourcing de contratos de estudios</td><td>Tiene sentido con &ge;&nbsp;2 universidades</td></tr>
+</table>
+
+<h2>4.2. MVP — 8 semanas en 4 bloques</h2>
+<p>El equipo no trabaja a tiempo completo, así que el MVP se organiza en <strong>cuatro bloques de dos semanas</strong> más una semana de buffer. Cada bloque termina con un hito que se puede comprobar.</p>
+<table>
+  <tr><th>Bloque</th><th>Semanas</th><th>Foco</th><th>Hito</th></tr>
+  <tr><td><strong>A · Arrancar</strong></td><td>1-2</td><td>Setup del repo y de cada persona, carga de los XLS, EDA<sup class="note">8</sup> para elegir el piloto, parser de fichas UC3M con tests, contrato JSON y web mínima con datos inventados</td><td>Piloto elegido con datos; 5 fichas UC3M parseadas con tests</td></tr>
+  <tr><td><strong>B · Datos</strong></td><td>3-4</td><td>Scraper UC3M del grado completo, scraper del destino (con conversión ECTS), histórico en SQLite, enlace XLS ↔ catálogo, reconciliación del plan viejo con el nuevo, web mock desplegada</td><td>Número de pares de calibración conocido; URL pública con datos inventados</td></tr>
+  <tr><td><strong>C · Matching</strong></td><td>5-6</td><td>Embeddings, calibración del umbral, evaluación, revisión manual de sugerencias, primer export real</td><td>Recall@5 &ge;&nbsp;0,80 en hold-out<sup class="note">9</sup> y precisión estimada &ge;&nbsp;0,70 (orientativos si hay pocos pares); la web enseña resultados reales</td></tr>
+  <tr><td><strong>D · Producto</strong></td><td>7-8</td><td>Matcher con etiquetado, export definitivo, web final, PDF, tests (&ge;&nbsp;70&nbsp;%), documentación, prueba con 3-5 usuarios</td><td>Demo de principio a fin publicada (0&nbsp;€) con PDF exportable</td></tr>
+  <tr><td>Buffer</td><td>9</td><td>Absorber retrasos</td><td>Entrega del MVP</td></tr>
+</table>
+<p>Los objetivos del Bloque C son iniciales y se revisarán cuando el EDA diga cuántos pares enlazados hay. Si hay menos de 30 en el hold-out, las métricas se presentan como orientativas.</p>
+<p class="arrow">&#8594; Las tareas concretas de cada bloque (unas 35, con entregable y criterio de "hecho") están en <code>plan_trabajo.md</code>; el detalle técnico, en <code>referencia_tecnica.md</code>.</p>
+
+<h1>5. Equipo y forma de trabajo</h1>
+<p><strong>6 personas</strong> en la Fase 1, a tiempo parcial y con conocimientos justos: la idea es que <strong>aprendan haciendo</strong>. No hay roles fijos. Las tareas viven en GitHub Issues, son pequeñas (una tarde o una semana a ratos) y tienen un entregable y un criterio de "hecho". En una reunión semanal corta cada uno coge una o dos. Cada tarea se entrega por Pull Request y la revisa otra persona, lo que sirve para que todos conozcan todas las partes. Las tareas grandes se hacen en pareja.</p>
+<p>El equipo programa con las herramientas de IA gratuitas para estudiantes, con reglas claras: pedir siempre que la IA explique lo que ha hecho, no incorporar código que no se entiende y acompañar todo el código de tests.</p>
+<table>
+  <tr><th>Herramienta</th><th>Para qué</th></tr>
+  <tr><td><strong>Antigravity</strong> (Claude Opus/Sonnet 4.6, Gemini 3.1 Pro)</td><td>Planificar una tarea y entender código o conceptos; cuota semanal, se reserva para pensar</td></tr>
+  <tr><td><strong>OpenCode + Copilot Student</strong></td><td>Programar en el día a día</td></tr>
+  <tr><td><strong>OpenCode + modelos gratuitos de Zen</strong></td><td>Boilerplate y tests cuando se agotan los créditos de Copilot</td></tr>
+  <tr><td><strong>Gemini (Google AI Plus)</strong></td><td>Estudiar los conceptos del proyecto</td></tr>
+</table>
+
+<h1>6. Recursos necesarios y costes</h1>
+<p>El proyecto está diseñado para un <strong>presupuesto de 0&nbsp;€</strong>: solo software libre y planes gratuitos, sin APIs de pago.</p>
+<table>
+  <tr><th>Necesidad</th><th>Solución gratuita</th><th>Límites a vigilar</th></tr>
+  <tr><td><strong>Datos</strong></td><td>3 XLS oficiales MNE (públicos) + catálogos web de la UC3M y del destino</td><td>Publicar solo nombres, códigos, créditos y enlaces, no los temarios scrapeados</td></tr>
+  <tr><td><strong>Modelo</strong></td><td><code>multilingual-e5-small</code> desde Hugging Face Hub, en CPU</td><td>—</td></tr>
+  <tr><td><strong>Cómputo</strong></td><td>Portátiles del equipo (≥&nbsp;8&nbsp;GB de RAM); Colab o Kaggle como plan B</td><td>Solo offline; pocos minutos para ~1.000 asignaturas</td></tr>
+  <tr><td><strong>Asistentes de IA</strong></td><td>Copilot Student en OpenCode, modelos gratuitos de OpenCode Zen, Antigravity y Google AI Plus para estudiantes</td><td>Créditos mensuales de Copilot y cuota semanal de Antigravity</td></tr>
+  <tr><td><strong>Repo, CI y refresco</strong></td><td>GitHub + GitHub Actions</td><td>Ilimitado en repos públicos; 2.000&nbsp;min/mes en privados</td></tr>
+  <tr><td><strong>Hosting MVP</strong></td><td>Streamlit Community Cloud</td><td>RAM limitada y apps que duermen; no cargar el modelo en la app</td></tr>
+  <tr><td><strong>Hosting Fase 3</strong></td><td>GitHub Pages o la web de AISC (estático)</td><td>~1&nbsp;GB por sitio, ~100&nbsp;GB/mes de tráfico</td></tr>
+  <tr><td><strong>Dominio</strong></td><td><code>*.streamlit.app</code>, <code>*.github.io</code> o la web de AISC</td><td>Dominio propio opcional (~10&nbsp;€/año)</td></tr>
+  <tr><td><strong>Total</strong></td><td colspan="2"><strong>0&nbsp;€</strong></td></tr>
+</table>
+<p><strong>Librerías:</strong> <code>pandas</code>, <code>xlrd</code>, <code>pydantic</code>, <code>requests</code>, <code>beautifulsoup4</code>, <code>rapidfuzz</code>, <code>sentence-transformers</code>, <code>numpy</code>, <code>streamlit</code>, <code>reportlab</code>; <code>playwright</code> y <code>faiss-cpu</code> solo si hacen falta.</p>
+
+<h1>7. Riesgos</h1>
+<table class="breakable">
+  <thead><tr><th>Riesgo</th><th>Mitigación</th></tr></thead>
+  <tr><td>Pocos pares enlazados en el piloto</td><td>Elegir el piloto por pares enlazables, no solo por pares brutos</td></tr>
+  <tr><td>Catálogo de destino sin descripciones o en PDF</td><td>Criterio de elección en el Bloque A; <code>pdfplumber</code> como plan B</td></tr>
+  <tr><td>Textos de longitud muy distinta (temario completo frente a descripción corta)</td><td>Embeber campos comparables en ambos lados</td></tr>
+  <tr><td>Idiomas distintos del español</td><td>Modelo multilingüe + guía UC3M en inglés</td></tr>
+  <tr><td>Conversión entre ECTS y créditos locales</td><td>Factor por universidad en el YAML + aviso en la UI</td></tr>
+  <tr><td>Histórico "orientativo" con errores</td><td>Filtro de outliers + revisión manual de los descartados</td></tr>
+  <tr><td>Cambios o bloqueos en las webs</td><td>Caché, hashing, rate limit, respeto a <code>robots.txt</code></td></tr>
+  <tr><td>Cambian los endpoints o el HTML de las fichas UC3M (no están documentados)</td><td>Tests con fichas guardadas; plan B: webs de grado o PDF de la ficha</td></tr>
+  <tr><td>Cambian o desaparecen los planes gratuitos</td><td>Producción = JSON estáticos: se mueven a cualquier hosting estático en minutos</td></tr>
+  <tr><td>Equipo junior y a tiempo parcial: tareas que se alargan</td><td>Tareas pequeñas con criterio de "hecho"; las grandes en pareja; semana de buffer; revisión semanal</td></tr>
+  <tr><td>Código generado con IA que nadie entiende</td><td>Pull Request revisada por otra persona; tests obligatorios; regla "no se incorpora lo que no se entiende"</td></tr>
+</table>
+
+<div class="appendix">
+<h1>Apéndice A. Fundamentos: embeddings, similitud coseno y calibración</h1>
+<p>Este anexo lo redacta la IA a partir del roadmap técnico y se revisa después. Desarrolla un poco más los conceptos en los que se apoya el matching, que en la Sección 3.3 solo se mencionan por encima.</p>
+
+<h2>Embeddings y similitud coseno</h2>
+<p>Un <em>embedding</em> es un vector numérico (aquí, de 384 dimensiones) que representa el significado de un texto. Dos asignaturas con temarios parecidos tendrán vectores parecidos aunque estén en idiomas distintos, porque el modelo es multilingüe. La <strong>similitud coseno</strong> mide el ángulo entre dos vectores: se acerca a 1 cuando apuntan en la misma dirección y a 0 cuando no tienen relación. Si los vectores se normalizan a longitud 1 (L2), el producto escalar es exactamente el coseno.</p>
+
+<h2>Por qué importa la longitud del texto</h2>
+<p>Estos modelos tienen una ventana máxima de tokens (trozos de palabra). Lo que pasa de ese límite <strong>se ignora sin avisar</strong>. Con 128 tokens, un temario completo se queda en sus primeras líneas; con 512, cabe mucho más. Por eso se trocean los textos largos y se promedian los embeddings de cada trozo. Además, si un lado tiene un temario de dos páginas y el otro una descripción de tres líneas, el coseno baja aunque las asignaturas sean equivalentes. Por eso se comparan campos del mismo tipo en ambos lados.</p>
+
+<h2>Por qué no fijar el umbral a mano</h2>
+<p>Un umbral fijo (p. ej. 0,8) supone que todos los grados y universidades se comportan igual, y no es así. En áreas con programas muy estandarizados (p. ej. Matemáticas o Informática), dos asignaturas equivalentes suelen dar similitudes altas. En áreas con programas más locales o descripciones escuetas, dos asignaturas igual de equivalentes pueden dar similitudes bastante más bajas. Por eso el umbral se calibra con los pares que ya se aprobaron en la práctica: si el 90-95&nbsp;% de ellos supera cierto valor, ese valor es un buen corte para ese grado y esa universidad.</p>
+
+<h2>El problema del histórico "orientativo"</h2>
+<p>La UC3M advierte de que el histórico es orientativo, no vinculante: puede contener aprobaciones puntuales poco representativas o errores. Por eso, antes de calcular el percentil, se descartan los pares con una similitud anormalmente baja, usando un criterio robusto: mediana menos 3 veces la desviación absoluta mediana (MAD<sup class="note">10</sup>). Sin ese filtro, un solo par mal registrado podría bajar el umbral de todo un grado.</p>
+
+<h2>Cómo se mide si funciona</h2>
+<p>Como el histórico solo tiene ejemplos positivos, no se puede calcular una precisión automática: que un par no aparezca no significa que no sea convalidable, solo que nadie lo pidió. En su lugar se aparta un 20&nbsp;% de las asignaturas UC3M (hold-out) y se mide con qué frecuencia la asignatura aprobada aparece entre las 5 primeras propuestas (<strong>Recall@5</strong>) y en qué posición media (<strong>MRR</strong><sup class="note">11</sup>). Aparte, se revisan a mano unas 50 sugerencias de la IA para estimar cuántas son razonables.</p>
+
+<h2>Grafo transitivo (Fase 4)</h2>
+<p>Cuando haya varias universidades en el sistema, una convalidación aprobada UC3M&#8594;Chile y una similitud alta Chile&#8594;Australia permiten <em>sugerir</em> (nunca aprobar directamente) una equivalencia UC3M&#8594;Australia. Su score es el producto de los scores del camino, y se muestra siempre la cadena de relaciones de la que sale. Se modela con <code>NetworkX</code> y se limita a 2 saltos para no acumular ruido.</p>
+
+</div>
+
+<h1>Notas</h1>
+<div class="endnotes">
+  <ol>
+    <li><strong>TL;DR:</strong> <em>Too long; didn't read</em>.</li>
+    <li><strong>Embedding:</strong> representación de un texto como vector numérico, de forma que textos con significado parecido quedan cerca entre sí (Apéndice A).</li>
+    <li><strong>MVP:</strong> <em>Minimum Viable Product</em>, la versión mínima que ya permite validar el producto.</li>
+    <li><strong>Scraper:</strong> programa que extrae información de páginas web de forma automática.</li>
+    <li><strong>Similitud coseno:</strong> medida de parecido entre dos vectores según el ángulo que forman (Apéndice A).</li>
+    <li><strong>SPA:</strong> <em>Single Page Application</em>, una web que carga su contenido con JavaScript y no en el HTML inicial, por lo que hace falta un navegador real (Playwright) para scrapearla.</li>
+    <li><strong>FAISS:</strong> librería de Meta para buscar vectores similares de forma eficiente (<em>Facebook AI Similarity Search</em>).</li>
+    <li><strong>EDA:</strong> <em>Exploratory Data Analysis</em>, un análisis exploratorio de los datos antes de tomar decisiones.</li>
+    <li><strong>Hold-out:</strong> parte de los datos que se aparta y no se usa para calibrar, para evaluar el sistema con datos que no ha visto.</li>
+    <li><strong>MAD:</strong> <em>Median Absolute Deviation</em>, una medida de dispersión menos sensible a valores extremos que la desviación típica.</li>
+    <li><strong>MRR:</strong> <em>Mean Reciprocal Rank</em>, la media de 1/posición de la respuesta correcta (1 si siempre sale la primera).</li>
+  </ol>
+</div>
+
+</div>
+</body>
+</html>
