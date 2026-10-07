@@ -1,0 +1,60 @@
+# Configuración de CodeRabbit (revisión automática de PRs; gratis en repos públicos).
+# Referencia: https://docs.coderabbit.ai/reference/configuration
+language: es-ES
+tone_instructions: >-
+  Habla en español, con tono amable y didáctico: el equipo está aprendiendo. Explica el porqué de
+  cada comentario en una o dos frases y, cuando propongas un cambio, incluye el código corregido.
+
+reviews:
+  profile: chill
+  # Aprueba solo cuando sus comentarios estén resueltos y la CI en verde. Hasta entonces la PR no
+  # pasa a revisión humana.
+  request_changes_workflow: true
+  high_level_summary: true
+  collapse_walkthrough: true
+  poem: false
+  sequence_diagrams: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!data/**"
+    - "!public/data/**"
+    - "!tests/fixtures/**"
+    - "!docs/**/*.pdf"
+    - "!**/*.ipynb"
+  path_instructions:
+    - path: "src/**"
+      instructions: |
+        - Toda función nueva debe tener al menos un test en tests/. Si no lo hay, pídelo.
+        - Python 3.11, ruff (línea 100), Pydantic v2. No aceptar `print` para depurar: usar logging.
+        - Si el código llama a una web externa: debe tener caché en disco, pausa entre peticiones
+          (≥ 1,5 s) y no debe guardar temarios/descripciones en public/ ni en el repo.
+        - Señalar datos personales o credenciales en el código.
+        - Señalar código que parece generado por IA sin entenderlo: funciones sin usar, imports
+          sobrantes, comentarios genéricos, manejo de errores con `except Exception: pass`.
+    - path: "src/scrapers/**"
+      instructions: |
+        - Comprobar que respeta robots.txt, que usa la caché antes de descargar y que la segunda
+          ejecución no vuelve a descargar.
+        - Los selectores y URLs de universidades de destino van en config/scrapers/*.yaml, no en el
+          código.
+    - path: "src/ui/**"
+      instructions: |
+        - La app Streamlit solo lee JSON de public/data; no debe cargar modelos ni bases de datos.
+    - path: "tests/**"
+      instructions: |
+        - Nombres de test descriptivos en español o inglés, pero consistentes. Cubrir el caso
+          normal y al menos un caso raro (campo vacío, duplicado, fila n:m, ficha sin Objetivos).
+    - path: "docs/**/*.md"
+      instructions: |
+        - Solo revisar coherencia y erratas; no proponer reescrituras de estilo.
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "AGENTS.md"

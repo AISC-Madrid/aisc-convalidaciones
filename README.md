@@ -59,7 +59,7 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 
 ## Reglas cortas
 
-- Una tarea = una rama = una Pull Request que revisa otra pareja.
+- Una tarea = una rama = una Pull Request. La revisa primero **CodeRabbit** (automático); cuando sus comentarios están resueltos y la CI en verde, la revisa Fran.
 - Toda tarea de código lleva tests. **No se mergea lo que no se entiende.**
 - Dentro de la semana nadie depende de otro grupo: lo que haga falta de otros está hecho la semana anterior.
 - Si te atascas más de dos días, cuéntalo en el grupo.
