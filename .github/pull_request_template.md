@@ -16,4 +16,3 @@
 ## Antes de pedir revisión
 
 - [ ] He leído y entiendo todo el código de la PR (incluido el generado con IA)
-- [ ] He atendido o contestado todos los comentarios de CodeRabbit

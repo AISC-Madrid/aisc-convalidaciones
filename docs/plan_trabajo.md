@@ -27,8 +27,7 @@ Cada paso es un script que se ejecuta en nuestros portátiles. En la web publica
 ### Organización
 - **Reunión semanal corta** (30 min, viernes): cada pareja enseña su entregable, cuenta dónde se ha atascado y confirma la tarea de la semana siguiente.
 - Las tareas viven en **GitHub Issues** (tablero *Projects* con columnas Pendiente / En curso / En revisión / Hecho). Cada tarea tiene un **entregable** y un **"hecho cuando"**: si no se cumple, no está hecha.
-- Cada tarea se hace en una **rama** y se entrega con una **Pull Request**. La revisa primero **CodeRabbit** (un revisor automático gratuito: resume la PR, señala errores y propone correcciones) y, cuando sus comentarios están resueltos y la CI en verde, la revisa **Fran** o la pareja que toque. La revisión es también la forma de que todos conozcamos todas las partes.
-- Los comentarios de CodeRabbit se contestan o se resuelven, no se ignoran. Si crees que se equivoca, díselo en el hilo (`@coderabbitai` + tu razón) y que quede escrito.
+- Cada tarea se hace en una **rama** y se entrega con una **Pull Request** con la CI en verde, que revisa **Fran** o la pareja que toque. La revisión es también la forma de que todos conozcamos todas las partes.
 - Se trabaja en **tres parejas fijas** (datos históricos, scraping y matching, web); cada pareja tiene **una tarea por semana** con su entregable.
 - **Regla de independencia:** dentro de la semana, ningún grupo depende de lo que otro grupo haga esa misma semana. Lo que haga falta de otros está hecho la semana anterior.
 - Si una semana una pareja no tiene tarea crítica, hace algo útil que no bloquea a nadie, o descansa. No hace falta que los seis estén siempre.
