@@ -1,2 +1,34 @@
-out/
+# --- Solo del coordinador (plantillas HTML, logo, script de PDF, roadmap para AISC) ---
+_privado/
+
+# --- Datos: nunca se suben (caché HTML, bases de datos, embeddings) ---
+data/raw/*
+data/processed/*
+data/historical/*.xls
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.sqlite
+*.npy
+
+# --- Python ---
 __pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Editores / SO ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+out/

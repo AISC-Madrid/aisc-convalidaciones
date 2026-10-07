@@ -1,0 +1,49 @@
+[project]
+name = "convalidaciones-aisc"
+version = "0.1.0"
+description = "Buscador de convalidaciones para movilidad no europea (MNE) de la UC3M"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.2",
+    "xlrd>=2.0",
+    "pydantic>=2.7",
+    "requests>=2.32",
+    "beautifulsoup4>=4.12",
+    "rapidfuzz>=3.9",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "streamlit>=1.36",
+    "reportlab>=4.2",
+]
+
+[project.optional-dependencies]
+# Solo hace falta en las máquinas que calculan embeddings (Semanas 5-6), no en la web.
+embeddings = ["sentence-transformers>=3.0"]
+# Solo si el catálogo del destino carga con JavaScript.
+scraping = ["playwright>=1.45"]
+dev = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "jupyter>=1.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = { find = { include = ["src*"] } }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["notebooks", "data", "public", "_privado"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
