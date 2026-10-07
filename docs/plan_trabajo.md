@@ -87,7 +87,7 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 
 ### Antes de la reunión de arranque (coordinador)
 
-**S0. Repositorio y tablero listos** · *hecho: repo, estructura, CI, README y AGENTS.md ya están; falta el tablero de issues*
+**S0. Repositorio y tablero listos** · *hecho: repo, estructura, CI, README, AGENTS.md y las issues de las Semanas 1 y 2 asignadas a cada pareja*
 - Entregable: repo en la organización de AISC con `pyproject.toml`, `ruff`, `pytest`, `.gitignore` (excluye `data/raw` y `data/processed`), la estructura de carpetas de `referencia_tecnica.md` §6 (carpetas vacías con un `.gitkeep`), un test trivial, CI de GitHub Actions (lint + pytest), un `README` con el enlace a este plan y un `AGENTS.md` que describa el proyecto en 10 líneas. Tablero de *Projects* con una issue por cada tarea de las Semanas 1 y 2, asignada a su pareja.
 - Hecho cuando: la CI está en verde y los seis tienen permisos de escritura.
 

@@ -2,6 +2,8 @@
 
 Buscador de equivalencias de asignaturas para alumnos de la UC3M que se van de **movilidad no europea (MNE)**. Dado un grado y una universidad de destino, propone las asignaturas que probablemente convalidan, marca cuáles ya se aprobaron antes y cuáles sugiere la IA, y genera una propuesta en PDF para el tutor. Presupuesto: 0 €.
 
+Tareas de cada semana: [issues](../../issues), ya asignadas a cada pareja.
+
 ## Qué leer, en este orden
 
 1. **[`docs/plan_trabajo.md`](docs/plan_trabajo.md)** — qué construimos, cómo trabajamos y qué hace cada pareja cada semana. **Empieza por aquí.**
@@ -15,9 +17,9 @@ Tres parejas fijas, una tarea por semana. Fran coordina además del trabajo de s
 
 | Pareja | Quiénes | Qué lleva |
 |---|---|---|
-| **Datos históricos** | **Alejandra** (3º Datos) · **Ángela** (2º Datos y Teleco) | Los Excel de convalidaciones: EDA, carga, reconciliación, enlace, calibración |
-| **Scraping y matching** | **Fran** (5º Teleco y Datos) · **Mercedes** (2º Datos y Teleco) | Fichas de la UC3M, catálogo del destino, embeddings, matcher, export |
-| **Web** | **Héctor** (4º Informática) · **Víctor** (2º Sonido e Imagen) | Bocetos, Streamlit, PDF, prueba con usuarios |
+| **Datos históricos** | **Alejandra** [@kalejandra-dev](https://github.com/kalejandra-dev) (3º Datos) · **Ángela** [@angelacea](https://github.com/angelacea) (2º Datos y Teleco) | Los Excel de convalidaciones: EDA, carga, reconciliación, enlace, calibración |
+| **Scraping y matching** | **Fran** [@franjifer](https://github.com/franjifer) (5º Teleco y Datos) · **Mercedes** [@MercedesCaballero](https://github.com/MercedesCaballero) (2º Datos y Teleco) | Fichas de la UC3M, catálogo del destino, embeddings, matcher, export |
+| **Web** | **Héctor** [@Toriomg](https://github.com/Toriomg) (4º Informática) · **Víctor** [@victornegueruelag](https://github.com/victornegueruelag) (2º Sonido e Imagen) | Bocetos, Streamlit, PDF, prueba con usuarios |
 
 **Piloto (grado + universidad):** se elige el viernes de la Semana 1 → _pendiente_.
 
@@ -33,7 +35,7 @@ pytest          # tiene que salir en verde
 ruff check .    # tiene que salir sin avisos
 ```
 
-Después abre una rama, añade tu usuario de GitHub junto a tu nombre en la tabla de arriba y abre una **Pull Request**. Cuando te la mergeen, tu setup está hecho.
+Después abre una rama, añade una línea con tu nombre al final de este README y abre una **Pull Request**. Cuando te la mergeen, tu setup está hecho (tienes una [issue de setup](../../issues) asignada).
 
 Instala también OpenCode con Copilot Student y Antigravity siguiendo la guía de `docs/`.
 
