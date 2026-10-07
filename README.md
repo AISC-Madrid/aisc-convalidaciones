@@ -11,13 +11,13 @@ Buscador de equivalencias de asignaturas para alumnos de la UC3M que se van de *
 
 ## Equipo
 
-Tres parejas fijas, una tarea por semana. Los nombres se ponen en la reunión de arranque.
+Tres parejas fijas, una tarea por semana. Fran coordina además del trabajo de su pareja.
 
-| Pareja | Qué lleva | Quiénes |
+| Pareja | Quiénes | Qué lleva |
 |---|---|---|
-| **Datos históricos** (P1 + P2) | Los Excel de convalidaciones: EDA, carga, reconciliación, enlace, calibración | |
-| **Scraping y matching** (P3 + P4) | Fichas de la UC3M, catálogo del destino, embeddings, matcher, export | |
-| **Web** (P5 + P6) | Bocetos, Streamlit, PDF, prueba con usuarios | |
+| **Datos históricos** | **Alejandra** (3º Datos) · **Ángela** (2º Datos y Teleco) | Los Excel de convalidaciones: EDA, carga, reconciliación, enlace, calibración |
+| **Scraping y matching** | **Fran** (5º Teleco y Datos) · **Mercedes** (2º Datos y Teleco) | Fichas de la UC3M, catálogo del destino, embeddings, matcher, export |
+| **Web** | **Héctor** (4º Informática) · **Víctor** (2º Sonido e Imagen) | Bocetos, Streamlit, PDF, prueba con usuarios |
 
 **Piloto (grado + universidad):** se elige el viernes de la Semana 1 → _pendiente_.
 
@@ -33,7 +33,7 @@ pytest          # tiene que salir en verde
 ruff check .    # tiene que salir sin avisos
 ```
 
-Después abre una rama, añade tu nombre a la tabla de arriba y abre una **Pull Request**. Cuando te la mergeen, tu setup está hecho.
+Después abre una rama, añade tu usuario de GitHub junto a tu nombre en la tabla de arriba y abre una **Pull Request**. Cuando te la mergeen, tu setup está hecho.
 
 Instala también OpenCode con Copilot Student y Antigravity siguiendo la guía de `docs/`.
 

@@ -59,25 +59,25 @@ Cada paso es un script que se ejecuta en nuestros portátiles. En la web publica
 
 No trabajamos a tiempo completo, así que el plan son **8 semanas** más una **semana 9 de buffer**. La unidad de trabajo es **un grupo, una semana, un entregable**. Hay tres parejas fijas, que así acumulan contexto:
 
-- **P1 + P2 · Datos históricos:** los Excel de convalidaciones, de leerlos a calibrar con ellos.
-- **P3 + P4 · Scraping y matching:** las fichas de la UC3M, el catálogo del destino y, con esos datos en la mano, los embeddings y el matcher.
-- **P5 + P6 · Web:** bocetos, web, PDF y prueba con usuarios.
+- **Alejandra (3º Datos) + Ángela (2º Datos y Teleco) · Datos históricos:** los Excel de convalidaciones, de leerlos a calibrar con ellos.
+- **Fran (5º Teleco y Datos) + Mercedes (2º Datos y Teleco) · Scraping y matching:** las fichas de la UC3M, el catálogo del destino y, con esos datos en la mano, los embeddings y el matcher. Fran coordina además.
+- **Héctor (4º Informática) + Víctor (2º Sonido e Imagen) · Web:** bocetos, web, PDF y prueba con usuarios.
 
 **Regla:** dentro de una semana, ningún grupo depende de lo que otro grupo haga esa misma semana. Lo que haga falta de otros ya está hecho la semana anterior. Si una semana un grupo no tiene tarea crítica, hace algo útil que no dependa de nadie (marcado en cursiva) o descansa: no hace falta que los seis estén siempre.
 
-| Sem | P1 + P2 · Datos históricos | P3 + P4 · Scraping y matching | P5 + P6 · Web |
+| Sem | Alejandra + Ángela · Datos históricos | Fran + Mercedes · Scraping y matching | Héctor + Víctor · Web |
 |---|---|---|---|
 | **1** | **EDA** de los Excel + revisar las 6 candidatas | **SQLite + scraper UC3M** del plan vigente | **Pydantic + frontend**: modelos, JSON de ejemplo, bocetos, web mínima |
 | | ◆ **Viernes: piloto elegido** | | |
 | **2** | **Histórico → SQLite**: loader con dedup y n:m | **Scraper del destino** piloto + YAML + ECTS | **Web completa** según los bocetos + despliegue |
 | **3** | **Reconciliación** de códigos viejos → vigentes | **Fichas antiguas** de la UC3M a la BD + destino terminado | **PDF** con `reportlab` sobre el JSON de ejemplo |
 | | ◆ **Datos del piloto completos en SQLite** | | |
-| **4** | **Enlace** histórico ↔ destino, tasa de enlace y revisión manual (los 4 juntos) | ↑ (con P1 + P2) | *Pulir la web: página "cómo funciona", estados vacíos, tests* |
+| **4** | **Enlace** histórico ↔ destino, tasa de enlace y revisión manual (los 4 juntos) | ↑ (con Alejandra + Ángela) | *Pulir la web: página "cómo funciona", estados vacíos, tests* |
 | | ◆ **Sabemos cuántos pares de calibración hay** | | |
 | **5** | *Preparar la calibración: notebook con split y filtro de outliers; revisión de 20 reconciliaciones* | **Embeddings**: encoder, embeber ambos catálogos, top-K | *README de usuario y guion de la prueba con usuarios* |
 | **6** | **Calibración + evaluación**: umbral, Recall@5, 50 sugerencias a mano | **Matcher + export del JSON real** | *Tests end-to-end de la web con un JSON grande; preparar la demo* |
 | | ◆ **JSON real disponible** | | |
-| **7** | **Tests + README + script de refresco** (los 4 juntos) | ↑ (con P1 + P2) | **Integración**: web y PDF con el JSON real, redespliegue |
+| **7** | **Tests + README + script de refresco** (los 4 juntos) | ↑ (con Alejandra + Ángela) | **Integración**: web y PDF con el JSON real, redespliegue |
 | **8** | **Prueba con 3-5 usuarios y arreglos** (todos) | | |
 | **9** | Buffer | | |
 
@@ -98,19 +98,19 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 
 ### Semana 1 · Tres grupos, tres cimientos
 
-**1A · P1 + P2. EDA de los Excel + candidatas**
+**1A · Alejandra + Ángela. EDA de los Excel + candidatas**
 - Entregable: notebook `01_eda_historical.ipynb` que descarga los 3 XLS (enlaces en `referencia_tecnica.md` §3.2), los carga con `pandas` + `xlrd` y responde a dos preguntas. **¿Dónde hay más datos?**: pares por **grado × universidad** deduplicando cursos, top 10 universidades, top 10 grados. **¿Qué nos va a dar problemas?**: filas repetidas entre cursos, relaciones **n:m** (una asignatura UC3M → varias del destino o al revés), filas sin código de destino, universidades escritas de varias formas. Después, para las **6 universidades con más pares**, una ficha de 5 líneas en `docs/candidatas.md`: URL del catálogo, ¿publica descripciones?, ¿HTML normal o JavaScript?, ¿créditos y equivalencia a ECTS?, ¿idioma?
 - Hecho cuando: la tabla grado × universidad está en un `.csv` en `data/processed`, cada problema del dato tiene un ejemplo y un recuento, y `docs/candidatas.md` tiene las 6 fichas con una recomendación. Se presenta el viernes y se **elige el piloto** (criterio: muchos pares, datos limpios y catálogo con descripciones accesibles).
 - Aprendes: pandas básico (`read_excel`, `groupby`, `value_counts`, `duplicated`); a desconfiar de los datos; a mirar una web con F12 y distinguir HTML estático de una SPA.
 - Pista: `pd.read_excel(ruta, engine="xlrd")`. Normaliza nombres (tildes, mayúsculas, espacios) antes de agrupar. Repartíos: uno el EDA, otro las candidatas, y cambiad a mitad de semana para que los dos toquéis las dos cosas.
 
-**1B · P3 + P4. SQLite + scraper UC3M del plan vigente**
+**1B · Fran + Mercedes. SQLite + scraper UC3M del plan vigente**
 - Entregable: (1) esquema de la BD `data/processed/uc3m.sqlite` con la tabla `subjects` (código, nombre, plan, curso académico, tipo, créditos, curso, cuatrimestre, objetivos, programa, idioma, url, fecha de actualización) documentado en `docs/esquema_bd.md`; (2) `src/scrapers/uc3m.py` con enumeración de planes y asignaturas (`findPlanes.ajax`, `findAsignaturas.ajax`), descarga de `generaFicha` en ES y EN con **caché en disco** y pausa de 1,5 s, `parse_ficha(html)` que saca todos los campos, y carga en la BD; (3) 5 fichas como fixtures en `tests/fixtures/uc3m/` (una sin Objetivos y una de Humanidades) con tests del parser.
 - Hecho cuando: todas las asignaturas del curso actual están en la BD con Programa relleno, deduplicadas por código; los tests pasan; ejecutar el script dos veces no vuelve a descargar nada.
 - Aprendes: `requests`, BeautifulSoup, SQLite, caché, por qué respetar a la web de destino.
 - Pista: todo lo que hay que saber de la web está en `referencia_tecnica.md` §5, Paso 1. Uno hace la enumeración + descarga con caché y el otro el parser con las fixtures; se juntan el miércoles y lanzan la descarga completa (unas horas desatendidas; si se corta, se retoma).
 
-**1C · P5 + P6. Pydantic + frontend**
+**1C · Héctor + Víctor. Pydantic + frontend**
 - Entregable: (1) `src/models/` con las clases Pydantic `Subject`, `HistoricalMatch` y `Match` y un test por clase (a partir de la Semana 2 todos las usan); (2) `public/data/ejemplo.json` inventado con el esquema de `referencia_tecnica.md` §5, Paso 5 (5-6 resultados, con un precedente, una sugerencia y un aviso de ECTS), validado con `Match`; (3) bocetos en `docs/diseno/` de la **pantalla de resultados** y de la **propuesta en PDF** para el tutor (Figma, Excalidraw, HTML estático o papel); (4) `src/ui/app.py` en Streamlit que lee el JSON y enseña una tabla con desplegable de grado y universidad.
 - Hecho cuando: los tests de los modelos pasan, el JSON está mergeado, los bocetos están en el repo con 5-10 decisiones de interfaz escritas, y `streamlit run src/ui/app.py` muestra la tabla con datos inventados. A partir de aquí **nadie cambia el esquema del JSON sin avisar al grupo**.
 - Aprendes: Pydantic; Streamlit; a pensar primero qué ve el usuario; por qué un "contrato" permite que web y datos avancen en paralelo.
@@ -118,95 +118,95 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 
 ### Semana 2 · Sobre los cimientos
 
-**2A · P1 + P2. Histórico → SQLite**
+**2A · Alejandra + Ángela. Histórico → SQLite**
 - Entregable: `src/loaders/historical_xls.py`: lee los 3 XLS, valida cada fila con `HistoricalMatch` (1C), normaliza textos y códigos, deduplica entre cursos, agrupa las n:m con un `group_id` y guarda la tabla `historical_matches` en `data/processed/historico.sqlite`. Se limpia justo lo que encontrasteis en el EDA.
 - Hecho cuando: la tabla está cargada con los 3 ficheros y hay un test con 10 filas inventadas que incluye una duplicada y una n:m.
 - Aprendes: limpieza de datos real; SQLite desde Python.
 - Pista: cargad un solo XLS sin limpiar y guardadlo; luego añadid normalización y deduplicación paso a paso, con un test por paso.
 
-**2B · P3 + P4. Scraper del destino piloto**
+**2B · Fran + Mercedes. Scraper del destino piloto**
 - Entregable: `config/scrapers/<uni>.yaml` (URLs, selectores, `credits_to_ects`, rate limit) + `src/scrapers/destination.py`, que saca nombre, código, descripción y créditos (convertidos a ECTS) de cada asignatura y los guarda en la tabla `dest_subjects` de la BD. Factor de créditos confirmado con la web de la universidad o la ORI.
 - Hecho cuando: una parte del catálogo (al menos el departamento o facultad del grado piloto) está en la BD y 10 asignaturas comprobadas a mano coinciden con la web.
 - Aprendes: scraping de una web que no controlamos; selectores CSS; Playwright si hace falta.
 - Pista: primero `requests`; solo si la página carga con JavaScript, Playwright. Ejemplo de YAML en `referencia_tecnica.md` §5, Paso 1. Usad la ficha de `docs/candidatas.md`.
 
-**2C · P5 + P6. Web completa + despliegue**
+**2C · Héctor + Víctor. Web completa + despliegue**
 - Entregable: la pantalla de resultados de los bocetos: filtros, tabla con score y etiqueta ✅/🤖, checkbox de selección, resumen de ECTS seleccionados, aviso de ECTS dispares; desplegada en **Streamlit Community Cloud** leyendo `ejemplo.json`.
 - Hecho cuando: hay una URL pública que cualquiera puede abrir y hace lo que dice el boceto.
 - Aprendes: Streamlit a fondo; desplegar una app gratis desde GitHub.
 
 ### Semana 3 · Cerrar los datos de la UC3M y del destino
 
-**3A · P1 + P2. Reconciliación de códigos viejos → vigentes**
+**3A · Alejandra + Ángela. Reconciliación de códigos viejos → vigentes**
 - Entregable: `src/reconciliation/old_to_new.py` con los niveles 1 y 2 de la cascada de `referencia_tecnica.md` §5, Paso 2 (mismo código en el plan vigente → mismo nombre normalizado); tabla `old_code → new_code` con la columna `method`; los casos sin resolver, listados en `docs/reconciliacion_pendiente.md` (el nivel 3, por contenido, llega en la Semana 6 con los embeddings).
 - Hecho cuando: cada código UC3M del histórico tiene fila en la tabla, con `method` o marcado como pendiente; test con 5 casos inventados.
 - Aprendes: que los datos cambian con el tiempo; a diseñar un proceso en cascada.
 - Pista: usa la tabla `subjects` de 1B. Empieza contando cuántos códigos del histórico existen tal cual en el plan vigente.
 
-**3B · P3 + P4. Fichas antiguas + destino terminado**
+**3B · Fran + Mercedes. Fichas antiguas + destino terminado**
 - Entregable: (1) el scraper de 1B con el parámetro `anio`: fichas de los cursos **2025-26, 2024-25 y 2023-24** (los del Excel) en la tabla `subjects` con su curso académico, solo en EN (ES si la EN viene vacía), con caché; (2) el scraper del destino completo: todo el catálogo relevante en `dest_subjects`.
 - Hecho cuando: los tres cursos anteriores están en la BD; el catálogo del destino está completo y 10 asignaturas más comprobadas a mano coinciden.
 - Aprendes: a extender tu propio código; a dejar correr descargas largas con caché.
 - Pista: uno extiende el scraper UC3M con `anio` y el otro termina el destino. Lanzad las descargas el lunes.
 
-**3C · P5 + P6. Generador de PDF**
+**3C · Héctor + Víctor. Generador de PDF**
 - Entregable: `src/ui/pdf.py` con `reportlab`, siguiendo el boceto: cabecera con alumno, grado y universidad; tabla de asignaturas seleccionadas con ECTS de cada lado y etiqueta; nota de que es orientativo; fecha. Botón "Generar PDF" en la web que lo descarga.
 - Hecho cuando: desde la web pública, seleccionar asignaturas y pulsar el botón descarga un PDF legible.
 - Aprendes: generar documentos desde Python.
 
 ### Semana 4 · Juntar el histórico con el destino
 
-**4AB · P1 + P2 + P3 + P4. Enlace histórico ↔ destino y revisión manual**
+**4AB · Alejandra + Ángela + Fran + Mercedes. Enlace histórico ↔ destino y revisión manual**
 - Entregable: `src/loaders/link_catalog.py`: para cada fila del histórico del piloto, buscar su asignatura en `dest_subjects` por código normalizado (`CS 1332` = `CS1332`) y, si falla, por nombre aproximado (`rapidfuzz` ≥ 90); lo que no enlaza se marca `unlinked`. Notebook que imprime la **tasa de enlace**. Revisión manual: 20 enlaces y 20 reconciliaciones en una hoja de `docs/` con acierto/fallo.
 - Hecho cuando: `dest_subject_id` relleno en las filas enlazadas, tasa de enlace conocida y hoja de revisión con los fallos convertidos en issues. **Viernes:** si la tasa es menor del 50 %, se decide si mejorar el enlace o seguir con los pares que hay (métricas marcadas como orientativas).
 - Aprendes: fuzzy matching; a evaluar la calidad de un proceso automático.
-- Pista: P1 + P2 programan el enlace (conocen el histórico); P3 + P4 hacen la revisión manual (conocen el catálogo) y ajustan la normalización de códigos del destino si hace falta.
+- Pista: Alejandra + Ángela programan el enlace (conocen el histórico); Fran + Mercedes hacen la revisión manual (conocen el catálogo) y ajustan la normalización de códigos del destino si hace falta.
 
-**4C · P5 + P6. Pulir la web** *(no bloquea a nadie)*
+**4C · Héctor + Víctor. Pulir la web** *(no bloquea a nadie)*
 - Entregable: página o pestaña "Cómo funciona" (qué es un precedente, qué es una sugerencia, qué significa el score, en lenguaje llano); estados vacíos y de error (sin selección, JSON que no existe); tests de la web con `pytest` sobre las funciones de carga y filtrado.
 - Hecho cuando: la URL pública tiene la ayuda, no se rompe sin datos y los tests pasan en la CI.
 
 ### Semana 5 · Embeddings
 
-**5B · P3 + P4. Encoder, embeddings y top-K**
+**5B · Fran + Mercedes. Encoder, embeddings y top-K**
 - Entregable: `src/embeddings/encoder.py`: texto `"query: {nombre}. {Objetivos}. {Programa}"`, troceado en ~400 tokens, media de los trozos y normalización L2, con `multilingual-e5-small`; embeddings de todas las asignaturas UC3M del piloto y del destino guardados en `data/processed`; `src/embeddings/index.py` con búsqueda top-K por producto matricial `numpy`.
 - Hecho cuando: un test comprueba que dos textos iguales dan similitud 1 y que un texto largo se trocea; para "Estructuras de Datos" el top-5 del destino tiene sentido a ojo.
 - Aprendes: qué es un embedding y por qué se normaliza; `sentence-transformers`; álgebra básica con numpy.
 - Pista: pídele a Antigravity que te explique la similitud coseno con dos asignaturas de ejemplo antes de programar. Detalle en `referencia_tecnica.md` §5, Paso 3. Si el portátil va lento, Google Colab gratis.
 
-**5A · P1 + P2. Preparar la calibración** *(no bloquea a nadie)*
+**5A · Alejandra + Ángela. Preparar la calibración** *(no bloquea a nadie)*
 - Entregable: notebook `04_calibration.ipynb` con la parte que no necesita cosenos: lista de pares enlazados y reconciliados del piloto, **split 80/20 por asignatura UC3M** (no por fila), función del filtro de outliers (mediana − 3·MAD) y del percentil, probadas con números inventados; revisión manual de 20 reconciliaciones más.
 - Hecho cuando: el notebook corre de arriba abajo con cosenos inventados y produce un umbral; el número de pares de train y de hold-out está anotado.
 - Aprendes: por qué no se fija un umbral a ojo; fuga de información en un split; percentiles y MAD (`referencia_tecnica.md` §5, Paso 4).
 
-**5C · P5 + P6. README de usuario y guion de la prueba** *(no bloquea a nadie)*
+**5C · Héctor + Víctor. README de usuario y guion de la prueba** *(no bloquea a nadie)*
 - Entregable: `README` de usuario (qué hace la web, cómo leer los resultados, qué hacer con el PDF) y `docs/prueba_usuarios.md` con 4-5 tareas que haremos hacer a los alumnos en la Semana 8 y un cuestionario corto.
 - Hecho cuando: una persona ajena entiende para qué sirve la web leyendo el README.
 
 ### Semana 6 · Calibrar y producir el JSON real
 
-**6A · P1 + P2. Calibración y evaluación**
-- Entregable: el notebook de 5A con los cosenos reales (de 5B): umbral calibrado, lista de outliers descartados, `src/matching/evaluation.py` con Recall@1, Recall@5 y MRR sobre el hold-out, y hoja con **50 sugerencias por encima del umbral revisadas a mano** (razonable / dudoso / no) → precisión estimada. Con P3 + P4, el nivel 3 de la reconciliación (por contenido) para los códigos pendientes de 3A.
+**6A · Alejandra + Ángela. Calibración y evaluación**
+- Entregable: el notebook de 5A con los cosenos reales (de 5B): umbral calibrado, lista de outliers descartados, `src/matching/evaluation.py` con Recall@1, Recall@5 y MRR sobre el hold-out, y hoja con **50 sugerencias por encima del umbral revisadas a mano** (razonable / dudoso / no) → precisión estimada. Con Fran + Mercedes, el nivel 3 de la reconciliación (por contenido) para los códigos pendientes de 3A.
 - Hecho cuando: umbral, Recall@5, MRR y precisión estimada están documentados con el tamaño de la muestra (orientativos si hay < 30 pares en el hold-out).
 - Aprendes: métricas de ranking; que el histórico solo tiene positivos y por eso no se puede medir la precisión automáticamente.
 
-**6B · P3 + P4. Matcher y export del JSON real**
+**6B · Fran + Mercedes. Matcher y export del JSON real**
 - Entregable: `src/matching/matcher.py` (top-10 por coseno, filtro por el umbral de 6A, etiqueta `PRECEDENTE_APROBADO` que se muestra siempre / `SUGERENCIA_IA`, aviso si los ECTS difieren más del 25 %) y `src/export/build_static.py` que genera `public/data/<grado>__<uni>.json` e `index.json` con el esquema de 1C.
 - Hecho cuando: tests con pares inventados cubren los tres casos; el JSON real valida con `Match` y está en `public/data/`.
 - Aprendes: a cerrar un pipeline de principio a fin.
 - Pista: el umbral de 6A llega a mitad de semana; hasta entonces, trabajad con uno provisional (0,7) y dejadlo parametrizado.
 
-**6C · P5 + P6. Tests end-to-end y demo** *(no bloquea a nadie)*
+**6C · Héctor + Víctor. Tests end-to-end y demo** *(no bloquea a nadie)*
 - Entregable: un JSON inventado grande (200 resultados) para probar rendimiento y paginación; test end-to-end de la web; guion de la demo de 5 minutos.
 - Hecho cuando: la web responde bien con el JSON grande y el guion está en `docs/`.
 
 ### Semana 7 · Integración y cierre técnico
 
-**7C · P5 + P6. Integración con el JSON real**
+**7C · Héctor + Víctor. Integración con el JSON real**
 - Entregable: la web y el PDF leyendo `public/data/<grado>__<uni>.json` e `index.json` reales; ajustes que pida el dato real (nombres largos, scores, avisos); redespliegue.
 - Hecho cuando: en la URL pública, un alumno elige el grado y la universidad piloto, ve los resultados reales y descarga el PDF.
 
-**7AB · P1 + P2 + P3 + P4. Tests, documentación y refresco**
+**7AB · Alejandra + Ángela + Fran + Mercedes. Tests, documentación y refresco**
 - Entregable: `pytest --cov` ≥ 70 % con un `test_e2e.py` que recorre el pipeline con datos pequeños; `README` técnico (cómo instalar, ejecutar y añadir una universidad) y `docs/architecture.md`; script `make refresh` que vuelve a scrapear, recalcula y regenera los JSON sin pasos manuales.
 - Hecho cuando: la CI está en verde con la cobertura publicada; una persona nueva puede ejecutar el pipeline siguiendo el README; `make refresh` corre de principio a fin.
 
