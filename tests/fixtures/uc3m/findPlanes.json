@@ -1,0 +1,249 @@
+{
+ "ok": "S",
+ "datos": [
+  {
+   "activado": "A",
+   "baja": false,
+   "codigo": 456,
+   "creditosMaximo": 372,
+   "creditosMinimo": 372,
+   "duracion": 6,
+   "estudio": {
+    "baja": false,
+    "codigo": 371,
+    "denominacion": "Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación",
+    "denominacionCorta": "Doble Ciencia y Datos - Teleco",
+    "denominacionCorta2": "DB in Data Science and Teleco",
+    "nombreEng": "Dual Bachelor in Data Science and Engineering and Telecommunication Technologies Engineering"
+   },
+   "fechaAlta": {
+    "year": 2020,
+    "month": 4,
+    "day": 14,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "fechaBaja": null,
+   "fechaCarencia": null,
+   "nombre": "Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación (Plan 2020)",
+   "nombreCorto": "Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación (Plan 2020)",
+   "nombreEng": "Dual Bachelor Data Science and Engineering - Telecommunication Technologies Engineering (Study Plan 2020)",
+   "primerCurso": 1,
+   "segundoCiclo": false,
+   "tipoEstudio": {
+    "denominacion": "Grado",
+    "tipo": 5
+   },
+   "tipoPeriodo": "CUATRIMESTRAL",
+   "ultimoCurso": 6
+  },
+  {
+   "activado": "A",
+   "baja": false,
+   "codigo": 178,
+   "creditosMaximo": 300,
+   "creditosMinimo": 30,
+   "duracion": 1,
+   "estudio": {
+    "baja": false,
+    "codigo": 30,
+    "denominacion": "Estudios de Humanidades",
+    "denominacionCorta": "Estudios de Humanidades",
+    "denominacionCorta2": "Estudios de Humanidades",
+    "nombreEng": "Estudios de Humanidades"
+   },
+   "fechaAlta": {
+    "year": 2008,
+    "month": 5,
+    "day": 17,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "fechaBaja": {
+    "year": 2018,
+    "month": 2,
+    "day": 8,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "fechaCarencia": {
+    "year": 2018,
+    "month": 2,
+    "day": 8,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "nombre": "Asignaturas de Humanidades para Grados",
+   "nombreCorto": "Asignaturas de Humanidades para Grados",
+   "nombreEng": "Asignaturas de Humanidades para Grados",
+   "primerCurso": 1,
+   "segundoCiclo": false,
+   "tipoEstudio": {
+    "denominacion": "Grado",
+    "tipo": 5
+   },
+   "tipoPeriodo": "CUATRIMESTRAL",
+   "ultimoCurso": 1
+  },
+  {
+   "activado": "A",
+   "baja": false,
+   "codigo": 580,
+   "creditosMaximo": 372,
+   "creditosMinimo": 372,
+   "duracion": 6,
+   "estudio": {
+    "baja": false,
+    "codigo": 371,
+    "denominacion": "Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación",
+    "denominacionCorta": "Doble Ciencia y Datos - Teleco",
+    "denominacionCorta2": "DB in Data Science and Teleco",
+    "nombreEng": "Dual Bachelor in Data Science and Engineering and Telecommunication Technologies Engineering"
+   },
+   "fechaAlta": {
+    "year": 2025,
+    "month": 4,
+    "day": 7,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "fechaBaja": null,
+   "fechaCarencia": null,
+   "nombre": "Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación",
+   "nombreCorto": "Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación",
+   "nombreEng": "Dual Bachelor Data Science and Engineering - Telecommunication Technologies Engineering",
+   "primerCurso": 1,
+   "segundoCiclo": false,
+   "tipoEstudio": {
+    "denominacion": "Grado",
+    "tipo": 5
+   },
+   "tipoPeriodo": "CUATRIMESTRAL",
+   "ultimoCurso": 6
+  },
+  {
+   "activado": "A",
+   "baja": false,
+   "codigo": 523,
+   "creditosMaximo": 120,
+   "creditosMinimo": 118,
+   "duracion": 2,
+   "estudio": {
+    "baja": false,
+    "codigo": 391,
+    "denominacion": "Doble Máster en Abogacía Internacional / Máster en Acceso a las Profesiones de Abogacía y Procura",
+    "denominacionCorta": "DMU Abogacía Inter - Acceso Abog",
+    "denominacionCorta2": " ",
+    "nombreEng": " "
+   },
+   "fechaAlta": {
+    "year": 2024,
+    "month": 4,
+    "day": 7,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "fechaBaja": null,
+   "fechaCarencia": null,
+   "nombre": "Doble Máster en Abogacía Internacional y Acceso a las Profesiones de Abogacía y Procura (Edición Marzo)",
+   "nombreCorto": "Doble Máster en Abogacía Internacional y Acceso a las Profesiones de Abogacía y Procura (Edición Marzo)",
+   "nombreEng": "Master in Legal Practice and Representation",
+   "primerCurso": 1,
+   "segundoCiclo": false,
+   "tipoEstudio": {
+    "denominacion": "Máster Universitario",
+    "tipo": 6
+   },
+   "tipoPeriodo": "CUATRIMESTRAL",
+   "ultimoCurso": 2
+  },
+  {
+   "activado": "B",
+   "baja": false,
+   "codigo": 577,
+   "creditosMaximo": 348,
+   "creditosMinimo": 348,
+   "duracion": 5,
+   "estudio": {
+    "baja": false,
+    "codigo": 282,
+    "denominacion": "Doble Grado en Periodismo y Humanidades",
+    "denominacionCorta": "Doble Periodismo y Humanidades",
+    "denominacionCorta2": "Journalism and Humanities Studi",
+    "nombreEng": "Dual Bachelor in Journalism and Humanities Studies"
+   },
+   "fechaAlta": {
+    "year": 2025,
+    "month": 3,
+    "day": 23,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "fechaBaja": null,
+   "fechaCarencia": null,
+   "nombre": "Doble Grado en Periodismo y Humanidades Digitales",
+   "nombreCorto": "Doble Grado en Periodismo y Humanidades Digitales",
+   "nombreEng": "Dual Bachelor in Journalism and Digital Humanities Studies",
+   "primerCurso": 1,
+   "segundoCiclo": false,
+   "tipoEstudio": {
+    "denominacion": "Grado",
+    "tipo": 5
+   },
+   "tipoPeriodo": "CUATRIMESTRAL",
+   "ultimoCurso": 5
+  },
+  {
+   "activado": "B",
+   "baja": false,
+   "codigo": 418,
+   "creditosMaximo": 240,
+   "creditosMinimo": 240,
+   "duracion": 4,
+   "estudio": {
+    "baja": false,
+    "codigo": 256,
+    "denominacion": "Grado en Ingeniería en Tecnologías Industriales",
+    "denominacionCorta": "Grado en Ing. Tecno Industriales",
+    "denominacionCorta2": " ",
+    "nombreEng": "Bachelor in Industrial Technologies Engineering"
+   },
+   "fechaAlta": {
+    "year": 2018,
+    "month": 4,
+    "day": 17,
+    "hours": 0,
+    "minutes": 0,
+    "seconds": 0,
+    "milliseconds": 0
+   },
+   "fechaBaja": null,
+   "fechaCarencia": null,
+   "nombre": "Grado en Ingeniería en Tecnologías Industriales",
+   "nombreCorto": "Grado en Ingeniería en Tecnologías Industriales",
+   "nombreEng": "Bachelor in Industrial Technologies Engineering",
+   "primerCurso": 1,
+   "segundoCiclo": false,
+   "tipoEstudio": {
+    "denominacion": "Grado",
+    "tipo": 5
+   },
+   "tipoPeriodo": "CUATRIMESTRAL",
+   "ultimoCurso": 4
+  }
+ ]
+}
