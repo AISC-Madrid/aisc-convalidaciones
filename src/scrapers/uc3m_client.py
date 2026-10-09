@@ -1,7 +1,7 @@
 """Cliente HTTP para la API pública de la UC3M (aplicaciones.uc3m.es/cpa).
 
 Expone los endpoints JSON (años, planes, asignaturas de un plan) y la descarga de
-las fichas de asignatura (HTML estático en ISO-8859-1), con pausa entre
+las fichas de asignatura (HTML estático en UTF-8), con pausa entre
 peticiones, reintentos con backoff y caché en disco de las fichas.
 
 Las fichas se tratan siempre como ``bytes``: nunca se decodifican aquí.

@@ -21,6 +21,8 @@ Opciones: `--plan` (uno o varios planes), `--limite N` (máximo de asignaturas, 
   caché no se descargan otra vez (el log muestra el número de peticiones reales).
 - **Volumen:** 152 grados activos; cada asignatura se descarga una vez por idioma aunque esté en
   varios grados. Con 1,5 s por petición, el curso actual completo son varias horas.
+- **Cada ficha, con su plan:** se pide con el plan y el estudio donde aparece la asignatura ese
+  curso. Con otro plan la web devuelve una página vacía, que cuenta como `sin_ficha`.
 - **Cortesía:** pausa antes de cada petición, reintentos con espera creciente y, si la web
   responde 429, se duplica la pausa automáticamente.
 

@@ -142,7 +142,7 @@ Las dependencias Python (`torch` CPU ronda 1 GB instalado) solo van en las máqu
 
 #### Scraper UC3M (estructura verificada)
 
-Comprobado sobre fichas reales (Álgebra Lineal 15363, Ficheros y bases de datos 13881, Fundamentos de producción de software 17631, un curso de Humanidades 11692), en ES y EN y en años distintos.
+Comprobado sobre fichas reales (Álgebra Lineal 15363 y un curso de Humanidades 11692 del plan 456, Ficheros y bases de datos 13881 del plan 489, Fundamentos de producción de software 17631 del plan 486, y Constitución y sistema de fuentes 13565 de Derecho, plan 557), en ES y EN y en años distintos.
 
 **Enumeración (sin scrapear las webs de grado)**: la aplicación pública de programas (`aplicaciones.uc3m.es/cpa/`) tiene tres endpoints JSON (POST), que son los que usa su propio formulario:
 
@@ -152,7 +152,7 @@ Comprobado sobre fichas reales (Álgebra Lineal 15363, Ficheros y bases de datos
 | `/cpa/findPlanes.ajax` | — | ~386 planes (318 activos), con `codigo` (plan) y `estudio.codigo` (est) |
 | `/cpa/findAsignaturas.ajax` | `codPlan`, `ano` | Código y nombre de cada asignatura del plan (p. ej. 135 en el plan 456). **Sin** tipo, créditos ni curso: esos datos salen de la ficha |
 
-**Ficha**: `GET /cpa/generaFicha?est={est}&plan={plan}&asig={asig}&anio={año}&idioma={1=ES|2=EN}`. Es HTML estático renderizado en servidor (~14-20 KB): basta con `requests` + `BeautifulSoup4`, sin Playwright.
+**Ficha**: `GET /cpa/generaFicha?est={est}&plan={plan}&asig={asig}&anio={año}&idioma={1=ES|2=EN}`. Es HTML estático renderizado en servidor (~14-20 KB), **en UTF-8** (algunos acentos vienen como entidades HTML, p. ej. `&Aacute;`): basta con `requests` + `BeautifulSoup4`, sin Playwright. Hay que pedirla con un `plan`/`est` que contenga la asignatura ese curso (los que devuelve `findAsignaturas`): con otro plan, la web devuelve una página vacía de ~2,8 KB sin código, que el parser rechaza y la carga cuenta como `sin_ficha`.
 
 | Dato | Dónde está en el HTML |
 |---|---|

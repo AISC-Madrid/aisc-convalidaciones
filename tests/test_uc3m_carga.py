@@ -3,10 +3,17 @@
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from src.scrapers.uc3m import cargar_curso
 from src.scrapers.uc3m_client import AsignaturaPlan, Plan
 
 FIXTURES = Path(__file__).parent / "fixtures" / "uc3m"
+
+pytestmark = pytest.mark.skipif(
+    not any(FIXTURES.glob("*.html")),
+    reason="Fichas HTML no descargadas: python tests/fixtures/uc3m/descargar.py",
+)
 
 
 class ClienteFalso:

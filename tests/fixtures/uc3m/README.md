@@ -1,5 +1,15 @@
 # Fixtures de fichas UC3M
 
+**Las fichas HTML no se suben al repo** (contienen los temarios completos de la UC3M) y están en
+`.gitignore`. Para tenerlas en local y que corran todos los tests:
+
+```bash
+python tests/fixtures/uc3m/descargar.py
+```
+
+Sin ellas, los tests del parser y de la carga se saltan (`skipped`); los del cliente y la BD usan
+solo los JSON de esta carpeta, que sí se suben (solo códigos y nombres).
+
 Fichas HTML de `generaFicha` guardadas tal cual se descargaron (bytes sin re-codificar).
 Aunque se esperaba ISO-8859-1, el servidor las sirve en UTF-8 (`Content-Type: text/html;charset=utf-8`
 y dos `<meta ... charset=UTF-8>`); parte de los acentos vienen como entidades HTML (`&Aacute;`).

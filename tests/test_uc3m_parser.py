@@ -7,6 +7,11 @@ from src.scrapers.uc3m_parser import normalizar_titulo, parse_ficha
 FIXTURES = Path(__file__).parent / "fixtures" / "uc3m"
 FICHAS = sorted(FIXTURES.glob("*.html"))
 
+pytestmark = pytest.mark.skipif(
+    not any(FIXTURES.glob("*.html")),
+    reason="Fichas HTML no descargadas: python tests/fixtures/uc3m/descargar.py",
+)
+
 CLAVES = {
     "codigo",
     "nombre",

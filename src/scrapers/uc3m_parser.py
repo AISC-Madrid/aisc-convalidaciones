@@ -12,6 +12,7 @@ import unicodedata
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
+# Las fichas vienen en UTF-8; ISO-8859-1 es solo el último recurso si no se pueden decodificar.
 CODIFICACION_POR_DEFECTO = "iso-8859-1"
 
 # Etiquetas de cabecera (normalizadas, sin ":"), en español e inglés.
