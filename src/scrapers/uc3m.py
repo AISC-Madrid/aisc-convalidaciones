@@ -90,16 +90,60 @@ CREATE TABLE IF NOT EXISTS descargas (
 """
 
 
+COLUMNAS_RENOMBRADAS = {"código": "codigo"}
+
+
 def create_database(database_path: str | Path = DATABASE_PATH) -> Path:
-    """Crea la base de datos y sus tablas si todavía no existen."""
+    """Crea la base de datos y sus tablas si todavía no existen.
+
+    Si ``subjects`` tiene un esquema anterior, la migra sin perder la tabla vieja.
+    """
     database_path = Path(database_path)
     database_path.parent.mkdir(parents=True, exist_ok=True)
 
     with closing(sqlite3.connect(database_path)) as connection:
         with connection:
+            antigua = _apartar_subjects_antigua(connection)
             connection.executescript(SCHEMA)
+            if antigua:
+                _copiar_subjects(connection, antigua)
 
     return database_path
+
+
+def _apartar_subjects_antigua(connection: sqlite3.Connection) -> str | None:
+    """Si ``subjects`` tiene un esquema anterior (p. ej. el de #14), la renombra y no la borra.
+
+    Devuelve el nombre nuevo (``subjects_antigua_<fecha>``), o ``None`` si no hace falta migrar.
+    """
+    columnas = tuple(fila[1] for fila in connection.execute("PRAGMA table_info(subjects)"))
+    if not columnas or columnas == SUBJECT_COLUMNS:
+        return None
+    antigua = f"subjects_antigua_{datetime.now():%Y%m%d%H%M%S}"
+    connection.execute(f'ALTER TABLE subjects RENAME TO "{antigua}"')
+    logger.warning("subjects tenía un esquema anterior: se migra y la vieja queda en %s", antigua)
+    return antigua
+
+
+def _copiar_subjects(connection: sqlite3.Connection, antigua: str) -> None:
+    """Copia las filas de la tabla vieja a la nueva (``código`` → ``codigo``).
+
+    Se saltan las filas sin código, curso o idioma, que el esquema actual no admite.
+    """
+    columnas = [fila[1] for fila in connection.execute(f'PRAGMA table_info("{antigua}")')]
+    origen = {COLUMNAS_RENOMBRADAS.get(c, c): c for c in columnas}
+    comunes = [c for c in SUBJECT_COLUMNS if c in origen]
+    obligatorias = ("codigo", "curso_academico", "idioma")
+    if not set(obligatorias) <= set(comunes):
+        logger.warning("No se copian filas de %s: le faltan %s", antigua, obligatorias)
+        return
+    destino = ", ".join(comunes)
+    seleccion = ", ".join(f'"{origen[c]}"' for c in comunes)
+    filtro = " AND ".join(f'"{origen[c]}" IS NOT NULL' for c in obligatorias)
+    connection.execute(
+        f'INSERT OR REPLACE INTO subjects ({destino}) SELECT {seleccion} FROM "{antigua}" '
+        f"WHERE {filtro}"
+    )
 
 
 class Cliente(Protocol):
@@ -143,6 +187,27 @@ def _guardar(connection: sqlite3.Connection, fila: dict) -> None:
     connection.execute(f"INSERT OR REPLACE INTO subjects ({columnas}) VALUES ({marcas})", fila)
 
 
+ESTADOS = ("completo", "parcial", "fallido")
+
+
+def estado_plan(
+    asignaturas: set[int], procesadas: set[int], con_ficha: set[int], con_error: set[int]
+) -> str:
+    """Estado de la carga de un plan para la tabla ``descargas``.
+
+    - ``completo``: todas sus asignaturas procesadas y sin errores (una página sin ficha no es un
+      error: la UC3M no publica ficha de todo).
+    - ``fallido``: hay errores y ninguna asignatura del plan ha dado ficha.
+    - ``parcial``: el resto (errores sueltos o asignaturas sin procesar por ``--limite``). Volver a
+      lanzar la carga lo completa.
+    """
+    if asignaturas <= procesadas and not asignaturas & con_error:
+        return "completo"
+    if asignaturas & con_error and not asignaturas & con_ficha:
+        return "fallido"
+    return "parcial"
+
+
 def cargar_curso(
     anio: int,
     cliente: Cliente,
@@ -172,6 +237,7 @@ def cargar_curso(
 
     stats = {"planes": 0, "asignaturas": 0, "fichas": 0, "sin_ficha": 0, "errores": 0}
     unicas: dict[int, AsignaturaPlan] = {}
+    por_plan: dict[int, set[int]] = {}
     with closing(sqlite3.connect(database_path)) as connection:
         for plan in seleccion:
             asignaturas = cliente.listar_asignaturas(plan.codigo, anio)
@@ -182,31 +248,44 @@ def cargar_curso(
                 )
             for a in asignaturas:
                 unicas.setdefault(a.codigo, a)
+            por_plan[plan.codigo] = {a.codigo for a in asignaturas}
             stats["planes"] += 1
         pendientes = list(unicas.values())[:limite] if limite else list(unicas.values())
         stats["asignaturas"] = len(pendientes)
         logger.info("Curso %s: %d grados, %d asignaturas distintas", curso,
                     stats["planes"], len(pendientes))
 
+        con_ficha: set[int] = set()
+        con_error: set[int] = set()
         inicio = time.monotonic()
         for i, asig in enumerate(pendientes, 1):
+            fichas, errores = stats["fichas"], stats["errores"]
             for idioma in (("EN",) if solo_en else idiomas):
                 guardada = _cargar_ficha(connection, cliente, asig, anio, idioma, stats)
                 if solo_en and (guardada is None or not guardada.get("programa")):
                     _cargar_ficha(connection, cliente, asig, anio, "ES", stats)
+            if stats["fichas"] > fichas:
+                con_ficha.add(asig.codigo)
+            if stats["errores"] > errores:
+                con_error.add(asig.codigo)
             if i % 50 == 0 or i == len(pendientes):
                 connection.commit()
                 ritmo = (time.monotonic() - inicio) / i
                 logger.info("%s: %d/%d asignaturas (%.0f min restantes)", curso, i,
                             len(pendientes), ritmo * (len(pendientes) - i) / 60)
 
+        procesadas = {a.codigo for a in pendientes}
+        estados = {p: estado_plan(asigs, procesadas, con_ficha, con_error)
+                   for p, asigs in por_plan.items()}
         ahora = datetime.now().isoformat(timespec="seconds")
         with connection:
             connection.executemany(
                 "INSERT OR REPLACE INTO descargas VALUES (?, ?, ?, ?, ?)",
-                [(curso, str(p.codigo), "EN" if solo_en else "+".join(idiomas), "completo", ahora)
-                 for p in seleccion],
+                [(curso, str(p), "EN" if solo_en else "+".join(idiomas), estado, ahora)
+                 for p, estado in estados.items()],
             )
+    for estado in ESTADOS:
+        stats[f"planes_{estado}"] = sum(1 for e in estados.values() if e == estado)
     logger.info("Curso %s terminado: %s", curso, stats)
     return stats
 

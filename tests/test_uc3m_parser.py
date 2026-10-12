@@ -7,7 +7,7 @@ from src.scrapers.uc3m_parser import normalizar_titulo, parse_ficha
 FIXTURES = Path(__file__).parent / "fixtures" / "uc3m"
 FICHAS = sorted(FIXTURES.glob("*.html"))
 
-pytestmark = pytest.mark.skipif(
+reales = pytest.mark.skipif(
     not any(FIXTURES.glob("*.html")),
     reason="Fichas HTML no descargadas: python tests/fixtures/uc3m/descargar.py",
 )
@@ -39,10 +39,12 @@ def _ficha(nombre: str) -> dict:
     return parse_ficha((FIXTURES / nombre).read_bytes())
 
 
+@reales
 def test_hay_fixtures():
     assert len(FICHAS) == 11
 
 
+@reales
 def test_algebra_lineal_es():
     ficha = _ficha("15363_2026_ES.html")
 
@@ -67,6 +69,7 @@ def test_algebra_lineal_es():
     assert "\n" in ficha["programa"]
 
 
+@reales
 def test_algebra_lineal_en():
     ficha = _ficha("15363_2026_EN.html")
 
@@ -79,6 +82,7 @@ def test_algebra_lineal_en():
     assert ficha["fecha_actualizacion"] == "14/04/2026 14:17:35"
 
 
+@reales
 @pytest.mark.parametrize("idioma", ["ES", "EN"])
 def test_curso_de_humanidades(idioma):
     ficha = _ficha(f"11692_2026_{idioma}.html")
@@ -92,6 +96,7 @@ def test_curso_de_humanidades(idioma):
     assert ficha["rama"] is None
 
 
+@reales
 @pytest.mark.parametrize("nombre", ["13881_2026_ES.html", "17631_2026_EN.html"])
 def test_ficha_sin_objetivos(nombre):
     ficha = _ficha(nombre)
@@ -101,6 +106,7 @@ def test_ficha_sin_objetivos(nombre):
     assert ficha["requisitos"]
 
 
+@reales
 def test_otro_grado_derecho():
     ficha = _ficha("13565_2026_ES.html")
 
@@ -110,6 +116,7 @@ def test_otro_grado_derecho():
     assert ficha["tipo"] == "FB"
 
 
+@reales
 @pytest.mark.parametrize("ruta", FICHAS, ids=[f.name for f in FICHAS])
 def test_todas_las_fichas_se_parsean(ruta):
     ficha = parse_ficha(ruta.read_bytes())
@@ -123,6 +130,7 @@ def test_todas_las_fichas_se_parsean(ruta):
     assert "\ufffd" not in ficha["nombre"]
 
 
+@reales
 def test_ficha_antigua_2024():
     ficha = _ficha("15363_2024_ES.html")
 
@@ -131,6 +139,7 @@ def test_ficha_antigua_2024():
     assert ficha["programa"]
 
 
+@reales
 def test_acepta_str_y_bytes_por_igual():
     contenido = (FIXTURES / "15363_2026_ES.html").read_bytes()
 

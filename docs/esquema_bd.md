@@ -68,7 +68,23 @@ Clave `(codigo, plan, curso_academico)`, más `estudio`.
 ### `descargas` — qué se ha terminado de cargar
 
 Clave `(curso_academico, plan, idioma)`, más `estado` y `fecha`. Sirve para saber qué cursos y
-grados están completos.
+grados están completos. `estado` es uno de:
+
+- `completo`: todas las asignaturas del grado procesadas sin errores. Que la UC3M no publique
+  ficha de una asignatura (página vacía) no cuenta como error.
+- `parcial`: errores sueltos o asignaturas sin procesar (por ejemplo, con `--limite`).
+- `fallido`: hay errores y ninguna asignatura del grado ha dado ficha.
+
+Si un grado no queda `completo`, se vuelve a lanzar el mismo comando: la caché evita repetir lo
+que ya se descargó y el estado se actualiza.
+
+## Migración desde el esquema anterior
+
+Si `data/processed/uc3m.sqlite` se creó con el esquema de la PR #14 (columna `código` con tilde) o
+le faltan columnas, al ejecutar el scraper la tabla `subjects` se migra sola: la vieja se renombra a
+`subjects_antigua_<fecha>` (no se borra) y sus filas se copian a la nueva, salvo las que no tienen
+código, curso o idioma. Si se prefiere empezar de cero, basta con borrar el `.sqlite`: la caché
+HTML de `data/raw/uc3m/` se reutiliza y la recarga no vuelve a descargar nada.
 
 ## Consultas útiles
 

@@ -7,8 +7,14 @@
 python tests/fixtures/uc3m/descargar.py
 ```
 
-Sin ellas, los tests del parser y de la carga se saltan (`skipped`); los del cliente y la BD usan
-solo los JSON de esta carpeta, que sí se suben (solo códigos y nombres).
+Sin ellas, solo se saltan (`skipped`) los tests de `test_uc3m_parser.py` que leen fichas reales.
+Lo demás corre siempre, también en la CI:
+
+- `sinteticas/`: 5 fichas **inventadas** (códigos 10001-10003, planes 900 y 901) con la misma
+  estructura HTML que las reales: completa en ES y EN, sin objetivos, de Humanidades sin curso ni
+  cuatrimestre y de un curso anterior con una sección vacía. Las usan
+  `test_uc3m_parser_sintetico.py` y la carga de principio a fin (`test_uc3m_carga.py`). Sí se suben.
+- Los JSON de esta carpeta (solo códigos y nombres), para los tests del cliente.
 
 Fichas HTML de `generaFicha` guardadas tal cual se descargaron (bytes sin re-codificar).
 Aunque se esperaba ISO-8859-1, el servidor las sirve en UTF-8 (`Content-Type: text/html;charset=utf-8`
