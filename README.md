@@ -67,3 +67,4 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 - Si te atascas más de dos días, cuéntalo en el grupo.
 
 Setup personal: Víctor Negueruela — Python 3.11 instalado, pytest y Ruff pasan.
+Setup personal: Ángela (@angelacea) — completado.
