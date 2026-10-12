@@ -65,3 +65,5 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 - Toda tarea de código lleva tests. **No se mergea lo que no se entiende.**
 - Dentro de la semana nadie depende de otro grupo: lo que haga falta de otros está hecho la semana anterior.
 - Si te atascas más de dos días, cuéntalo en el grupo.
+
+Setup personal: Víctor Negueruela — Python 3.11 instalado, pytest y Ruff pasan.
