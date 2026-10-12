@@ -34,6 +34,30 @@ class ErrorAPIUC3M(RuntimeError):
     """La API de la UC3M respondió con un error o un formato inesperado."""
 
 
+class FichaInesperada(ErrorAPIUC3M):
+    """``generaFicha`` devolvió algo que no es ni una ficha ni la página de "sin ficha"."""
+
+
+# Qué puede devolver generaFicha (con HTTP 200):
+FICHA = "ficha"
+SIN_FICHA = "sin_ficha"  # la asignatura no tiene ficha con ese plan/año/idioma (página de la UC3M)
+INESPERADA = "inesperada"  # vacía, cortada, de mantenimiento, de un proxy...
+
+_MARCA_FICHA = b'class="asignatura"'
+_MARCA_SIN_FICHA = b'<span class="error">Error al generar la ficha</span>'
+
+
+def clasificar_ficha(contenido: bytes) -> str:
+    """Distingue una ficha, la página de "sin ficha" de la UC3M y cualquier otra respuesta."""
+    if b"</html>" not in contenido[-256:].lower():
+        return INESPERADA
+    if _MARCA_FICHA in contenido:
+        return FICHA
+    if _MARCA_SIN_FICHA in contenido:
+        return SIN_FICHA
+    return INESPERADA
+
+
 @dataclass(frozen=True)
 class Plan:
     codigo: int
@@ -185,14 +209,26 @@ class ClienteUC3M:
         return self.cache_dir / str(anio) / f"{asig}_{idioma}.html"
 
     def descargar_ficha(self, est: int, plan: int, asig: int, anio: int, idioma: str) -> bytes:
-        """Devuelve los bytes de la ficha, desde caché si existe o descargándola."""
+        """Devuelve los bytes de la ficha, desde caché si existe o descargándola.
+
+        Solo se guardan en caché las fichas y la página de "sin ficha" de la UC3M. Cualquier otra
+        respuesta lanza ``FichaInesperada`` y no se guarda, así que relanzar la carga la reintenta.
+        Si la caché tiene una respuesta inesperada (de una versión anterior), se vuelve a pedir.
+        """
         url = url_ficha(est, plan, asig, anio, idioma)
         ruta = self.ruta_cache(asig, anio, idioma)
-        if ruta.is_file() and ruta.stat().st_size > 0:
-            logger.debug("Ficha en caché: %s", ruta)
-            return ruta.read_bytes()
+        if ruta.is_file():
+            contenido = ruta.read_bytes()
+            if clasificar_ficha(contenido) != INESPERADA:
+                logger.debug("Ficha en caché: %s", ruta)
+                return contenido
+            logger.warning("Respuesta inesperada en la caché, se vuelve a pedir: %s", ruta)
 
         contenido = self._peticion("GET", url).content
+        if clasificar_ficha(contenido) == INESPERADA:
+            raise FichaInesperada(
+                f"Respuesta inesperada de {url} ({len(contenido)} bytes): {contenido[:120]!r}"
+            )
         ruta.parent.mkdir(parents=True, exist_ok=True)
         temporal = ruta.with_name(ruta.name + ".tmp")
         temporal.write_bytes(contenido)

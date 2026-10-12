@@ -23,6 +23,11 @@ Opciones: `--plan` (uno o varios planes), `--limite N` (máximo de asignaturas, 
   varios grados. Con 1,5 s por petición, el curso actual completo son varias horas.
 - **Cada ficha, con su plan:** se pide con el plan y el estudio donde aparece la asignatura ese
   curso. Con otro plan la web devuelve una página vacía, que cuenta como `sin_ficha`.
+- **Qué se guarda en caché:** solo las fichas y la página de "Error al generar la ficha" con la que
+  la UC3M responde (HTTP 200, ~2,8 KB) cuando no hay ficha para ese plan, año e idioma; esta
+  cuenta como `sin_ficha`. Cualquier otra respuesta (vacía, cortada, de mantenimiento…) cuenta como
+  error, no se guarda y se vuelve a pedir al relanzar. Si la caché tiene una respuesta así de una
+  versión anterior, también se vuelve a pedir.
 - **Cortesía:** pausa antes de cada petición, reintentos con espera creciente y, si la web
   responde 429, se duplica la pausa automáticamente.
 

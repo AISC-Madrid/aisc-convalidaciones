@@ -7,11 +7,19 @@ from src.scrapers.uc3m_client import (
     AsignaturaPlan,
     ClienteUC3M,
     ErrorAPIUC3M,
+    FichaInesperada,
     Plan,
+    clasificar_ficha,
     url_ficha,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures" / "uc3m"
+SINTETICAS = FIXTURES / "sinteticas"
+SIN_FICHA = (FIXTURES / "respuestas" / "sin_ficha.html").read_bytes()
+FICHA = (
+    '<html><body><div class="asignatura">Álgebra Lineal</div>'
+    '<div class="asignatura">(15363)</div></body></html>'
+).encode()
 
 
 class RespuestaFalsa:
@@ -137,7 +145,7 @@ def test_url_ficha_idioma_invalido():
 
 
 def test_descargar_ficha_usa_cache(tmp_path):
-    html = b"<html><body>\xc1lgebra Lineal</body></html>"
+    html = FICHA
     cliente, sesion = _cliente(tmp_path, [RespuestaFalsa(content=html)])
 
     primero = cliente.descargar_ficha(371, 456, 15363, 2025, "ES")
@@ -158,19 +166,18 @@ def test_descargar_ficha_usa_cache(tmp_path):
 
 
 def test_descargar_ficha_reintenta_tras_500(tmp_path):
-    html = b"<html>ok \xc1</html>"
-    cliente, _ = _cliente(tmp_path, [RespuestaFalsa(500), RespuestaFalsa(content=html)])
+    cliente, _ = _cliente(tmp_path, [RespuestaFalsa(500), RespuestaFalsa(content=FICHA)])
 
-    assert cliente.descargar_ficha(371, 456, 15363, 2025, "EN") == html
+    assert cliente.descargar_ficha(371, 456, 15363, 2025, "EN") == FICHA
     assert cliente.peticiones == 2
 
 
 def test_descargar_ficha_429_duplica_pausa(tmp_path, monkeypatch):
     monkeypatch.setattr("src.scrapers.uc3m_client.time.sleep", lambda _s: None)
-    sesion = SesionFalsa([RespuestaFalsa(429), RespuestaFalsa(content=b"x")])
+    sesion = SesionFalsa([RespuestaFalsa(429), RespuestaFalsa(content=FICHA)])
     cliente = ClienteUC3M(cache_dir=tmp_path, pausa=1.5, session=sesion)
 
-    assert cliente.descargar_ficha(371, 456, 15363, 2025, "ES") == b"x"
+    assert cliente.descargar_ficha(371, 456, 15363, 2025, "ES") == FICHA
     assert cliente.pausa == 3.0
 
 
@@ -189,3 +196,53 @@ def test_error_api_ok_distinto_de_s(tmp_path):
 
     with pytest.raises(ErrorAPIUC3M):
         cliente.listar_planes()
+
+
+@pytest.mark.parametrize(
+    ("contenido", "esperado"),
+    [
+        (FICHA, "ficha"),
+        ((SINTETICAS / "10001_2026_ES.html").read_bytes(), "ficha"),
+        (SIN_FICHA, "sin_ficha"),
+        (b"", "inesperada"),
+        (FICHA[: len(FICHA) // 2], "inesperada"),
+        (b"<html><body><h1>503 Service Unavailable</h1></body></html>", "inesperada"),
+        (b"<html><body>Estamos en mantenimiento</body></html>", "inesperada"),
+    ],
+    ids=["minima", "sintetica", "sin_ficha", "vacia", "cortada", "proxy", "mantenimiento"],
+)
+def test_clasificar_ficha(contenido, esperado):
+    assert clasificar_ficha(contenido) == esperado
+
+
+def test_la_pagina_sin_ficha_se_guarda_en_cache(tmp_path):
+    cliente, sesion = _cliente(tmp_path, [RespuestaFalsa(content=SIN_FICHA)])
+
+    assert cliente.descargar_ficha(371, 456, 13881, 2026, "ES") == SIN_FICHA
+    assert cliente.descargar_ficha(371, 456, 13881, 2026, "ES") == SIN_FICHA
+    assert len(sesion.llamadas) == 1
+
+
+def test_una_respuesta_inesperada_lanza_error_y_no_se_guarda(tmp_path):
+    error = b"<html><body>Estamos en mantenimiento</body></html>"
+    cliente, sesion = _cliente(
+        tmp_path, [RespuestaFalsa(content=error), RespuestaFalsa(content=FICHA)]
+    )
+
+    with pytest.raises(FichaInesperada):
+        cliente.descargar_ficha(371, 456, 15363, 2026, "ES")
+    assert not cliente.ruta_cache(15363, 2026, "ES").exists()
+
+    assert cliente.descargar_ficha(371, 456, 15363, 2026, "ES") == FICHA
+    assert len(sesion.llamadas) == 2
+
+
+def test_una_respuesta_inesperada_ya_en_cache_se_vuelve_a_pedir(tmp_path):
+    cliente, sesion = _cliente(tmp_path, [RespuestaFalsa(content=FICHA)])
+    ruta = cliente.ruta_cache(15363, 2026, "ES")
+    ruta.parent.mkdir(parents=True)
+    ruta.write_bytes(b"")
+
+    assert cliente.descargar_ficha(371, 456, 15363, 2026, "ES") == FICHA
+    assert ruta.read_bytes() == FICHA
+    assert len(sesion.llamadas) == 1

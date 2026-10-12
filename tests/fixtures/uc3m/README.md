@@ -14,6 +14,9 @@ Lo demás corre siempre, también en la CI:
   estructura HTML que las reales: completa en ES y EN, sin objetivos, de Humanidades sin curso ni
   cuatrimestre y de un curso anterior con una sección vacía. Las usan
   `test_uc3m_parser_sintetico.py` y la carga de principio a fin (`test_uc3m_carga.py`). Sí se suben.
+- `respuestas/sin_ficha.html`: la página real que devuelve `generaFicha` (HTTP 200) cuando no hay
+  ficha para ese plan, año e idioma ("Error al generar la ficha"), sin `jsessionid` ni Google Tag
+  Manager. No tiene temario. Sí se sube.
 - Los JSON de esta carpeta (solo códigos y nombres), para los tests del cliente.
 
 Fichas HTML de `generaFicha` guardadas tal cual se descargaron (bytes sin re-codificar).

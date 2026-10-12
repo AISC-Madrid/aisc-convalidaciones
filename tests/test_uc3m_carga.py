@@ -2,13 +2,15 @@
 
 import sqlite3
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 
 from src.scrapers.uc3m import cargar_curso, estado_plan
-from src.scrapers.uc3m_client import AsignaturaPlan, Plan
+from src.scrapers.uc3m_client import AsignaturaPlan, ClienteUC3M, Plan
 
 SINTETICAS = Path(__file__).parent / "fixtures" / "uc3m" / "sinteticas"
+SIN_FICHA = Path(__file__).parent / "fixtures" / "uc3m" / "respuestas" / "sin_ficha.html"
 
 
 class ClienteFalso:
@@ -43,7 +45,41 @@ class ClienteFalso:
         if self.fallan is None or asig in self.fallan:
             raise ConnectionError("la web no responde")
         ruta = SINTETICAS / f"{asig}_{anio}_{idioma}.html"
-        return ruta.read_bytes() if ruta.exists() else b"<html><body>Sin ficha</body></html>"
+        return (ruta if ruta.exists() else SIN_FICHA).read_bytes()
+
+
+class Respuesta:
+    def __init__(self, content: bytes) -> None:
+        self.status_code = 200
+        self.content = content
+
+    def raise_for_status(self) -> None:
+        pass
+
+
+class SesionPorAsignatura:
+    """Sesión HTTP falsa: sirve las fixtures sintéticas salvo para las asignaturas de ``caidas``,
+    a las que responde 200 con una página de mantenimiento (ni ficha ni "sin ficha")."""
+
+    def __init__(self, caidas: set[int]) -> None:
+        self.caidas = caidas
+        self.urls: list[str] = []
+
+    def get(self, url: str, **kwargs) -> Respuesta:
+        self.urls.append(url)
+        params = {k: v[0] for k, v in parse_qs(urlparse(url).query).items()}
+        if int(params["asig"]) in self.caidas:
+            return Respuesta(b"<html><body>Estamos en mantenimiento</body></html>")
+        idioma = {"1": "ES", "2": "EN"}[params["idioma"]]
+        ruta = SINTETICAS / f"{params['asig']}_{params['anio']}_{idioma}.html"
+        return Respuesta((ruta if ruta.exists() else SIN_FICHA).read_bytes())
+
+
+class ClienteConSesionFalsa(ClienteUC3M):
+    """El cliente real (clasificación y caché incluidas) con los listados de ``ClienteFalso``."""
+
+    listar_planes = ClienteFalso.listar_planes
+    listar_asignaturas = ClienteFalso.listar_asignaturas
 
 
 def _filas(db: Path, sql: str) -> list[tuple]:
@@ -127,6 +163,28 @@ def test_con_limite_los_planes_quedan_parciales(tmp_path):
 
     assert stats["asignaturas"] == 1
     assert _estados(db) == {"900": "parcial", "901": "parcial"}
+
+
+def test_una_pagina_inesperada_no_da_un_completo_falso_y_se_reintenta(tmp_path):
+    db, cache = tmp_path / "uc3m.sqlite", tmp_path / "cache"
+
+    def cliente(sesion: SesionPorAsignatura) -> ClienteConSesionFalsa:
+        return ClienteConSesionFalsa(cache, pausa=0, reintentos=1, session=sesion)
+
+    stats = cargar_curso(2026, cliente(SesionPorAsignatura(caidas={10001, 10002, 10003})), db)
+
+    assert stats["fichas"] == 0
+    assert stats["errores"] == 6
+    assert _estados(db) == {"900": "fallido", "901": "fallido"}
+    assert not list(cache.rglob("*.html"))  # nada inesperado se queda en la caché
+
+    sana = SesionPorAsignatura(caidas=set())
+    stats = cargar_curso(2026, cliente(sana), db)
+
+    assert len(sana.urls) == 6  # al relanzar se vuelven a pedir todas
+    assert stats["fichas"] == 4
+    assert stats["sin_ficha"] == 2
+    assert _estados(db) == {"900": "completo", "901": "completo"}
 
 
 @pytest.mark.parametrize(
