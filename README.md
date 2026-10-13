@@ -46,6 +46,7 @@ docs/            plan de trabajo, referencia técnica, presentación, guía de I
 src/
   models/        clases Pydantic (Subject, HistoricalMatch, Match)
   scrapers/      uc3m.py, destination.py
+  sync/          datos.py: baja/sube los datos del repo privado (docs/esquema_bd.md)
   loaders/       historical_xls.py, link_catalog.py
   reconciliation/ old_to_new.py
   embeddings/    encoder.py, index.py
@@ -55,6 +56,7 @@ src/
 config/scrapers/ un YAML por universidad de destino
 public/data/     JSON publicados (lo único que usa la web)
 data/            Excel, caché HTML y bases de datos: solo en local, no se sube
+                 (python -m src.sync.datos descargar --todo para bajar lo ya scrapeado)
 tests/           pytest; fixtures en tests/fixtures/
 notebooks/       EDA, reconciliación, benchmark, calibración
 ```
