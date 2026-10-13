@@ -8,6 +8,8 @@ data/historical/*.xls
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 *.sqlite
+# Fichas completas de la UC3M (temarios): solo en local, ver tests/fixtures/uc3m/README.md
+tests/fixtures/uc3m/*.html
 *.npy
 
 # --- Python ---
