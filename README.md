@@ -68,3 +68,4 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 
 Setup personal: Víctor Negueruela — Python 3.11 instalado, pytest y Ruff pasan.
 Setup personal: Ángela (@angelacea) — completado.
+Setup perosnal: ALejandra (kalejandra-dev) - completado. 
