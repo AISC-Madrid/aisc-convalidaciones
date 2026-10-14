@@ -8,6 +8,20 @@ from src.models import Resultados
 
 RUTA_JSON = Path(__file__).resolve().parents[2] / "public/data/ejemplo.json"
 
+COLUMNAS = {
+    "Asignatura de origen": st.column_config.TextColumn(width="large"),
+    "Asignatura de destino": st.column_config.TextColumn("Destino", width="large"),
+    "ECTS origen": st.column_config.NumberColumn(width="small"),
+    "ECTS destino": st.column_config.NumberColumn(width="small"),
+    "Similitud": st.column_config.NumberColumn(format="%.2f", width="small"),
+    "Etiqueta": st.column_config.TextColumn(width="medium"),
+    "Aviso": st.column_config.TextColumn(width="small"),
+    "Ficha de destino": st.column_config.LinkColumn(
+        "Ficha", display_text="Ver ficha", width="small"
+    ),
+    "Grupo conjunto": st.column_config.TextColumn("Grupo", width="small"),
+}
+
 
 def cargar_datos(ruta):
     """Lee el JSON como un diccionario de Python."""
@@ -43,7 +57,6 @@ def preparar_tabla(resultados):
 
 
 def main(ruta=RUTA_JSON):
-    # layout="wide" aprovecha el ancho disponible.
     st.set_page_config(page_title="Convalidaciones · AISC", layout="wide")
     st.title("AISC · Buscador de convalidaciones")
     st.write("Explora posibles equivalencias para tu movilidad.")
@@ -54,7 +67,7 @@ def main(ruta=RUTA_JSON):
         datos = cargar_datos(ruta)
         filas = preparar_tabla(datos["resultados"])
     except FileNotFoundError:
-        pass  # Es normal mientras esperamos el archivo de Héctor.
+        pass  # Sin archivo todavía: se muestra un aviso, no un error.
     except (ValueError, KeyError, TypeError):
         datos = None
         error = "El archivo de resultados no tiene el formato esperado."
@@ -64,7 +77,6 @@ def main(ruta=RUTA_JSON):
     # Un JSON contiene una sola combinación de grado y universidad.
     columna_grado, columna_universidad = st.columns(2)
     with columna_grado:
-        # selectbox crea un desplegable.
         st.selectbox(
             "Grado",
             [datos["grado"]] if datos else ["Pendiente de cargar datos"],
@@ -90,29 +102,16 @@ def main(ruta=RUTA_JSON):
         st.dataframe(
             filas,
             hide_index=True,
-            column_config={
-                "Asignatura de origen": st.column_config.TextColumn(width="large"),
-                "Asignatura de destino": st.column_config.TextColumn("Destino", width="large"),
-                "ECTS origen": st.column_config.NumberColumn(width="small"),
-                "ECTS destino": st.column_config.NumberColumn(width="small"),
-                "Similitud": st.column_config.NumberColumn(format="%.2f", width="small"),
-                "Etiqueta": st.column_config.TextColumn(width="medium"),
-                "Aviso": st.column_config.TextColumn(width="small"),
-                "Ficha de destino": st.column_config.LinkColumn(
-                    "Ficha", display_text="Ver ficha", width="small"
-                ),
-                "Grupo conjunto": st.column_config.TextColumn("Grupo", width="small"),
-            },
+            column_config=COLUMNAS,
         )
     st.caption(
         "*Precedente aprobado: existe una convalidación histórica.*  \n"
         "*Sugerencia IA: propuesta basada en similitud de contenidos.*"
-        # *texto* pone el texto en cursiva.
     )
-    st.markdown("<br>", unsafe_allow_html=True)
     st.caption("*La similitud no indica la probabilidad de aprobación.*")
 
 
 if __name__ == "__main__":
     main()
+
 

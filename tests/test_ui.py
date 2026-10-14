@@ -3,7 +3,7 @@ import json
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from src.ui.app import cargar_datos, preparar_tabla
+from src.ui.app import COLUMNAS, cargar_datos, preparar_tabla
 
 
 def ejecutar_app(ruta):
@@ -78,6 +78,10 @@ def test_resultados_vacios(tmp_path, ejemplo):
     app = AppTest.from_function(ejecutar_app, args=(str(ruta),)).run(timeout=15)
     assert not app.exception
     assert "No hay equivalencias" in app.info[0].value
+
+
+def test_config_de_columnas_coincide_con_la_tabla(ejemplo):
+    assert COLUMNAS.keys() == preparar_tabla(ejemplo["resultados"])[0].keys()
 
 
 def test_precedente_sin_aviso(ejemplo):
