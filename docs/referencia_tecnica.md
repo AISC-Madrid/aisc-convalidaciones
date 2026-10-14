@@ -210,7 +210,7 @@ rate_limit_seconds: 2
 
 #### Loader XLS histórico
 - `pandas` + `xlrd`, validación con Pydantic, normalización (tildes, mayúsculas, espacios, códigos) y deduplicación entre cursos.
-- Conserva las relaciones **n:m** (una asignatura UC3M convalidada por dos del destino, o al revés) con un `group_id`.
+- Conserva las relaciones **n:m** (una asignatura UC3M convalidada por dos del destino, o al revés) con un `grupo`.
 - Salida: tabla `historical_matches`.
 
 #### Enlace XLS ↔ catálogo destino
@@ -315,19 +315,24 @@ Como el espacio de consultas es finito (grado × universidad), **no hace falta c
 | PDF | `reportlab` dentro de la app de Streamlit (en Windows no necesita dependencias nativas, a diferencia de `weasyprint`) | 0 € |
 | Frontend Fase 3 | Web estática (HTML/JS) en **GitHub Pages** o en la web de AISC, leyendo los mismos JSON; PDF en el navegador (`window.print()` con CSS de impresión) | 0 € |
 
-Esquema del JSON (contrato entre el pipeline y la interfaz, que se cierra en el Bloque A):
+Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo valida `src.models.Resultados` y hay un ejemplo en `public/data/ejemplo.json`):
 
 ```json
 {
   "grado": "...", "universidad": "...", "generado": "2026-10-20", "modelo": "multilingual-e5-small",
   "umbral": 0.71,
   "resultados": [
-    {"uc3m": {"codigo": "...", "nombre": "...", "ects": 6},
+    {"origen": {"codigo": "...", "nombre": "...", "ects": 6, "tipo": "OB", "url": "..."},
      "destino": {"codigo": "...", "nombre": "...", "ects": 6.0, "url": "..."},
-     "score": 0.87, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false}
+     "score": 0.87, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": null}
   ]
 }
 ```
+
+- `origen` es la asignatura UC3M; `tipo` (`FB`/`OB`/`OP`/`HUM`) y `url` (ficha UC3M) son opcionales.
+- `etiqueta`: `PRECEDENTE_APROBADO` o `SUGERENCIA_IA`.
+- `aviso_ects` es `true` si los ECTS del destino difieren más del 25 % de los de origen; en las n:m se comparan los totales del grupo (cada asignatura cuenta una vez) y todas sus filas llevan el mismo aviso. El modelo rechaza un valor incoherente.
+- `grupo`: las filas de una misma convalidación n:m llevan el mismo número; `null` en las 1:1.
 
 **Por qué no hay API**: una API solo tiene sentido si hay cálculo en tiempo de consulta, y aquí no lo hay. Quitarla ahorra un servidor y trabajo en la parte web. Si en el futuro hace falta búsqueda libre ("pega el temario de tu asignatura"), entonces sí habría que servir el modelo. Esa funcionalidad queda fuera del alcance.
 
