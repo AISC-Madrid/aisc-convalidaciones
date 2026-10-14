@@ -28,12 +28,12 @@
     {
       "origen": {"codigo": "18101", "nombre": "Programación", "ects": 6, "tipo": "FB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18101"},
       "destino": {"codigo": "CS 1301", "nombre": "Introduction to Computing", "ects": 4.5, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
-      "score": 0.81, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": 1
+      "score": 0.81, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": true, "grupo": 1
     },
     {
       "origen": {"codigo": "18101", "nombre": "Programación", "ects": 6, "tipo": "FB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18101"},
       "destino": {"codigo": "CS 1331", "nombre": "Introduction to Object-Oriented Programming", "ects": 4.5, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
-      "score": 0.76, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": 1
+      "score": 0.76, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": true, "grupo": 1
     }
   ]
 }

@@ -210,7 +210,7 @@ rate_limit_seconds: 2
 
 #### Loader XLS histórico
 - `pandas` + `xlrd`, validación con Pydantic, normalización (tildes, mayúsculas, espacios, códigos) y deduplicación entre cursos.
-- Conserva las relaciones **n:m** (una asignatura UC3M convalidada por dos del destino, o al revés) con un `group_id`.
+- Conserva las relaciones **n:m** (una asignatura UC3M convalidada por dos del destino, o al revés) con un `grupo`.
 - Salida: tabla `historical_matches`.
 
 #### Enlace XLS ↔ catálogo destino
@@ -331,7 +331,7 @@ Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo va
 
 - `origen` es la asignatura UC3M; `tipo` (`FB`/`OB`/`OP`/`HUM`) y `url` (ficha UC3M) son opcionales.
 - `etiqueta`: `PRECEDENTE_APROBADO` o `SUGERENCIA_IA`.
-- `aviso_ects` es `true` si los ECTS del destino difieren más del 25 % de los de origen; el modelo rechaza un valor incoherente.
+- `aviso_ects` es `true` si los ECTS del destino difieren más del 25 % de los de origen; en las n:m se comparan los totales del grupo (cada asignatura cuenta una vez) y todas sus filas llevan el mismo aviso. El modelo rechaza un valor incoherente.
 - `grupo`: las filas de una misma convalidación n:m llevan el mismo número; `null` en las 1:1.
 
 **Por qué no hay API**: una API solo tiene sentido si hay cálculo en tiempo de consulta, y aquí no lo hay. Quitarla ahorra un servidor y trabajo en la parte web. Si en el futuro hace falta búsqueda libre ("pega el temario de tu asignatura"), entonces sí habría que servir el modelo. Esa funcionalidad queda fuera del alcance.
