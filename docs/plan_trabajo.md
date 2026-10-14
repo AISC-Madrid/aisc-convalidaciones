@@ -74,7 +74,7 @@ No trabajamos a tiempo completo, así que el plan son **8 semanas** más una **s
 | | ◆ **Datos del piloto completos en SQLite** | | |
 | **4** | **Enlace** histórico ↔ destino, tasa de enlace y revisión manual (los 4 juntos) | ↑ (con Alejandra + Ángela) | *Pulir la web: página "cómo funciona", estados vacíos, tests* |
 | | ◆ **Sabemos cuántos pares de calibración hay** | | |
-| **5** | *Preparar la calibración: notebook con split y filtro de outliers; revisión de 20 reconciliaciones* | **Embeddings**: encoder, embeber ambos catálogos, top-K | *README de usuario y guion de la prueba con usuarios* |
+| **5** | *Preparar la calibración: notebook con split y filtro de outliers; revisión de 20 reconciliaciones* | **Embeddings**: encoder, embeber ambos catálogos, top-K | *README de usuario y guion de la prueba con usuarios (opcional: prototipo HTML estático)* |
 | **6** | **Calibración + evaluación**: umbral, Recall@5, 50 sugerencias a mano | **Matcher + export del JSON real** | *Tests end-to-end de la web con un JSON grande; preparar la demo* |
 | | ◆ **JSON real disponible** | | |
 | **7** | **Tests + README + script de refresco** (los 4 juntos) | ↑ (con Alejandra + Ángela) | **Integración**: web y PDF con el JSON real, redespliegue |
@@ -182,6 +182,7 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 **5C · Héctor + Víctor. README de usuario y guion de la prueba** *(no bloquea a nadie)*
 - Entregable: `README` de usuario (qué hace la web, cómo leer los resultados, qué hacer con el PDF) y `docs/prueba_usuarios.md` con 4-5 tareas que haremos hacer a los alumnos en la Semana 8 y un cuestionario corto.
 - Hecho cuando: una persona ajena entiende para qué sirve la web leyendo el README.
+- *Opcional, si sobra tiempo:* prototipo de la web estática de la Fase 3: `public/index.html` (HTML/JS, sin servidor) que lee `ejemplo.json` y muestra la tabla con filtros. No sustituye a Streamlit en el MVP; se decide en la reunión si se sigue.
 
 ### Semana 6 · Calibrar y producir el JSON real
 
