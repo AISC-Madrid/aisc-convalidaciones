@@ -1,0 +1,39 @@
+{
+  "grado": "Grado en Ingeniería Informática",
+  "universidad": "Georgia Institute of Technology",
+  "generado": "2026-10-20",
+  "modelo": "multilingual-e5-small",
+  "umbral": 0.71,
+  "resultados": [
+    {
+      "origen": {"codigo": "18201", "nombre": "Estructuras de Datos y Algoritmos", "ects": 6, "tipo": "OB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18201"},
+      "destino": {"codigo": "CS 1332", "nombre": "Data Structures and Algorithms", "ects": 6.0, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
+      "score": 0.87, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": null
+    },
+    {
+      "origen": {"codigo": "18210", "nombre": "Sistemas Operativos", "ects": 6, "tipo": "OB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18210"},
+      "destino": {"codigo": "CS 2200", "nombre": "Computer Systems and Networks", "ects": 8.0, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
+      "score": 0.83, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": true, "grupo": null
+    },
+    {
+      "origen": {"codigo": "18215", "nombre": "Redes de Ordenadores", "ects": 6, "tipo": "OB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18215"},
+      "destino": {"codigo": "CS 3251", "nombre": "Computer Networking I", "ects": 6.0, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
+      "score": 0.79, "etiqueta": "SUGERENCIA_IA", "aviso_ects": false, "grupo": null
+    },
+    {
+      "origen": {"codigo": "18230", "nombre": "Inteligencia Artificial", "ects": 6, "tipo": "OB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18230"},
+      "destino": {"codigo": "CS 3600", "nombre": "Introduction to Artificial Intelligence", "ects": 6.0, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
+      "score": 0.66, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": null
+    },
+    {
+      "origen": {"codigo": "18101", "nombre": "Programación", "ects": 6, "tipo": "FB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18101"},
+      "destino": {"codigo": "CS 1301", "nombre": "Introduction to Computing", "ects": 4.5, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
+      "score": 0.81, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": 1
+    },
+    {
+      "origen": {"codigo": "18101", "nombre": "Programación", "ects": 6, "tipo": "FB", "url": "https://aplicaciones.uc3m.es/cpa/generaFicha?est=218&asig=18101"},
+      "destino": {"codigo": "CS 1331", "nombre": "Introduction to Object-Oriented Programming", "ects": 4.5, "url": "https://catalog.gatech.edu/courses-undergrad/cs/"},
+      "score": 0.76, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": 1
+    }
+  ]
+}
