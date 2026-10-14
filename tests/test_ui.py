@@ -50,10 +50,10 @@ def test_carga_y_tabla(tmp_path, ejemplo):
     ruta = tmp_path / "ejemplo.json"
     ruta.write_text(json.dumps(ejemplo), encoding="utf-8")
     fila = preparar_tabla(cargar_datos(ruta)["resultados"])[0]
-    assert fila["Asignatura UC3M"] == "Redes (001)"
+    assert fila["Asignatura de origen"] == "Redes (001)"
     assert fila["Asignatura de destino"] == "Networks (CS1)"
     assert fila["ECTS destino"] == 4
-    assert fila["Tipo"] == "Sugerencia IA"
+    assert fila["Etiqueta"] == "Sugerencia IA"
     assert fila["Aviso"] == "ECTS dispares"
     app = AppTest.from_function(ejecutar_app, args=(str(ruta),)).run(timeout=15)
     assert not app.exception
@@ -83,7 +83,7 @@ def test_resultados_vacios(tmp_path, ejemplo):
 def test_precedente_sin_aviso(ejemplo):
     ejemplo["resultados"][0].update(etiqueta="PRECEDENTE_APROBADO", aviso_ects=False)
     fila = preparar_tabla(ejemplo["resultados"])[0]
-    assert fila["Tipo"] == "Precedente aprobado"
+    assert fila["Etiqueta"] == "Precedente aprobado"
     assert fila["Aviso"] == ""
 
 
@@ -96,7 +96,7 @@ def test_json_del_equipo_en_pantalla():
     tabla = app.dataframe[0].value
     assert len(tabla) == 6
     assert (tabla["Grupo conjunto"] == "1").sum() == 2
-    assert ((tabla["Similitud"] < 0.71) & (tabla["Tipo"] == "Precedente aprobado")).any()
+    assert ((tabla["Similitud"] < 0.71) & (tabla["Etiqueta"] == "Precedente aprobado")).any()
 
 
 def test_url_opcional_y_validacion(tmp_path, ejemplo):
@@ -109,3 +109,4 @@ def test_url_opcional_y_validacion(tmp_path, ejemplo):
     app = AppTest.from_function(ejecutar_app, args=(str(ruta),)).run(timeout=15)
     assert not app.exception
     assert app.error
+

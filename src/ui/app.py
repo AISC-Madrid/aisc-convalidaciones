@@ -26,12 +26,12 @@ def preparar_tabla(resultados):
         origen, destino = resultado["origen"], resultado["destino"]
         filas.append(
             {
-                "Asignatura UC3M": f"{origen['nombre']} ({origen['codigo']})",
-                "ECTS UC3M": origen["ects"],
+                "Asignatura de origen": f"{origen['nombre']} ({origen['codigo']})",
+                "ECTS origen": origen["ects"],
                 "Asignatura de destino": f"{destino['nombre']} ({destino['codigo']})",
                 "ECTS destino": destino["ects"],
                 "Similitud": resultado["score"],
-                "Tipo": etiquetas[resultado["etiqueta"]],
+                "Etiqueta": etiquetas[resultado["etiqueta"]],
                 "Aviso": "ECTS dispares" if resultado["aviso_ects"] else "",
                 "Ficha de destino": destino.get("url"),
                 "Grupo conjunto": str(resultado["grupo"])
@@ -91,12 +91,12 @@ def main(ruta=RUTA_JSON):
             filas,
             hide_index=True,
             column_config={
-                "Asignatura Origen": st.column_config.TextColumn(width="large"),
+                "Asignatura de origen": st.column_config.TextColumn(width="large"),
                 "Asignatura de destino": st.column_config.TextColumn("Destino", width="large"),
-                "ECTS Origen": st.column_config.NumberColumn(width="small"),
+                "ECTS origen": st.column_config.NumberColumn(width="small"),
                 "ECTS destino": st.column_config.NumberColumn(width="small"),
                 "Similitud": st.column_config.NumberColumn(format="%.2f", width="small"),
-                "Tipo": st.column_config.TextColumn(width="medium"),
+                "Etiqueta": st.column_config.TextColumn(width="medium"),
                 "Aviso": st.column_config.TextColumn(width="small"),
                 "Ficha de destino": st.column_config.LinkColumn(
                     "Ficha", display_text="Ver ficha", width="small"
@@ -115,3 +115,4 @@ def main(ruta=RUTA_JSON):
 
 if __name__ == "__main__":
     main()
+
