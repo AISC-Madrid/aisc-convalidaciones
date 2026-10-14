@@ -17,4 +17,4 @@ class HistoricalMatch(BaseModel):
     destino_codigo: str | None = None
     destino_nombre: str
     # Lo asigna el loader (2A) a las convalidaciones n:m.
-    group_id: int | None = None
+    grupo: int | None = None

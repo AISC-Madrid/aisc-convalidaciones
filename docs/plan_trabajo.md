@@ -119,7 +119,7 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 ### Semana 2 · Sobre los cimientos
 
 **2A · Alejandra + Ángela. Histórico → SQLite**
-- Entregable: `src/loaders/historical_xls.py`: lee los 3 XLS, valida cada fila con `HistoricalMatch` (1C), normaliza textos y códigos, deduplica entre cursos, agrupa las n:m con un `group_id` y guarda la tabla `historical_matches` en `data/processed/historico.sqlite`. Se limpia justo lo que encontrasteis en el EDA.
+- Entregable: `src/loaders/historical_xls.py`: lee los 3 XLS, valida cada fila con `HistoricalMatch` (1C), normaliza textos y códigos, deduplica entre cursos, agrupa las n:m con un `grupo` y guarda la tabla `historical_matches` en `data/processed/historico.sqlite`. Se limpia justo lo que encontrasteis en el EDA.
 - Hecho cuando: la tabla está cargada con los 3 ficheros y hay un test con 10 filas inventadas que incluye una duplicada y una n:m.
 - Aprendes: limpieza de datos real; SQLite desde Python.
 - Pista: cargad un solo XLS sin limpiar y guardadlo; luego añadid normalización y deduplicación paso a paso, con un test por paso.

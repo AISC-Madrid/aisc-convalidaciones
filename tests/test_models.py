@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -49,6 +50,15 @@ def test_match_aviso_ects_coherente_con_la_regla_del_25():
         _match(destino=destino_8, aviso_ects=False)
     with pytest.raises(ValidationError):
         _match(etiqueta="OTRA")
+
+
+def test_aviso_ects_en_grupo_n_m_usa_los_totales():
+    ejemplo = json.loads(EJEMPLO.read_text(encoding="utf-8"))
+    filas = [m for m in ejemplo["resultados"] if m["grupo"] == 1]
+    assert all(m["aviso_ects"] for m in filas)  # 6 ECTS frente a 4,5 + 4,5
+    filas[0]["aviso_ects"] = False
+    with pytest.raises(ValidationError, match="grupo 1"):
+        Resultados.model_validate(ejemplo)
 
 
 def test_ejemplo_json_cumple_el_contrato():
