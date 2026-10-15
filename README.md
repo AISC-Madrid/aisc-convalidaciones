@@ -21,7 +21,7 @@ Tres parejas fijas, una tarea por semana. Fran coordina además del trabajo de s
 | **Scraping y matching** | **Fran** [@franjifer](https://github.com/franjifer) (5º Teleco y Datos) · **Mercedes** [@MercedesCaballero](https://github.com/MercedesCaballero) (2º Datos y Teleco) | Fichas de la UC3M, catálogo del destino, embeddings, matcher, export |
 | **Web** | **Héctor** [@Toriomg](https://github.com/Toriomg) (4º Informática) · **Víctor** [@victornegueruelag](https://github.com/victornegueruelag) (2º Sonido e Imagen) | Bocetos, Streamlit, PDF, prueba con usuarios |
 
-**Piloto (grado + universidad):** universidad recomendada en `docs/candidatas.md`: **Georgia Tech** (grado por confirmar).
+**Piloto (grado + universidad):** universidad recomendada en `docs/candidatas.md`: **Georgia Tech** × **Ingeniería Biomédica**.
 
 ## Empezar (Semana 1, todos)
 
