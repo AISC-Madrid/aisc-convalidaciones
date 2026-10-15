@@ -28,7 +28,7 @@ Cada paso es un script que se ejecuta en nuestros portátiles. En la web publica
 - **Reunión semanal corta** (30 min, viernes): cada pareja enseña su entregable, cuenta dónde se ha atascado y confirma la tarea de la semana siguiente.
 - Las tareas viven en **GitHub Issues** (tablero *Projects* con columnas Pendiente / En curso / En revisión / Hecho). Cada tarea tiene un **entregable** y un **"hecho cuando"**: si no se cumple, no está hecha.
 - Cada tarea se hace en una **rama** y se entrega con una **Pull Request** con la CI en verde, que revisa **Fran** o la pareja que toque. La revisión es también la forma de que todos conozcamos todas las partes.
-- Se trabaja en **tres parejas fijas** (datos históricos, scraping y matching, web); cada pareja tiene **una tarea por semana** con su entregable.
+- Se trabaja en **tres equipos de dos** (datos históricos, scraping y matching, web), con **rotación semanal**: una persona se queda para mantener el contexto y la otra pasa al equipo siguiente (Datos → Scraping → Web → Datos). La semana siguiente se mueve quien se quedó. Cada equipo tiene **una tarea por semana** con su entregable.
 - **Regla de independencia:** dentro de la semana, ningún grupo depende de lo que otro grupo haga esa misma semana. Lo que haga falta de otros está hecho la semana anterior.
 - Si una semana una pareja no tiene tarea crítica, hace algo útil que no bloquea a nadie, o descansa. No hace falta que los seis estén siempre.
 - Si algo se atasca más de dos días, se cuenta en el grupo: no hay que resolverlo solo.
@@ -57,15 +57,24 @@ Cada paso es un script que se ejecuta en nuestros portátiles. En la web publica
 
 ## 4. Calendario: una tarea por grupo y semana
 
-No trabajamos a tiempo completo, así que el plan son **8 semanas** más una **semana 9 de buffer**. La unidad de trabajo es **un grupo, una semana, un entregable**. Hay tres parejas fijas, que así acumulan contexto:
+No trabajamos a tiempo completo, así que el plan son **8 semanas** más una **semana 9 de buffer**. La unidad de trabajo es **un grupo, una semana, un entregable**. Hay tres equipos de dos con rotación. Las parejas de la Semana 1 fueron:
 
 - **Alejandra (3º Datos) + Ángela (2º Datos y Teleco) · Datos históricos:** los Excel de convalidaciones, de leerlos a calibrar con ellos.
 - **Fran (5º Teleco y Datos) + Mercedes (2º Datos y Teleco) · Scraping y matching:** las fichas de la UC3M, el catálogo del destino y, con esos datos en la mano, los embeddings y el matcher. Fran coordina además.
 - **Héctor (4º Informática) + Víctor (2º Sonido e Imagen) · Web:** bocetos, web, PDF y prueba con usuarios.
 
+**Rotación de la reunión 2 (14/10):**
+
+| Semana | Datos históricos | Scraping y matching | Web |
+|---|---|---|---|
+| **2** | Ángela + Héctor | Fran + Alejandra | Víctor + Mercedes |
+| **3** | Héctor + Víctor | Alejandra + Ángela | Mercedes + Fran |
+
+Se queda quien tiene el contexto de la tarea y la otra persona rota al equipo siguiente; en la Semana 3 se mueve quien se quedó en la Semana 2. Las parejas de las semanas posteriores se confirmarán siguiendo esta rotación; los nombres del plan original a partir de la Semana 4 quedan como referencia, no como asignación fija.
+
 **Regla:** dentro de una semana, ningún grupo depende de lo que otro grupo haga esa misma semana. Lo que haga falta de otros ya está hecho la semana anterior. Si una semana un grupo no tiene tarea crítica, hace algo útil que no dependa de nadie (marcado en cursiva) o descansa: no hace falta que los seis estén siempre.
 
-| Sem | Alejandra + Ángela · Datos históricos | Fran + Mercedes · Scraping y matching | Héctor + Víctor · Web |
+| Sem | Datos históricos | Scraping y matching | Web |
 |---|---|---|---|
 | **1** | **EDA** de los Excel + revisar las 6 candidatas | **SQLite + scraper UC3M** del plan vigente | **Pydantic + frontend**: modelos, JSON de ejemplo, bocetos, web mínima |
 | | ◆ **Viernes: piloto elegido** | | |
@@ -118,38 +127,38 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 
 ### Semana 2 · Sobre los cimientos
 
-**2A · Alejandra + Ángela. Histórico → SQLite**
+**2A · Ángela + Héctor. Histórico → SQLite**
 - Entregable: `src/loaders/historical_xls.py`: lee los 3 XLS, valida cada fila con `HistoricalMatch` (1C), normaliza textos y códigos, deduplica entre cursos, agrupa las n:m con un `grupo` y guarda la tabla `historical_matches` en `data/processed/historico.sqlite`. Se limpia justo lo que encontrasteis en el EDA.
 - Hecho cuando: la tabla está cargada con los 3 ficheros y hay un test con 10 filas inventadas que incluye una duplicada y una n:m.
 - Aprendes: limpieza de datos real; SQLite desde Python.
 - Pista: cargad un solo XLS sin limpiar y guardadlo; luego añadid normalización y deduplicación paso a paso, con un test por paso.
 
-**2B · Fran + Mercedes. Scraper del destino piloto**
+**2B · Fran + Alejandra. Scraper del destino piloto**
 - Entregable: `config/scrapers/<uni>.yaml` (URLs, selectores, `credits_to_ects`, rate limit) + `src/scrapers/destination.py`, que saca nombre, código, descripción y créditos (convertidos a ECTS) de cada asignatura y los guarda en la tabla `dest_subjects` de la BD. Factor de créditos confirmado con la web de la universidad o la ORI.
 - Hecho cuando: una parte del catálogo (al menos el departamento o facultad del grado piloto) está en la BD y 10 asignaturas comprobadas a mano coinciden con la web.
 - Aprendes: scraping de una web que no controlamos; selectores CSS; Playwright si hace falta.
 - Pista: primero `requests`; solo si la página carga con JavaScript, Playwright. Ejemplo de YAML en `referencia_tecnica.md` §5, Paso 1. Usad la ficha de `docs/candidatas.md`.
 
-**2C · Héctor + Víctor. Web completa + despliegue**
+**2C · Víctor + Mercedes. Web completa + despliegue**
 - Entregable: la pantalla de resultados de los bocetos: filtros, tabla con score y etiqueta ✅/🤖, checkbox de selección, resumen de ECTS seleccionados, aviso de ECTS dispares; desplegada en **Streamlit Community Cloud** leyendo `ejemplo.json`.
 - Hecho cuando: hay una URL pública que cualquiera puede abrir y hace lo que dice el boceto.
 - Aprendes: Streamlit a fondo; desplegar una app gratis desde GitHub.
 
 ### Semana 3 · Cerrar los datos de la UC3M y del destino
 
-**3A · Alejandra + Ángela. Reconciliación de códigos viejos → vigentes**
+**3A · Héctor + Víctor. Reconciliación de códigos viejos → vigentes**
 - Entregable: `src/reconciliation/old_to_new.py` con los niveles 1 y 2 de la cascada de `referencia_tecnica.md` §5, Paso 2 (mismo código en el plan vigente → mismo nombre normalizado); tabla `old_code → new_code` con la columna `method`; los casos sin resolver, listados en `docs/reconciliacion_pendiente.md` (el nivel 3, por contenido, llega en la Semana 6 con los embeddings).
 - Hecho cuando: cada código UC3M del histórico tiene fila en la tabla, con `method` o marcado como pendiente; test con 5 casos inventados.
 - Aprendes: que los datos cambian con el tiempo; a diseñar un proceso en cascada.
 - Pista: usa la tabla `subjects` de 1B. Empieza contando cuántos códigos del histórico existen tal cual en el plan vigente.
 
-**3B · Fran + Mercedes. Fichas antiguas + destino terminado**
+**3B · Alejandra + Ángela. Fichas antiguas + destino terminado**
 - Entregable: (1) el scraper de 1B con el parámetro `anio`: fichas de los cursos **2025-26, 2024-25 y 2023-24** (los del Excel) en la tabla `subjects` con su curso académico, solo en EN (ES si la EN viene vacía), con caché; (2) el scraper del destino completo: todo el catálogo relevante en `dest_subjects`.
 - Hecho cuando: los tres cursos anteriores están en la BD; el catálogo del destino está completo y 10 asignaturas más comprobadas a mano coinciden.
 - Aprendes: a extender tu propio código; a dejar correr descargas largas con caché.
 - Pista: uno extiende el scraper UC3M con `anio` y el otro termina el destino. Lanzad las descargas el lunes.
 
-**3C · Héctor + Víctor. Generador de PDF**
+**3C · Mercedes + Fran. Generador de PDF**
 - Entregable: `src/ui/pdf.py` con `reportlab`, siguiendo el boceto: cabecera con alumno, grado y universidad; tabla de asignaturas seleccionadas con ECTS de cada lado y etiqueta; nota de que es orientativo; fecha. Botón "Generar PDF" en la web que lo descarga.
 - Hecho cuando: desde la web pública, seleccionar asignaturas y pulsar el botón descarga un PDF legible.
 - Aprendes: generar documentos desde Python.
