@@ -137,7 +137,7 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 - Entregable: `config/scrapers/<uni>.yaml` (URLs, selectores, `credits_to_ects`, rate limit) + `src/scrapers/destination.py`, que saca nombre, código, descripción y créditos (convertidos a ECTS) de cada asignatura y los guarda en la tabla `dest_subjects` de la BD. Factor de créditos confirmado con la web de la universidad o la ORI.
 - Hecho cuando: una parte del catálogo (al menos el departamento o facultad del grado piloto) está en la BD y 10 asignaturas comprobadas a mano coinciden con la web.
 - Aprendes: scraping de una web que no controlamos; selectores CSS; Playwright si hace falta.
-- Pista: primero `requests`; solo si la página carga con JavaScript, Playwright. Ejemplo de YAML en `referencia_tecnica.md` §5, Paso 1. Usad la ficha de `docs/candidatas.md`.
+- Pista: primero `requests`; solo si la página carga con JavaScript, Playwright. Ejemplo de YAML en `referencia_tecnica.md` §5, Paso 1. El piloto recomendado en `docs/candidatas.md` es **Georgia Tech** (catálogo HTML estático con descripciones y créditos); usad su ficha.
 
 **2C · Víctor + Mercedes. Web completa + despliegue**
 - Entregable: la pantalla de resultados de los bocetos: filtros, tabla con score y etiqueta ✅/🤖, checkbox de selección, resumen de ECTS seleccionados, aviso de ECTS dispares; desplegada en **Streamlit Community Cloud** leyendo `ejemplo.json`.
@@ -159,7 +159,7 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 - Pista: uno extiende el scraper UC3M con `anio` y el otro termina el destino. Lanzad las descargas el lunes.
 
 **3C · Mercedes + Fran. Generador de PDF**
-- Entregable: `src/ui/pdf.py` con `reportlab`, siguiendo el boceto: cabecera con alumno, grado y universidad; tabla de asignaturas seleccionadas con ECTS de cada lado y etiqueta; nota de que es orientativo; fecha. Botón "Generar PDF" en la web que lo descarga.
+- Entregable: `src/ui/pdf.py` con `reportlab`, siguiendo el boceto: cabecera con alumno, grado y universidad; tabla de asignaturas seleccionadas con ECTS de cada lado y etiqueta; nota de que es orientativo; fecha. Botón "Generar PDF" en la web que lo descarga. Incluye lo pendiente de la issue #22: cada grupo n:m es una sola propuesta y suma cada asignatura una vez en los totales, y la columna se llama «Etiqueta» (no «Tipo»).
 - Hecho cuando: desde la web pública, seleccionar asignaturas y pulsar el botón descarga un PDF legible.
 - Aprendes: generar documentos desde Python.
 
