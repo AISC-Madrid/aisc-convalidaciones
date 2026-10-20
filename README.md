@@ -21,7 +21,7 @@ Tres parejas fijas, una tarea por semana. Fran coordina además del trabajo de s
 | **Scraping y matching** | **Fran** [@franjifer](https://github.com/franjifer) (5º Teleco y Datos) · **Mercedes** [@MercedesCaballero](https://github.com/MercedesCaballero) (2º Datos y Teleco) | Fichas de la UC3M, catálogo del destino, embeddings, matcher, export |
 | **Web** | **Héctor** [@Toriomg](https://github.com/Toriomg) (4º Informática) · **Víctor** [@victornegueruelag](https://github.com/victornegueruelag) (2º Sonido e Imagen) | Bocetos, Streamlit, PDF, prueba con usuarios |
 
-**Piloto (grado + universidad):** se elige el viernes de la Semana 1 → _pendiente_.
+**Piloto (grado + universidad):** universidad recomendada en `docs/candidatas.md`: **Georgia Tech** × **Ingeniería Biomédica**.
 
 ## Empezar (Semana 1, todos)
 
@@ -67,3 +67,7 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 - Toda tarea de código lleva tests. **No se mergea lo que no se entiende.**
 - Dentro de la semana nadie depende de otro grupo: lo que haga falta de otros está hecho la semana anterior.
 - Si te atascas más de dos días, cuéntalo en el grupo.
+
+Setup personal: Víctor Negueruela — Python 3.11 instalado, pytest y Ruff pasan.
+Setup personal: Ángela (@angelacea) — completado.
+Setup perosnal: ALejandra (kalejandra-dev) - completado. 
