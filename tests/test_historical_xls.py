@@ -13,7 +13,6 @@ from src.loaders.historical_xls import (
 )
 
 
-
 def test_lee_las_hojas_de_datos_de_un_xls_temporal(monkeypatch, tmp_path):
     # Los XLS de data/raw no se suben; simulamos su lectura para CI/GitHub Actions.
     xls_path = tmp_path / "historical.xls"
