@@ -4,7 +4,8 @@
 `.gitignore`. Para tenerlas en local y que corran todos los tests:
 
 ```bash
-python tests/fixtures/uc3m/descargar.py
+python -m src.sync.datos descargar --paquete fixtures   # del repo privado de datos
+python tests/fixtures/uc3m/descargar.py                 # o directamente de la UC3M
 ```
 
 Sin ellas, solo se saltan (`skipped`) los tests de `test_uc3m_parser.py` que leen fichas reales.

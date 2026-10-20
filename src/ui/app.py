@@ -99,11 +99,40 @@ def main(ruta=RUTA_JSON):
     else:
         st.caption("Datos de ejemplo: asignaturas y resultados inventados.")
         st.caption("Las filas con el mismo grupo pertenecen a una propuesta conjunta.")
-        st.dataframe(
-            filas,
-            hide_index=True,
-            column_config=COLUMNAS,
+        opciones_etiqueta = ["Precedente aprobado", "Sugerencia IA"]
+        etiquetas_seleccionadas = st.sidebar.multiselect(
+            "Etiqueta",
+            opciones_etiqueta,
+            default=opciones_etiqueta,
         )
+        similitud_minima = st.sidebar.slider(
+            "Similitud mínima",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.0,
+            step=0.01,
+            format="%.2f",
+        )
+        asignaturas = sorted({fila["Asignatura de origen"] for fila in filas})
+        asignatura_seleccionada = st.sidebar.selectbox(
+            "Asignatura UC3M",
+            ["Todas", *asignaturas],
+        )
+        filas_filtradas = [
+            fila
+            for fila in filas
+            if fila["Etiqueta"] in etiquetas_seleccionadas
+            and fila["Similitud"] >= similitud_minima
+            and asignatura_seleccionada in ("Todas", fila["Asignatura de origen"])
+        ]
+        if filas_filtradas:
+            st.dataframe(
+                filas_filtradas,
+                hide_index=True,
+                column_config=COLUMNAS,
+            )
+        else:
+            st.info("No hay resultados que coincidan con los filtros seleccionados.")
     st.caption(
         "*Precedente aprobado: existe una convalidación histórica.*  \n"
         "*Sugerencia IA: propuesta basada en similitud de contenidos.*"

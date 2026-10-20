@@ -69,7 +69,7 @@ Cómo leer las cifras:
 
 ## Recomendación
 
-**Piloto: Georgia Tech.** Reúne las tres condiciones del criterio: 276 pares con todos los códigos destino rellenos y un n:m bajo (32,2 %), un catálogo oficial único en HTML estático con descripciones y créditos, y la documentación en inglés. No es la que más pares tiene, pero es la que menos riesgo técnico tiene.
+**Piloto: Georgia Tech (grado: Ingeniería Biomédica).** Reúne las tres condiciones del criterio: 276 pares con todos los códigos destino rellenos y un n:m bajo (32,2 %), un catálogo oficial único en HTML estático con descripciones y créditos, y la documentación en inglés. No es la que más pares tiene, pero es la que menos riesgo técnico tiene.
 
 Segunda opción: **Purdue**, si se confirma que su catálogo se puede leer sin JavaScript. Tiene más pares (361) y el n:m más bajo (29,7 %), pero el catálogo está sin confirmar y tiene varios campus. Si no es estático, la segunda opción pasa a ser **Maryland College Park** (272 pares, n:m 35,0 %, catálogo estático), siempre que el dato confirme ese campus.
 

@@ -10,3 +10,4 @@ Contexto para los asistentes de IA (OpenCode, Antigravity…) que trabajen en es
 - **Scraping:** caché en disco siempre, pausa de 1,5 s entre peticiones, respeto a `robots.txt`. No publicar los temarios scrapeados: en el repo y los JSON solo nombres, códigos, créditos, scores y enlaces.
 - **Presupuesto 0 €:** sin APIs de pago ni servicios con tarjeta. Si una solución necesita pagar, no es la solución.
 - **Comandos:** `pip install -e ".[dev]"` · `pytest` · `ruff check .` · `streamlit run src/ui/app.py`.
+- **Datos compartidos:** lo ya scrapeado está en los Releases del repo privado `AISC-Madrid/aisc-convalidaciones-data`. `python -m src.sync.datos descargar [--todo]` lo baja y `publicar <tag>` sube una versión nueva (necesita `gh`). No se vuelve a scrapear si ya está ahí.

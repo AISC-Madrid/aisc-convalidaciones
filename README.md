@@ -21,7 +21,7 @@ Tres parejas fijas, una tarea por semana. Fran coordina además del trabajo de s
 | **Scraping y matching** | **Fran** [@franjifer](https://github.com/franjifer) (5º Teleco y Datos) · **Mercedes** [@MercedesCaballero](https://github.com/MercedesCaballero) (2º Datos y Teleco) | Fichas de la UC3M, catálogo del destino, embeddings, matcher, export |
 | **Web** | **Héctor** [@Toriomg](https://github.com/Toriomg) (4º Informática) · **Víctor** [@victornegueruelag](https://github.com/victornegueruelag) (2º Sonido e Imagen) | Bocetos, Streamlit, PDF, prueba con usuarios |
 
-**Piloto (grado + universidad):** se elige el viernes de la Semana 1 → _pendiente_.
+**Piloto (grado + universidad):** universidad recomendada en `docs/candidatas.md`: **Georgia Tech** × **Ingeniería Biomédica**.
 
 ## Empezar (Semana 1, todos)
 
@@ -46,6 +46,7 @@ docs/            plan de trabajo, referencia técnica, presentación, guía de I
 src/
   models/        clases Pydantic (Subject, HistoricalMatch, Match)
   scrapers/      uc3m.py, destination.py
+  sync/          datos.py: baja/sube los datos del repo privado (docs/esquema_bd.md)
   loaders/       historical_xls.py, link_catalog.py
   reconciliation/ old_to_new.py
   embeddings/    encoder.py, index.py
@@ -55,6 +56,7 @@ src/
 config/scrapers/ un YAML por universidad de destino
 public/data/     JSON publicados (lo único que usa la web)
 data/            Excel, caché HTML y bases de datos: solo en local, no se sube
+                 (python -m src.sync.datos descargar --todo para bajar lo ya scrapeado)
 tests/           pytest; fixtures en tests/fixtures/
 notebooks/       EDA, reconciliación, benchmark, calibración
 ```

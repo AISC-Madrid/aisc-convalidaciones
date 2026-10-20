@@ -3,6 +3,28 @@
 La base de datos local se guarda en `data/processed/uc3m.sqlite` y la caché de fichas HTML en
 `data/raw/uc3m/<año>/<asignatura>_<ES|EN>.html`. Ninguna de las dos se sube al repo.
 
+## Compartir los datos en el equipo
+
+La BD, la caché HTML y las fichas reales de los tests contienen temarios, así que no pueden ir a
+este repo (público). Se comparten como *assets* de los Releases del repo **privado**
+[`AISC-Madrid/aisc-convalidaciones-data`](https://github.com/AISC-Madrid/aisc-convalidaciones-data),
+que ven todos los miembros de la organización. No hace falta volver a scrapear.
+
+Requisito: [`gh`](https://cli.github.com/) instalado y `gh auth login` hecho. Desde la raíz:
+
+```bash
+python -m src.sync.datos descargar            # solo data/processed/uc3m.sqlite (~9 MB)
+python -m src.sync.datos descargar --todo     # + caché HTML (~53 MB) + fichas de los tests
+python -m src.sync.datos descargar --tag uc3m-2026-10-12 --forzar   # versión concreta, pisa la BD
+python -m src.sync.datos publicar uc3m-AAAA-MM-DD   # tras un scraping nuevo: sube un release
+```
+
+- Por defecto baja el último release y comprueba el SHA-256 de cada zip con `manifest.json`.
+- No sustituye una `uc3m.sqlite` local salvo con `--forzar`.
+- `publicar` copia la BD con `VACUUM INTO` (se puede publicar aunque esté abierta) y deja en las
+  notas del release el número de fichas por curso y el estado de las descargas.
+- Paquetes sueltos: `--paquete bd cache fixtures`.
+
 ## Cómo se ejecuta
 
 Desde la raíz del repositorio:
