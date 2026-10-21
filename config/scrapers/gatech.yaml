@@ -16,7 +16,7 @@ selectors:                     # comprobados con DevTools en /coursesaz/bmed/ (1
 title_pattern: '^(?P<code>[A-Z]{2,5} \w+)\.\s+(?P<name>.+?)\.?\s+(?P<cmin>\d+(?:\.\d+)?)(?:-(?P<cmax>\d+(?:\.\d+)?))?\s+Credit Hours?\.?$'
 
 max_course_level: 7999         # el histórico tiene pares de 6000 y 7000 (8 de 50); 8000+ son investigación/tesis
-credits_to_ects: 2.0           # PROVISIONAL: pendiente de confirmar con la ORI
+credits_to_ects: 2.0           # 1 credit hour = 2 ECTS; fuentes en docs/comprobacion_gatech.md
 code_normalization: remove_spaces_upper
 rate_limit_seconds: 2
 user_agent: "AISC-UC3M convalidaciones (proyecto de estudiantes)"

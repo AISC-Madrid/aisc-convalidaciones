@@ -4,7 +4,10 @@ import argparse
 import re
 import sqlite3
 import time
+from functools import cache
 from pathlib import Path
+from urllib.parse import urlsplit
+from urllib.robotparser import RobotFileParser
 
 import requests
 import yaml
@@ -21,10 +24,27 @@ def cargar_config(uni: str) -> dict:
         return yaml.safe_load(f)
 
 
+@cache
+def _robots(raiz: str, user_agent: str) -> RobotFileParser:
+    """Descarga y lee el robots.txt de una web una sola vez por ejecución."""
+    robots = RobotFileParser()
+    respuesta = requests.get(f"{raiz}/robots.txt", headers={"User-Agent": user_agent}, timeout=30)
+    robots.parse(respuesta.text.splitlines() if respuesta.ok else [])  # sin robots.txt: todo vale
+    return robots
+
+
+def permitido_por_robots(url: str, user_agent: str) -> bool:
+    """True si el robots.txt de la web deja descargar esa URL."""
+    partes = urlsplit(url)
+    return _robots(f"{partes.scheme}://{partes.netloc}", user_agent).can_fetch(user_agent, url)
+
+
 def descargar(url: str, ruta_cache: Path, cfg: dict) -> str:
     """Devuelve el HTML de la URL. Si ya está en la caché, no vuelve a pedirlo."""
     if ruta_cache.exists():
         return ruta_cache.read_text(encoding="utf-8")
+    if not permitido_por_robots(url, cfg["user_agent"]):
+        raise PermissionError(f"robots.txt no permite descargar {url}")
     time.sleep(cfg["rate_limit_seconds"])
     respuesta = requests.get(url, headers={"User-Agent": cfg["user_agent"]}, timeout=30)
     respuesta.raise_for_status()
@@ -64,9 +84,7 @@ def parse_catalog(html: str, cfg: dict) -> tuple[list[dict], list[str]]:
     for bloque in soup.select(sel["course_list"]):
         elem_titulo = bloque.select_one(sel["course_title"])
         titulo = limpiar(elem_titulo.get_text(" ")) if elem_titulo else ""
-        partes = titulo.split(".")[
-            0
-        ].split()  # "MATH 1X51. Transfer..." -> ["MATH", "1X51"]
+        partes = titulo.split(".")[0].split()  # "MATH 1X51. Transfer..." -> ["MATH", "1X51"]
         if len(partes) == 2 and "X" in partes[1]:  # comodines y "Transfer" (1XXX, 1X51...)
             continue
         m = patron.match(titulo)
@@ -77,7 +95,8 @@ def parse_catalog(html: str, cfg: dict) -> tuple[list[dict], list[str]]:
         codigo = m["code"]  # "BMED 2110"
         prefijo, numero = codigo.split()  # "BMED", "2110"
 
-        if int(numero[:4]) > cfg["max_course_level"]:  # 8000+: investigación/tesis
+        nivel = re.match(r"\d+", numero)
+        if nivel and int(nivel[0]) > cfg["max_course_level"]:  # 8000+: investigación/tesis
             continue
 
         cmin = float(m["cmin"])
@@ -89,7 +108,6 @@ def parse_catalog(html: str, cfg: dict) -> tuple[list[dict], list[str]]:
         asignaturas.append(
             {
                 "codigo": codigo,
-                "codigo_norm": codigo.replace(" ", "").upper(),
                 "nombre": m["name"].strip(),
                 "descripcion": limpiar(elem_desc.get_text(" ")) if elem_desc else None,
                 "departamento": prefijo,
@@ -107,6 +125,7 @@ CREATE TABLE IF NOT EXISTS dest_subjects (
     id           INTEGER PRIMARY KEY,
     universidad  TEXT NOT NULL,
     codigo       TEXT NOT NULL,
+    codigo_norm  TEXT,
     nombre       TEXT NOT NULL,
     descripcion  TEXT,
     ects         REAL,
@@ -115,23 +134,39 @@ CREATE TABLE IF NOT EXISTS dest_subjects (
 """
 
 SQL_UPSERT = """
-INSERT INTO dest_subjects (universidad, codigo, nombre, descripcion, ects)
-VALUES (:universidad, :codigo, :nombre, :descripcion, :ects)
+INSERT INTO dest_subjects (universidad, codigo, codigo_norm, nombre, descripcion, ects)
+VALUES (:universidad, :codigo, :codigo_norm, :nombre, :descripcion, :ects)
 ON CONFLICT (universidad, codigo) DO UPDATE SET
+    codigo_norm = excluded.codigo_norm,
     nombre      = excluded.nombre,
     descripcion = excluded.descripcion,
     ects        = excluded.ects
 """
 
 
+def normalizar_codigo(codigo: str) -> str:
+    """'BMED 2110' -> 'BMED2110': sin espacios y en mayúsculas, igual que en el histórico."""
+    return "".join(codigo.split()).upper()
+
+
 def crear_tabla(con: sqlite3.Connection) -> None:
     """Crea dest_subjects si no existe. No toca las demás tablas de la BD."""
     con.execute(ESQUEMA_DEST_SUBJECTS)
+    columnas = {fila[1] for fila in con.execute("PRAGMA table_info(dest_subjects)")}
+    if "codigo_norm" not in columnas:  # tablas creadas antes de añadir la columna
+        con.execute("ALTER TABLE dest_subjects ADD COLUMN codigo_norm TEXT")
+    con.execute(
+        "CREATE INDEX IF NOT EXISTS idx_dest_subjects_codigo_norm "
+        "ON dest_subjects (universidad, codigo_norm)"
+    )
 
 
 def guardar(con: sqlite3.Connection, asignaturas: list[dict], cfg: dict) -> None:
     """Inserta o actualiza las asignaturas en dest_subjects (upsert)."""
-    filas = [{**a, "universidad": cfg["university_code"]} for a in asignaturas]
+    filas = [
+        {**a, "codigo_norm": normalizar_codigo(a["codigo"]), "universidad": cfg["university_code"]}
+        for a in asignaturas
+    ]
     with con:
         con.executemany(SQL_UPSERT, filas)
 
