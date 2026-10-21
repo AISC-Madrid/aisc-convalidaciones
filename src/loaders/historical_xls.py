@@ -192,45 +192,55 @@ def deduplicate_historical_matches(
     )
 
 
+def _same_convalidation(indexes: list[int], records: list[HistoricalMatch]) -> bool:
+    """True si hay al menos dos equivalencias distintas."""
+    return len({_deduplication_key(records[i]) for i in indexes}) >= 2
+
+
 def assign_groups(
     records: list[HistoricalMatch] | tuple[HistoricalMatch, ...],
 ) -> list[HistoricalMatch]:
     """Asigna `grupo` a las convalidaciones n:m. Llamar ANTES de deduplicar.
 
-    Una n:m son las filas de un mismo curso académico, universidad y grado que
-    comparten asignatura UC3M o asignatura de destino y suman al menos dos
-    equivalencias distintas. Entre cursos distintos no se agrupa: pueden ser
-    alternativas aprobadas en años diferentes, no asignaturas que se cursan juntas.
+    Dentro del mismo curso, universidad y grado, comparten grupo las filas de
+    una misma asignatura UC3M con dos destinos distintos. La dirección inversa
+    (un destino que cubre dos UC3M) va en otro grupo: no se encadenan los dos
+    lados, porque compartir una asignatura no significa que se cursen juntas.
+    Entre cursos distintos no se agrupa.
     """
-    parent = list(range(len(records)))
-
-    def find(i: int) -> int:
-        while parent[i] != i:
-            parent[i] = parent[parent[i]]
-            i = parent[i]
-        return i
-
-    first_seen: dict[tuple, int] = {}
-    for i, record in enumerate(records):
-        *scope, uc_id, dest_id = _deduplication_key(record)
-        scope = (record.curso_academico, *scope)
-        for side in (("uc", uc_id), ("dest", dest_id)):
-            j = first_seen.setdefault((*scope, *side), i)
-            parent[find(i)] = find(j)
-
-    components: dict[int, list[int]] = {}
-    for i in range(len(records)):
-        components.setdefault(find(i), []).append(i)
-
-    result = list(records)
+    records = list(records)
+    grupos: list[int | None] = [None] * len(records)
     number = 0
-    for members in components.values():  # el orden de inserción es el de aparición
-        if len({_deduplication_key(records[i]) for i in members}) < 2:
-            continue
-        number += 1
-        for i in members:
-            result[i] = records[i].model_copy(update={"grupo": number})
-    return result
+
+    def parts(index: int) -> tuple[str, ...]:
+        universidad, grado, uc_id, dest_id = _deduplication_key(records[index])
+        return (records[index].curso_academico, universidad, grado, uc_id, dest_id)
+
+    def assign(buckets: dict[tuple, list[int]], solo_sin_grupo: bool) -> None:
+        nonlocal number
+        for indexes in buckets.values():
+            members = [i for i in indexes if not solo_sin_grupo or grupos[i] is None]
+            if not _same_convalidation(members, records):
+                continue
+            number += 1
+            for i in members:
+                grupos[i] = number
+
+    by_uc: dict[tuple, list[int]] = {}
+    by_dest: dict[tuple, list[int]] = {}
+    for i in range(len(records)):
+        year, universidad, grado, uc_id, dest_id = parts(i)
+        scope = (year, universidad, grado)
+        by_uc.setdefault((*scope, uc_id), []).append(i)
+        by_dest.setdefault((*scope, dest_id), []).append(i)
+
+    assign(by_uc, solo_sin_grupo=False)
+    assign(by_dest, solo_sin_grupo=True)
+
+    return [
+        record.model_copy(update={"grupo": grupos[i]}) if grupos[i] is not None else record
+        for i, record in enumerate(records)
+    ]
 
 
 COLUMNS = (

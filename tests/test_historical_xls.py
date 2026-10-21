@@ -348,6 +348,23 @@ def test_n_m_inversa_varias_uc3m_un_destino():
     assert [r.grupo for r in result.records] == [1, 1]
 
 
+def test_no_encadena_una_uc3m_con_varias_destino_y_la_inversa():
+    # Fisiología I se convalida con teoría y laboratorio. Fisiología II solo
+    # comparte el laboratorio: es otra convalidación y no entra en el grupo.
+    result = _pipeline(
+        [
+            _fila("1", "TEO", "2025-2026", uc_subject="Fisiología I"),
+            _fila("1", "LAB", "2025-2026", uc_subject="Fisiología I"),
+            _fila("2", "LAB", "2025-2026", uc_subject="Fisiología II"),
+        ]
+    )
+
+    grupos = {(r.uc3m_nombre, r.destino_codigo): r.grupo for r in result.records}
+    assert grupos[("Fisiología I", "TEO")] == grupos[("Fisiología I", "LAB")]
+    assert grupos[("Fisiología I", "TEO")] is not None
+    assert grupos[("Fisiología II", "LAB")] is None
+
+
 def test_grupo_que_queda_con_una_fila_tras_deduplicar_deja_de_serlo():
     # A1 se repite en 2025-2026 sin n:m: gana esa fila y A2 se queda sola.
     result = _pipeline(
