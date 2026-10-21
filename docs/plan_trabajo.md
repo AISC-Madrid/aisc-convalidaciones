@@ -28,7 +28,7 @@ Cada paso es un script que se ejecuta en nuestros portátiles. En la web publica
 - **Reunión semanal corta** (30 min, viernes): cada pareja enseña su entregable, cuenta dónde se ha atascado y confirma la tarea de la semana siguiente.
 - Las tareas viven en **GitHub Issues** (tablero *Projects* con columnas Pendiente / En curso / En revisión / Hecho). Cada tarea tiene un **entregable** y un **"hecho cuando"**: si no se cumple, no está hecha.
 - Cada tarea se hace en una **rama** y se entrega con una **Pull Request** con la CI en verde, que revisa **Fran** o la pareja que toque. La revisión es también la forma de que todos conozcamos todas las partes.
-- Se trabaja en **tres equipos de dos** (datos históricos, scraping y matching, web), con **rotación semanal**: una persona se queda para mantener el contexto y la otra pasa al equipo siguiente (Datos → Scraping → Web → Datos). La semana siguiente se mueve quien se quedó. Cada equipo tiene **una tarea por semana** con su entregable.
+- Se trabaja en **tres equipos de dos** (datos históricos, scraping y matching, web), con **rotación semanal**: una persona se queda para mantener el contexto y la otra pasa a un equipo que todavía no ha hecho, con alguien con quien no ha trabajado. Cada equipo tiene **una tarea por semana** con su entregable.
 - **Regla de independencia:** dentro de la semana, ningún grupo depende de lo que otro grupo haga esa misma semana. Lo que haga falta de otros está hecho la semana anterior.
 - Si una semana una pareja no tiene tarea crítica, hace algo útil que no bloquea a nadie, o descansa. No hace falta que los seis estén siempre.
 - Si algo se atasca más de dos días, se cuenta en el grupo: no hay que resolverlo solo.
@@ -63,14 +63,17 @@ No trabajamos a tiempo completo, así que el plan son **8 semanas** más una **s
 - **Fran (5º Teleco y Datos) + Mercedes (2º Datos y Teleco) · Scraping y matching:** las fichas de la UC3M, el catálogo del destino y, con esos datos en la mano, los embeddings y el matcher. Fran coordina además.
 - **Héctor (4º Informática) + Víctor (2º Sonido e Imagen) · Web:** bocetos, web, PDF y prueba con usuarios.
 
-**Rotación de la reunión 2 (14/10):**
+**Rotación semanal.** La Semana 2 se cerró en la reunión del 14/10. Desde la Semana 3, cada semana rota una persona de la pareja y se queda la otra. Quien rota va a un equipo que todavía no ha hecho, con alguien con quien no ha trabajado: el objetivo es pasar por datos, scraping y web y ser pareja de las otras cinco. Una pareja coincide como mucho en dos semanas, y no seguidas. En cada equipo, a partir de la Semana 2, el primer nombre es quien se queda con el contexto y el segundo quien acaba de llegar. La Semana 8 es de todos y la 9 es buffer.
 
 | Semana | Datos históricos | Scraping y matching | Web |
 |---|---|---|---|
+| **1** | Alejandra + Ángela | Fran + Mercedes | Héctor + Víctor |
 | **2** | Ángela + Héctor | Fran + Alejandra | Víctor + Mercedes |
-| **3** | Héctor + Víctor | Alejandra + Ángela | Mercedes + Fran |
-
-Se queda quien tiene el contexto de la tarea y la otra persona rota al equipo siguiente; en la Semana 3 se mueve quien se quedó en la Semana 2. Las parejas de las semanas posteriores se confirmarán siguiendo esta rotación; los nombres del plan original a partir de la Semana 4 quedan como referencia, no como asignación fija.
+| **3** | Ángela + Fran | Alejandra + Víctor | Mercedes + Héctor |
+| **4** | Fran + Mercedes | Víctor + Ángela | Héctor + Alejandra |
+| **5** | Fran + Víctor | Ángela + Héctor | Alejandra + Mercedes |
+| **6** | Víctor + Alejandra | Héctor + Fran | Mercedes + Ángela |
+| **7** | Alejandra + Mercedes | Héctor + Víctor | Ángela + Fran |
 
 **Regla:** dentro de una semana, ningún grupo depende de lo que otro grupo haga esa misma semana. Lo que haga falta de otros ya está hecho la semana anterior. Si una semana un grupo no tiene tarea crítica, hace algo útil que no dependa de nadie (marcado en cursiva) o descansa: no hace falta que los seis estén siempre.
 
@@ -81,12 +84,12 @@ Se queda quien tiene el contexto de la tarea y la otra persona rota al equipo si
 | **2** | **Histórico → SQLite**: loader con dedup y n:m | **Scraper del destino** piloto + YAML + ECTS | **Web completa** según los bocetos + despliegue |
 | **3** | **Reconciliación** de códigos viejos → vigentes | **Fichas antiguas** de la UC3M a la BD + destino terminado | **PDF** con `reportlab` sobre el JSON de ejemplo |
 | | ◆ **Datos del piloto completos en SQLite** | | |
-| **4** | **Enlace** histórico ↔ destino, tasa de enlace y revisión manual (los 4 juntos) | ↑ (con Alejandra + Ángela) | *Pulir la web: página "cómo funciona", estados vacíos, tests* |
+| **4** | **Enlace** histórico ↔ destino, tasa de enlace y revisión manual (los 4 juntos) | ↑ (con Fran + Mercedes) | *Pulir la web: página "cómo funciona", estados vacíos, tests* |
 | | ◆ **Sabemos cuántos pares de calibración hay** | | |
 | **5** | *Preparar la calibración: notebook con split y filtro de outliers; revisión de 20 reconciliaciones* | **Embeddings**: encoder, embeber ambos catálogos, top-K | *README de usuario y guion de la prueba con usuarios (opcional: prototipo HTML estático)* |
 | **6** | **Calibración + evaluación**: umbral, Recall@5, 50 sugerencias a mano | **Matcher + export del JSON real** | *Tests end-to-end de la web con un JSON grande; preparar la demo* |
 | | ◆ **JSON real disponible** | | |
-| **7** | **Tests + README + script de refresco** (los 4 juntos) | ↑ (con Alejandra + Ángela) | **Integración**: web y PDF con el JSON real, redespliegue |
+| **7** | **Tests + README + script de refresco** (los 4 juntos) | ↑ (con Alejandra + Mercedes) | **Integración**: web y PDF con el JSON real, redespliegue |
 | **8** | **Prueba con 3-5 usuarios y arreglos** (todos) | | |
 | **9** | Buffer | | |
 
@@ -146,77 +149,77 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 
 ### Semana 3 · Cerrar los datos de la UC3M y del destino
 
-**3A · Héctor + Víctor. Reconciliación de códigos viejos → vigentes**
+**3A · Ángela + Fran. Reconciliación de códigos viejos → vigentes**
 - Entregable: `src/reconciliation/old_to_new.py` con los niveles 1 y 2 de la cascada de `referencia_tecnica.md` §5, Paso 2 (mismo código en el plan vigente → mismo nombre normalizado); tabla `old_code → new_code` con la columna `method`; los casos sin resolver, listados en `docs/reconciliacion_pendiente.md` (el nivel 3, por contenido, llega en la Semana 6 con los embeddings).
 - Hecho cuando: cada código UC3M del histórico tiene fila en la tabla, con `method` o marcado como pendiente; test con 5 casos inventados.
 - Aprendes: que los datos cambian con el tiempo; a diseñar un proceso en cascada.
-- Pista: usa la tabla `subjects` de 1B. Empieza contando cuántos códigos del histórico existen tal cual en el plan vigente.
+- Pista: usa la tabla `subjects` de 1B. Ángela trae los códigos del histórico y Fran esa tabla. Empieza contando cuántos códigos del histórico existen tal cual en el plan vigente.
 
-**3B · Alejandra + Ángela. Fichas antiguas + destino terminado**
+**3B · Alejandra + Víctor. Fichas antiguas + destino terminado**
 - Entregable: (1) el scraper de 1B con el parámetro `anio`: fichas de los cursos **2025-26, 2024-25 y 2023-24** (los del Excel) en la tabla `subjects` con su curso académico, solo en EN (ES si la EN viene vacía), con caché; (2) el scraper del destino completo: todo el catálogo relevante en `dest_subjects`.
 - Hecho cuando: los tres cursos anteriores están en la BD; el catálogo del destino está completo y 10 asignaturas más comprobadas a mano coinciden.
 - Aprendes: a extender tu propio código; a dejar correr descargas largas con caché.
-- Pista: uno extiende el scraper UC3M con `anio` y el otro termina el destino. Lanzad las descargas el lunes.
+- Pista: Alejandra termina el destino (lo empezó en la Semana 2) y Víctor extiende el scraper UC3M con `anio`. Lanzad las descargas el lunes.
 
-**3C · Mercedes + Fran. Generador de PDF**
+**3C · Mercedes + Héctor. Generador de PDF**
 - Entregable: `src/ui/pdf.py` con `reportlab`, siguiendo el boceto: cabecera con alumno, grado y universidad; tabla de asignaturas seleccionadas con ECTS de cada lado y etiqueta; nota de que es orientativo; fecha. Botón "Generar PDF" en la web que lo descarga. Incluye lo pendiente de la issue #22: cada grupo n:m es una sola propuesta y suma cada asignatura una vez en los totales, y la columna se llama «Etiqueta» (no «Tipo»).
 - Hecho cuando: desde la web pública, seleccionar asignaturas y pulsar el botón descarga un PDF legible.
 - Aprendes: generar documentos desde Python.
 
 ### Semana 4 · Juntar el histórico con el destino
 
-**4AB · Alejandra + Ángela + Fran + Mercedes. Enlace histórico ↔ destino y revisión manual**
+**4AB · Fran + Mercedes + Víctor + Ángela. Enlace histórico ↔ destino y revisión manual**
 - Entregable: `src/loaders/link_catalog.py`: para cada fila del histórico del piloto, buscar su asignatura en `dest_subjects` por código normalizado (`CS 1332` = `CS1332`) y, si falla, por nombre aproximado (`rapidfuzz` ≥ 90); lo que no enlaza se marca `unlinked`. Notebook que imprime la **tasa de enlace**. Revisión manual: 20 enlaces y 20 reconciliaciones en una hoja de `docs/` con acierto/fallo.
 - Hecho cuando: `dest_subject_id` relleno en las filas enlazadas, tasa de enlace conocida y hoja de revisión con los fallos convertidos en issues. **Viernes:** si la tasa es menor del 50 %, se decide si mejorar el enlace o seguir con los pares que hay (métricas marcadas como orientativas).
 - Aprendes: fuzzy matching; a evaluar la calidad de un proceso automático.
-- Pista: Alejandra + Ángela programan el enlace (conocen el histórico); Fran + Mercedes hacen la revisión manual (conocen el catálogo) y ajustan la normalización de códigos del destino si hace falta.
+- Pista: Fran + Mercedes programan el enlace (Fran viene de la reconciliación de la Semana 3); Víctor + Ángela hacen la revisión manual (Víctor viene del catálogo del destino; Ángela trae el histórico) y ajustan la normalización de códigos del destino si hace falta.
 
-**4C · Héctor + Víctor. Pulir la web** *(no bloquea a nadie)*
+**4C · Héctor + Alejandra. Pulir la web** *(no bloquea a nadie)*
 - Entregable: página o pestaña "Cómo funciona" (qué es un precedente, qué es una sugerencia, qué significa el score, en lenguaje llano); estados vacíos y de error (sin selección, JSON que no existe); tests de la web con `pytest` sobre las funciones de carga y filtrado.
 - Hecho cuando: la URL pública tiene la ayuda, no se rompe sin datos y los tests pasan en la CI.
 
 ### Semana 5 · Embeddings
 
-**5B · Fran + Mercedes. Encoder, embeddings y top-K**
+**5B · Ángela + Héctor. Encoder, embeddings y top-K**
 - Entregable: `src/embeddings/encoder.py`: texto `"query: {nombre}. {Objetivos}. {Programa}"`, troceado en ~400 tokens, media de los trozos y normalización L2, con `multilingual-e5-small`; embeddings de todas las asignaturas UC3M del piloto y del destino guardados en `data/processed`; `src/embeddings/index.py` con búsqueda top-K por producto matricial `numpy`.
 - Hecho cuando: un test comprueba que dos textos iguales dan similitud 1 y que un texto largo se trocea; para "Estructuras de Datos" el top-5 del destino tiene sentido a ojo.
 - Aprendes: qué es un embedding y por qué se normaliza; `sentence-transformers`; álgebra básica con numpy.
 - Pista: pídele a Antigravity que te explique la similitud coseno con dos asignaturas de ejemplo antes de programar. Detalle en `referencia_tecnica.md` §5, Paso 3. Si el portátil va lento, Google Colab gratis.
 
-**5A · Alejandra + Ángela. Preparar la calibración** *(no bloquea a nadie)*
+**5A · Fran + Víctor. Preparar la calibración** *(no bloquea a nadie)*
 - Entregable: notebook `04_calibration.ipynb` con la parte que no necesita cosenos: lista de pares enlazados y reconciliados del piloto, **split 80/20 por asignatura UC3M** (no por fila), función del filtro de outliers (mediana − 3·MAD) y del percentil, probadas con números inventados; revisión manual de 20 reconciliaciones más.
 - Hecho cuando: el notebook corre de arriba abajo con cosenos inventados y produce un umbral; el número de pares de train y de hold-out está anotado.
 - Aprendes: por qué no se fija un umbral a ojo; fuga de información en un split; percentiles y MAD (`referencia_tecnica.md` §5, Paso 4).
 
-**5C · Héctor + Víctor. README de usuario y guion de la prueba** *(no bloquea a nadie)*
+**5C · Alejandra + Mercedes. README de usuario y guion de la prueba** *(no bloquea a nadie)*
 - Entregable: `README` de usuario (qué hace la web, cómo leer los resultados, qué hacer con el PDF) y `docs/prueba_usuarios.md` con 4-5 tareas que haremos hacer a los alumnos en la Semana 8 y un cuestionario corto.
 - Hecho cuando: una persona ajena entiende para qué sirve la web leyendo el README.
 - *Opcional, si sobra tiempo:* prototipo de la web estática de la Fase 3: `public/index.html` (HTML/JS, sin servidor) que lee `ejemplo.json` y muestra la tabla con filtros. No sustituye a Streamlit en el MVP; se decide en la reunión si se sigue.
 
 ### Semana 6 · Calibrar y producir el JSON real
 
-**6A · Alejandra + Ángela. Calibración y evaluación**
-- Entregable: el notebook de 5A con los cosenos reales (de 5B): umbral calibrado, lista de outliers descartados, `src/matching/evaluation.py` con Recall@1, Recall@5 y MRR sobre el hold-out, y hoja con **50 sugerencias por encima del umbral revisadas a mano** (razonable / dudoso / no) → precisión estimada. Con Fran + Mercedes, el nivel 3 de la reconciliación (por contenido) para los códigos pendientes de 3A.
+**6A · Víctor + Alejandra. Calibración y evaluación**
+- Entregable: el notebook de 5A con los cosenos reales (de 5B): umbral calibrado, lista de outliers descartados, `src/matching/evaluation.py` con Recall@1, Recall@5 y MRR sobre el hold-out, y hoja con **50 sugerencias por encima del umbral revisadas a mano** (razonable / dudoso / no) → precisión estimada. Con Héctor + Fran, el nivel 3 de la reconciliación (por contenido) para los códigos pendientes de 3A.
 - Hecho cuando: umbral, Recall@5, MRR y precisión estimada están documentados con el tamaño de la muestra (orientativos si hay < 30 pares en el hold-out).
 - Aprendes: métricas de ranking; que el histórico solo tiene positivos y por eso no se puede medir la precisión automáticamente.
 
-**6B · Fran + Mercedes. Matcher y export del JSON real**
+**6B · Héctor + Fran. Matcher y export del JSON real**
 - Entregable: `src/matching/matcher.py` (top-10 por coseno, filtro por el umbral de 6A, etiqueta `PRECEDENTE_APROBADO` que se muestra siempre / `SUGERENCIA_IA`, aviso si los ECTS difieren más del 25 %) y `src/export/build_static.py` que genera `public/data/<grado>__<uni>.json` e `index.json` con el esquema de 1C.
 - Hecho cuando: tests con pares inventados cubren los tres casos; el JSON real valida con `Match` y está en `public/data/`.
 - Aprendes: a cerrar un pipeline de principio a fin.
 - Pista: el umbral de 6A llega a mitad de semana; hasta entonces, trabajad con uno provisional (0,7) y dejadlo parametrizado.
 
-**6C · Héctor + Víctor. Tests end-to-end y demo** *(no bloquea a nadie)*
+**6C · Mercedes + Ángela. Tests end-to-end y demo** *(no bloquea a nadie)*
 - Entregable: un JSON inventado grande (200 resultados) para probar rendimiento y paginación; test end-to-end de la web; guion de la demo de 5 minutos.
 - Hecho cuando: la web responde bien con el JSON grande y el guion está en `docs/`.
 
 ### Semana 7 · Integración y cierre técnico
 
-**7C · Héctor + Víctor. Integración con el JSON real**
+**7C · Ángela + Fran. Integración con el JSON real**
 - Entregable: la web y el PDF leyendo `public/data/<grado>__<uni>.json` e `index.json` reales; ajustes que pida el dato real (nombres largos, scores, avisos); redespliegue.
 - Hecho cuando: en la URL pública, un alumno elige el grado y la universidad piloto, ve los resultados reales y descarga el PDF.
 
-**7AB · Alejandra + Ángela + Fran + Mercedes. Tests, documentación y refresco**
+**7AB · Alejandra + Mercedes + Héctor + Víctor. Tests, documentación y refresco**
 - Entregable: `pytest --cov` ≥ 70 % con un `test_e2e.py` que recorre el pipeline con datos pequeños; `README` técnico (cómo instalar, ejecutar y añadir una universidad) y `docs/architecture.md`; script `make refresh` que vuelve a scrapear, recalcula y regenera los JSON sin pasos manuales.
 - Hecho cuando: la CI está en verde con la cobertura publicada; una persona nueva puede ejecutar el pipeline siguiendo el README; `make refresh` corre de principio a fin.
 
