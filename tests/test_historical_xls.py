@@ -1,14 +1,18 @@
+import sqlite3
+from contextlib import closing
 from types import SimpleNamespace
 
 import pandas as pd
 
 from src.loaders.historical_xls import (
     HISTORICAL_COLUMNS,
+    assign_groups,
     deduplicate_historical_matches,
     normalize_code,
     normalize_historical,
     normalize_text,
     read_historical_xls,
+    save_historical,
     validate_historical_rows,
 )
 
@@ -298,8 +302,96 @@ def test_pipeline_de_tres_ficheros_deduplica_sin_perder_n_m():
     assert deduplicated.duplicates_removed == 1
     assert len(deduplicated.records) == 4
     assert {(record.universidad, record.destino_codigo) for record in deduplicated.records} == {
-        ("UNI", "A1"),
-        ("UNI", "A2"),
-        ("UNI", "C1"),
-        ("OTRA UNI", "B1"),
+        ("Uni", "A1"),
+        ("Uni", "A2"),
+        ("Uni", "C1"),
+        ("Otra Uni", "B1"),
     }
+
+
+def _fila(uc, dest, year, uc_subject=None, uni="Univ. de Zürich"):
+    return {
+        "country": "Suiza",
+        "university": uni,
+        "degree": "Informática",
+        "uc_code": uc,
+        "uc_subject": uc_subject or f"Asignatura {uc}",
+        "ects": 6,
+        "course": 1,
+        "subject_type": "OB",
+        "dest_code": dest,
+        "dest_subject": f"Subject {dest}",
+        "academic_year": year,
+    }
+
+
+def _pipeline(rows):
+    records = assign_groups(_validated_records(rows))
+    return deduplicate_historical_matches(records)
+
+
+def test_n_m_del_mismo_curso_comparte_grupo():
+    result = _pipeline([_fila("1", "A1", "2025-2026"), _fila("1", "A2", "2025-2026")])
+
+    assert [r.grupo for r in result.records] == [1, 1]
+
+
+def test_alternativas_de_cursos_distintos_no_forman_grupo():
+    result = _pipeline([_fila("1", "A1", "2024-2025"), _fila("1", "A2", "2025-2026")])
+
+    assert [r.grupo for r in result.records] == [None, None]
+
+
+def test_n_m_inversa_varias_uc3m_un_destino():
+    result = _pipeline([_fila("1", "A1", "2025-2026"), _fila("2", "A1", "2025-2026")])
+
+    assert [r.grupo for r in result.records] == [1, 1]
+
+
+def test_grupo_que_queda_con_una_fila_tras_deduplicar_deja_de_serlo():
+    # A1 se repite en 2025-2026 sin n:m: gana esa fila y A2 se queda sola.
+    result = _pipeline(
+        [
+            _fila("1", "A1", "2024-2025"),
+            _fila("1", "A2", "2024-2025"),
+            _fila("1", "A1", "2025-2026"),
+        ]
+    )
+
+    assert result.duplicates_removed == 1
+    assert [r.grupo for r in result.records] == [None, None]
+
+
+def test_diez_filas_con_una_duplicada_y_una_n_m_conservan_nombres_originales():
+    rows = [_fila(str(n), f"D{n}", "2025-2026", uc_subject=f"Álgebra {n}") for n in range(1, 7)]
+    rows += [
+        _fila("7", "D7", "2025-2026"),  # n:m: UC3M 7 -> D7 y D8
+        _fila("7", "D8", "2025-2026"),
+        _fila("1", "D1", "2024-2025", uc_subject="Álgebra 1"),  # duplicada de otro curso
+        _fila("9", "D9", "2024-2025"),
+    ]
+
+    result = _pipeline(rows)
+
+    assert len(rows) == 10
+    assert result.duplicates_removed == 1
+    assert len(result.records) == 9
+    assert {r.uc3m_codigo for r in result.records if r.grupo} == {"7"}
+    assert sum(r.grupo is not None for r in result.records) == 2
+    assert result.records[0].uc3m_nombre == "Álgebra 1"
+    assert result.records[0].universidad == "Univ. de Zürich"
+
+
+def test_guarda_historical_matches_en_sqlite_y_se_puede_relanzar(tmp_path):
+    result = _pipeline([_fila("1", "A1", "2025-2026"), _fila("1", "A2", "2025-2026"),
+                        _fila("2", "B1", "2025-2026")])  # fmt: skip
+    path = tmp_path / "processed" / "historico.sqlite"
+
+    save_historical(result.records, path)
+    save_historical(result.records, path)
+
+    with closing(sqlite3.connect(path)) as connection:
+        rows = connection.execute(
+            "SELECT uc3m_codigo, destino_codigo, grupo FROM historical_matches ORDER BY id"
+        ).fetchall()
+    assert rows == [("1", "A1", 1), ("1", "A2", 1), ("2", "B1", None)]

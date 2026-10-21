@@ -1,7 +1,10 @@
 """Lectura de los ficheros XLS del histórico de convalidaciones."""
 
 import re
+import sqlite3
 import unicodedata
+from collections import Counter
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -11,6 +14,8 @@ from pydantic import ValidationError
 
 from src.models import HistoricalMatch
 
+RAW_DIR = Path("data/raw")
+DATABASE_PATH = Path("data/processed/historico.sqlite")
 HISTORICAL_COLUMNS = [
     "country",
     "university",
@@ -41,6 +46,13 @@ def normalize_text(value: Any) -> str:
     text = str(value).replace("\xa0", " ")
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
     return re.sub(r"\s+", " ", text).strip().upper()
+
+
+def clean_text(value: Any) -> str:
+    """Quita espacios sobrantes pero conserva tildes y mayúsculas (lo que se muestra)."""
+    if pd.isna(value):
+        return ""
+    return re.sub(r"\s+", " ", str(value).replace("\xa0", " ")).strip()
 
 
 def normalize_code(value: Any) -> str:
@@ -113,22 +125,22 @@ def _row_to_historical_match(row: pd.Series) -> HistoricalMatch:
 
     return HistoricalMatch(
         curso_academico=row["academic_year"],
-        pais=row["country_norm"],
-        universidad=row["university_norm"],
-        grado=row["degree_norm"],
+        pais=clean_text(row["country"]),
+        universidad=clean_text(row["university"]),
+        grado=clean_text(row["degree"]),
         uc3m_codigo=row["uc_code_norm"],
-        uc3m_nombre=row["uc_subject_norm"],
+        uc3m_nombre=clean_text(row["uc_subject"]),
         ects=_empty_to_none(row["ects"]),
         curso=course,
         tipo=_empty_to_none(row["subject_type"]),
         destino_codigo=_empty_to_none(row["dest_code_norm"]),
-        destino_nombre=row["dest_subject_norm"],
+        destino_nombre=clean_text(row["dest_subject"]),
     )
 
 
 def validate_historical_rows(frame: pd.DataFrame) -> HistoricalValidationResult:
     """Valida filas normalizadas y conserva los motivos de las inválidas."""
-    normalized = normalize_historical(frame)
+    normalized = frame if "uc_code_norm" in frame.columns else normalize_historical(frame)
     valid_rows: list[HistoricalMatch] = []
     invalid_rows: list[InvalidHistoricalRow] = []
 
@@ -156,25 +168,111 @@ def deduplicate_historical_matches(
     Se conserva la primera aparición al ordenar por curso académico descendente
     y, en caso de empate, por el orden original de los registros.
     """
-    ordered_records = sorted(
-        enumerate(records),
-        key=lambda item: item[1].curso_academico,
-        reverse=True,
-    )
+    ordered_records = sorted(records, key=lambda record: record.curso_academico, reverse=True)
     unique_records: list[HistoricalMatch] = []
     seen: set[tuple[str, ...]] = set()
 
-    for _, record in ordered_records:
+    for record in ordered_records:
         key = _deduplication_key(record)
         if key in seen:
             continue
         seen.add(key)
         unique_records.append(record)
 
+    # Un grupo al que la deduplicación deja una sola fila ya no es una n:m.
+    miembros = Counter(record.grupo for record in unique_records if record.grupo is not None)
+    unique_records = [
+        record.model_copy(update={"grupo": None}) if miembros.get(record.grupo) == 1 else record
+        for record in unique_records
+    ]
+
     return HistoricalDeduplicationResult(
         records=tuple(unique_records),
         duplicates_removed=len(records) - len(unique_records),
     )
+
+
+def assign_groups(
+    records: list[HistoricalMatch] | tuple[HistoricalMatch, ...],
+) -> list[HistoricalMatch]:
+    """Asigna `grupo` a las convalidaciones n:m. Llamar ANTES de deduplicar.
+
+    Una n:m son las filas de un mismo curso académico, universidad y grado que
+    comparten asignatura UC3M o asignatura de destino y suman al menos dos
+    equivalencias distintas. Entre cursos distintos no se agrupa: pueden ser
+    alternativas aprobadas en años diferentes, no asignaturas que se cursan juntas.
+    """
+    parent = list(range(len(records)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    first_seen: dict[tuple, int] = {}
+    for i, record in enumerate(records):
+        *scope, uc_id, dest_id = _deduplication_key(record)
+        scope = (record.curso_academico, *scope)
+        for side in (("uc", uc_id), ("dest", dest_id)):
+            j = first_seen.setdefault((*scope, *side), i)
+            parent[find(i)] = find(j)
+
+    components: dict[int, list[int]] = {}
+    for i in range(len(records)):
+        components.setdefault(find(i), []).append(i)
+
+    result = list(records)
+    number = 0
+    for members in components.values():  # el orden de inserción es el de aparición
+        if len({_deduplication_key(records[i]) for i in members}) < 2:
+            continue
+        number += 1
+        for i in members:
+            result[i] = records[i].model_copy(update={"grupo": number})
+    return result
+
+
+COLUMNS = (
+    "curso_academico", "pais", "universidad", "grado", "uc3m_codigo", "uc3m_nombre",
+    "ects", "curso", "tipo", "destino_codigo", "destino_nombre", "grupo",
+)  # fmt: skip
+
+
+def save_historical(
+    records: list[HistoricalMatch] | tuple[HistoricalMatch, ...],
+    database_path: str | Path = DATABASE_PATH,
+) -> Path:
+    """Guarda la tabla `historical_matches` desde cero (se puede relanzar)."""
+    database_path = Path(database_path)
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    with closing(sqlite3.connect(database_path)) as connection, connection:
+        connection.execute("DROP TABLE IF EXISTS historical_matches")
+        connection.execute(
+            f"CREATE TABLE historical_matches (id INTEGER PRIMARY KEY, {', '.join(COLUMNS)})"
+        )
+        connection.executemany(
+            f"INSERT INTO historical_matches ({', '.join(COLUMNS)}) "
+            f"VALUES ({', '.join('?' * len(COLUMNS))})",
+            [tuple(getattr(record, column) for column in COLUMNS) for record in records],
+        )
+    return database_path
+
+
+def load_historical(raw_dir: str | Path = RAW_DIR, database_path: str | Path = DATABASE_PATH):
+    """Lee los XLS de `raw_dir`, valida, agrupa las n:m, deduplica y guarda en SQLite."""
+    files = sorted(Path(raw_dir).glob("*.xls"))
+    frames = [read_historical_xls(path) for path in files]
+    validation = validate_historical_rows(pd.concat(frames, ignore_index=True))
+    deduplicated = deduplicate_historical_matches(assign_groups(validation.valid_rows))
+    save_historical(deduplicated.records, database_path)
+    groups = {record.grupo for record in deduplicated.records} - {None}
+    print(
+        f"{len(files)} ficheros: {len(validation.valid_rows)} válidas, "
+        f"{validation.invalid_count} inválidas, {deduplicated.duplicates_removed} duplicadas, "
+        f"{len(deduplicated.records)} guardadas en {database_path} ({len(groups)} grupos n:m)"
+    )
+    return deduplicated
 
 
 def read_historical_xls(path: str | Path) -> pd.DataFrame:
@@ -204,3 +302,7 @@ def read_historical_xls(path: str | Path) -> pd.DataFrame:
         return pd.DataFrame(columns=[*HISTORICAL_COLUMNS, "academic_year"])
 
     return normalize_historical(pd.concat(frames, ignore_index=True))
+
+
+if __name__ == "__main__":
+    load_historical()
