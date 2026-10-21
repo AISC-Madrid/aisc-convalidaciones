@@ -1,6 +1,5 @@
-from src.ui.seleccion import calcular_ects
-from src.ui.seleccion import obtener_propuesta
-from src.ui.seleccion import hay_aviso_ects
+from src.ui.seleccion import calcular_ects, hay_aviso_ects, obtener_propuesta, obtener_seleccion
+
 
 def test_no_duplica_creditos_de_origen():
     resultados = [
@@ -148,3 +147,31 @@ def test_aviso_compara_totales_del_grupo():
     ]
 
     assert hay_aviso_ects(propuesta) is True
+
+def test_obtener_seleccion_vacia():
+    resultados = [{"grupo": None, "nombre": "Individual"}]
+
+    assert obtener_seleccion(resultados, []) == []
+
+
+def test_obtener_seleccion_combina_individual_y_grupo():
+    resultados = [
+        {"grupo": 1, "nombre": "Parte A"},
+        {"grupo": None, "nombre": "Individual"},
+        {"grupo": 1, "nombre": "Parte B"},
+    ]
+
+    assert obtener_seleccion(resultados, [0, 1]) == [
+        resultados[0],
+        resultados[2],
+        resultados[1],
+    ]
+
+
+def test_seleccionar_dos_filas_del_grupo_no_lo_duplica():
+    resultados = [
+        {"grupo": 1, "nombre": "Parte A"},
+        {"grupo": 1, "nombre": "Parte B"},
+    ]
+
+    assert obtener_seleccion(resultados, [0, 1]) == resultados   

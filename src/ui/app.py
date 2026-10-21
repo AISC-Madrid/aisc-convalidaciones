@@ -5,6 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 from src.models import Resultados
+from src.ui.seleccion_ui import mostrar_seleccion
 
 RUTA_JSON = Path(__file__).resolve().parents[2] / "public/data/ejemplo.json"
 
@@ -99,13 +100,22 @@ def main(ruta=RUTA_JSON):
     else:
         st.caption("Datos de ejemplo: asignaturas y resultados inventados.")
         st.caption("Las filas con el mismo grupo pertenecen a una propuesta conjunta.")
+        contenido, columna_filtros = st.columns([4, 1], gap="large")
+        filtros = columna_filtros.expander("Filtros", expanded=True)
+        filtros.subheader("Filtros")
         opciones_etiqueta = ["Precedente aprobado", "Sugerencia IA"]
-        etiquetas_seleccionadas = st.sidebar.multiselect(
-            "Etiqueta",
-            opciones_etiqueta,
-            default=opciones_etiqueta,
-        )
-        similitud_minima = st.sidebar.slider(
+        with filtros.popover("Etiquetas"):
+            etiquetas_seleccionadas = []
+
+            for etiqueta in opciones_etiqueta:
+                if st.checkbox(
+                    etiqueta,
+                    value=True,
+                    key=f"filtro_{etiqueta}",
+                ):
+                    etiquetas_seleccionadas.append(etiqueta)
+                    
+        similitud_minima = filtros.slider(
             "Similitud mínima",
             min_value=0.0,
             max_value=1.0,
@@ -114,7 +124,7 @@ def main(ruta=RUTA_JSON):
             format="%.2f",
         )
         asignaturas = sorted({fila["Asignatura de origen"] for fila in filas})
-        asignatura_seleccionada = st.sidebar.selectbox(
+        asignatura_seleccionada = filtros.selectbox(
             "Asignatura UC3M",
             ["Todas", *asignaturas],
         )
@@ -126,21 +136,29 @@ def main(ruta=RUTA_JSON):
             and asignatura_seleccionada in ("Todas", fila["Asignatura de origen"])
         ]
         if filas_filtradas:
-            st.dataframe(
+            contenido.dataframe(
                 filas_filtradas,
                 hide_index=True,
                 column_config=COLUMNAS,
             )
+            contenido.caption(
+                "*Precedente aprobado: existe una convalidación histórica.*  \n"
+                "*Sugerencia IA: propuesta basada en similitud de contenidos.*"
+            )
+            contenido.caption(
+                "*La similitud no indica la probabilidad de aprobación.*"
+            )            
+            indices_visibles = [
+                indice
+                for indice, fila in enumerate(filas)
+                if fila in filas_filtradas
+            ]
+
+            with contenido:
+                mostrar_seleccion(datos["resultados"], indices_visibles)          
         else:
-            st.info("No hay resultados que coincidan con los filtros seleccionados.")
-    st.caption(
-        "*Precedente aprobado: existe una convalidación histórica.*  \n"
-        "*Sugerencia IA: propuesta basada en similitud de contenidos.*"
-    )
-    st.caption("*La similitud no indica la probabilidad de aprobación.*")
+            contenido.info("No hay resultados que coincidan con los filtros seleccionados.")
 
 
 if __name__ == "__main__":
     main()
-
-

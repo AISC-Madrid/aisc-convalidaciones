@@ -1,5 +1,6 @@
 from src.models.match import ects_dispares
 
+
 def calcular_ects(resultados):
     """Devuelve los ECTS de origen y destino sin repetir asignaturas."""
     origen = {}
@@ -38,3 +39,16 @@ def hay_aviso_ects(propuesta):
         return False
 
     return ects_dispares(total_origen, total_destino)
+
+def obtener_seleccion(resultados, indices):
+    """Reúne las propuestas seleccionadas, incluyendo sus grupos completos."""
+    seleccion = []
+
+    for indice in indices:
+        propuesta = obtener_propuesta(resultados, indice)
+
+        for resultado in propuesta:
+            if resultado not in seleccion:
+                seleccion.append(resultado)
+
+    return seleccion

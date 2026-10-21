@@ -117,7 +117,7 @@ def test_url_opcional_y_validacion(tmp_path, ejemplo):
     assert app.error
 
 
-def test_filtros_laterales_filtran_la_tabla(tmp_path, ejemplo):
+def test_filtros_filtran_la_tabla(tmp_path, ejemplo):
     sugerencia = ejemplo["resultados"][0]
     ejemplo["resultados"] = [
         sugerencia,
@@ -140,7 +140,7 @@ def test_filtros_laterales_filtran_la_tabla(tmp_path, ejemplo):
     assert not app.exception
     assert len(app.dataframe[0].value) == 2
 
-    app.multiselect[0].set_value(["Precedente aprobado"]).run(timeout=15)
+    app.checkbox(key="filtro_Sugerencia IA").uncheck().run(timeout=15)
     assert len(app.dataframe[0].value) == 1
     assert app.dataframe[0].value.iloc[0]["Etiqueta"] == "Precedente aprobado"
 
@@ -153,3 +153,33 @@ def test_filtros_laterales_filtran_la_tabla(tmp_path, ejemplo):
     app.selectbox[2].set_value("Redes (001)").run(timeout=15)
     assert len(app.dataframe[0].value) == 1
     assert app.dataframe[0].value.iloc[0]["Asignatura de origen"] == "Redes (001)"
+
+def test_seleccionar_grupo_actualiza_contadores():
+    from src.ui.app import RUTA_JSON
+
+    datos = cargar_datos(RUTA_JSON)
+    resultados = datos["resultados"]
+
+    indice = next(
+        indice
+        for indice, resultado in enumerate(resultados)
+        if resultado.get("grupo") is not None
+    )
+
+    app = AppTest.from_function(
+        ejecutar_app,
+        args=(str(RUTA_JSON),),
+    ).run(timeout=15)
+
+    assert not app.exception
+    assert [metrica.value for metrica in app.metric] == ["0", "0"]
+
+    app.checkbox(key=f"propuesta_{indice}").check().run(timeout=15)
+
+    assert not app.exception
+    assert [float(metrica.value) for metrica in app.metric] == [6, 9]
+
+    app.checkbox(key=f"propuesta_{indice}").uncheck().run(timeout=15)
+
+    assert not app.exception
+    assert [float(metrica.value) for metrica in app.metric] == [0, 0]
