@@ -1,0 +1,22 @@
+university_code: GATECH
+university_name: Georgia Institute of Technology
+country: USA
+catalog_edition: "2026-2027"
+catalog_url: https://catalog.gatech.edu/coursesaz/{prefix}/
+
+# Prefijos de los 50 pares Georgia Tech × Biomédica del histórico (01_eda_historical.ipynb, sección 6)
+departments: [BMED, BIOS, ME, MSE, PHIL, MATH, BIOL]
+render: static                 # comprobado: el HTML trae las asignaturas sin JavaScript
+
+selectors:                     # comprobados con DevTools en /coursesaz/bmed/ (19/10/2026)
+  course_list: "div.courseblock"
+  course_title: "p.courseblocktitle"   # código + nombre + créditos en una línea
+  description: "p.courseblockdesc"
+
+title_pattern: '^(?P<code>[A-Z]{2,5} \w+)\.\s+(?P<name>.+?)\.?\s+(?P<cmin>\d+(?:\.\d+)?)(?:-(?P<cmax>\d+(?:\.\d+)?))?\s+Credit Hours?\.?$'
+
+max_course_level: 7999         # el histórico tiene pares de 6000 y 7000 (8 de 50); 8000+ son investigación/tesis
+credits_to_ects: 2.0           # 1 credit hour = 2 ECTS; fuentes en docs/comprobacion_gatech.md
+code_normalization: remove_spaces_upper
+rate_limit_seconds: 2
+user_agent: "AISC-UC3M convalidaciones (proyecto de estudiantes)"

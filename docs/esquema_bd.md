@@ -105,6 +105,28 @@ grados están completos. `estado` es uno de:
 Si un grado no queda `completo`, se vuelve a lanzar el mismo comando: la caché evita repetir lo
 que ya se descargó y el estado se actualiza.
 
+### `dest_subjects` — una fila por asignatura de la universidad de destino
+
+`UNIQUE (universidad, codigo)`: volver a cargar actualiza la fila (nombre, descripción y ECTS) sin
+duplicarla y **sin cambiar su `id`**, para no romper las referencias desde el histórico
+(`historical_matches.dest_subject_id`, semana 4).
+
+| Columna | Tipo | Uso |
+|---|---|---|
+| `id` | `INTEGER` | Identificador de la fila; no cambia al recargar |
+| `universidad` | `TEXT` | Código de la universidad (`university_code` del YAML), p. ej. `GATECH` |
+| `codigo` | `TEXT` | Código de la asignatura tal como aparece en el catálogo, p. ej. `BMED 2110` |
+| `codigo_norm` | `TEXT` | Código sin espacios y en mayúsculas (`BMED2110`), igual que `destino_codigo` del histórico; con índice para el enlace de la semana 4 |
+| `nombre` | `TEXT` | Nombre de la asignatura |
+| `descripcion` | `TEXT` | Descripción del catálogo |
+| `ects` | `REAL` | Créditos convertidos a ECTS con `credits_to_ects` del YAML; nulo si los créditos son variables (p. ej. `1-12`) |
+
+Se carga con `python -m src.scrapers.destination --uni gatech` y vive en `data/processed/uc3m.sqlite`,
+junto a `subjects`. Si la tabla se creó sin `codigo_norm`, el scraper añade la columna y la rellena
+al volver a ejecutarse (la caché evita descargar de nuevo). Antes de descargar nada comprueba el
+`robots.txt` de la universidad. Comprobación manual y factor de créditos de Georgia Tech:
+`docs/comprobacion_gatech.md`.
+
 ## Migración desde el esquema anterior
 
 Si `data/processed/uc3m.sqlite` se creó con el esquema de la PR #14 (columna `código` con tilde) o
@@ -120,4 +142,6 @@ SELECT curso_academico, idioma, COUNT(*) FROM subjects GROUP BY 1, 2;
 SELECT COUNT(*) FROM subjects WHERE programa IS NULL;
 SELECT s.nombre FROM subjects s JOIN subject_plans p USING (codigo, curso_academico)
 WHERE p.plan = '456' AND s.idioma = 'ES';
+SELECT universidad, COUNT(*), SUM(ects IS NULL) AS sin_ects FROM dest_subjects GROUP BY 1; -- asignaturas por universidad y cuántas sin ECTS
+SELECT * FROM dest_subjects WHERE universidad = 'GATECH' AND codigo_norm = 'BMED2110';
 ```
