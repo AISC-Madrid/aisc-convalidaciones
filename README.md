@@ -2,6 +2,8 @@
 
 Buscador de equivalencias de asignaturas para alumnos de la UC3M que se van de **movilidad no europea (MNE)**. Dado un grado y una universidad de destino, propone las asignaturas que probablemente convalidan, marca cuáles ya se aprobaron antes y cuáles sugiere la IA, y genera una propuesta en PDF para el tutor. Presupuesto: 0 €.
 
+**Web (Streamlit Community Cloud):** https://aisc-convalidacionesgit-7yxa8ytcb4kcsc9urkcb74.streamlit.app/
+
 Tareas de cada semana: [issues](../../issues), ya asignadas a cada pareja.
 
 ## Qué leer, en este orden
