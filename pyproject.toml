@@ -3,7 +3,7 @@ name = "convalidaciones-aisc"
 version = "0.1.0"
 description = "Buscador de convalidaciones para movilidad no europea (MNE) de la UC3M"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<4"
 dependencies = [
     "pandas>=2.2",
     "xlrd>=2.0",
