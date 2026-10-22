@@ -5,16 +5,17 @@ from pathlib import Path
 import streamlit as st
 
 from src.models import Resultados
+from src.ui.seleccion_ui import mostrar_seleccion
 
 RUTA_JSON = Path(__file__).resolve().parents[2] / "public/data/ejemplo.json"
 
 COLUMNAS = {
-    "Asignatura UC3M": st.column_config.TextColumn(width="large"),
+    "Asignatura de origen": st.column_config.TextColumn(width="large"),
     "Asignatura de destino": st.column_config.TextColumn("Destino", width="large"),
-    "ECTS UC3M": st.column_config.NumberColumn(width="small"),
+    "ECTS origen": st.column_config.NumberColumn(width="small"),
     "ECTS destino": st.column_config.NumberColumn(width="small"),
     "Similitud": st.column_config.NumberColumn(format="%.2f", width="small"),
-    "Tipo": st.column_config.TextColumn(width="medium"),
+    "Etiqueta": st.column_config.TextColumn(width="medium"),
     "Aviso": st.column_config.TextColumn(width="small"),
     "Ficha de destino": st.column_config.LinkColumn(
         "Ficha", display_text="Ver ficha", width="small"
@@ -40,12 +41,12 @@ def preparar_tabla(resultados):
         origen, destino = resultado["origen"], resultado["destino"]
         filas.append(
             {
-                "Asignatura UC3M": f"{origen['nombre']} ({origen['codigo']})",
-                "ECTS UC3M": origen["ects"],
+                "Asignatura de origen": f"{origen['nombre']} ({origen['codigo']})",
+                "ECTS origen": origen["ects"],
                 "Asignatura de destino": f"{destino['nombre']} ({destino['codigo']})",
                 "ECTS destino": destino["ects"],
                 "Similitud": resultado["score"],
-                "Tipo": etiquetas[resultado["etiqueta"]],
+                "Etiqueta": etiquetas[resultado["etiqueta"]],
                 "Aviso": "ECTS dispares" if resultado["aviso_ects"] else "",
                 "Ficha de destino": destino.get("url"),
                 "Grupo conjunto": str(resultado["grupo"])
@@ -99,16 +100,64 @@ def main(ruta=RUTA_JSON):
     else:
         st.caption("Datos de ejemplo: asignaturas y resultados inventados.")
         st.caption("Las filas con el mismo grupo pertenecen a una propuesta conjunta.")
-        st.dataframe(
-            filas,
-            hide_index=True,
-            column_config=COLUMNAS,
+        contenido, columna_filtros = st.columns([4, 1], gap="large")
+        filtros = columna_filtros.expander("Filtros", expanded=True)
+        filtros.subheader("Filtros")
+        opciones_etiqueta = ["Precedente aprobado", "Sugerencia IA"]
+        with filtros.popover("Etiquetas"):
+            etiquetas_seleccionadas = []
+
+            for etiqueta in opciones_etiqueta:
+                if st.checkbox(
+                    etiqueta,
+                    value=True,
+                    key=f"filtro_{etiqueta}",
+                ):
+                    etiquetas_seleccionadas.append(etiqueta)
+                    
+        similitud_minima = filtros.slider(
+            "Similitud mínima",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.0,
+            step=0.01,
+            format="%.2f",
         )
-    st.caption(
-        "*Precedente aprobado: existe una convalidación histórica.*  \n"
-        "*Sugerencia IA: propuesta basada en similitud de contenidos.*"
-    )
-    st.caption("*La similitud no indica la probabilidad de aprobación.*")
+        asignaturas = sorted({fila["Asignatura de origen"] for fila in filas})
+        asignatura_seleccionada = filtros.selectbox(
+            "Asignatura UC3M",
+            ["Todas", *asignaturas],
+        )
+        filas_filtradas = [
+            fila
+            for fila in filas
+            if fila["Etiqueta"] in etiquetas_seleccionadas
+            and fila["Similitud"] >= similitud_minima
+            and asignatura_seleccionada in ("Todas", fila["Asignatura de origen"])
+        ]
+        if filas_filtradas:
+            contenido.dataframe(
+                filas_filtradas,
+                hide_index=True,
+                column_config=COLUMNAS,
+            )
+            contenido.caption(
+                "*Precedente aprobado: existe una convalidación histórica.*  \n"
+                "*Sugerencia IA: propuesta basada en similitud de contenidos.*"
+            )
+            contenido.caption(
+                "*La similitud no indica la probabilidad de aprobación.*"
+            )            
+            indices_visibles = [
+                indice
+                for indice, fila in enumerate(filas)
+                if fila in filas_filtradas
+            ]
+
+            with contenido:
+                mostrar_seleccion(datos["resultados"], indices_visibles)          
+        else:
+            contenido.info("No hay resultados que coincidan con los filtros seleccionados.")
 
 
 if __name__ == "__main__":
