@@ -170,6 +170,27 @@ def test_crear_tabla_anade_codigo_norm_a_una_tabla_antigua():
     conexion.close()
 
 
+def test_departamento_que_falla_no_para_el_resto(monkeypatch, tmp_path, capsys):
+    import sqlite3
+
+    import requests
+
+    from src.scrapers import destination
+
+    db = tmp_path / "prueba.sqlite"
+    sqlite3.connect(db).close()  # crea el fichero de BD vacío
+
+    def falla(prefijo, cfg):
+        raise requests.HTTPError("404")
+
+    monkeypatch.setattr(destination, "descargar_departamento", falla)
+    destination.ejecutar("gatech", db)
+
+    salida = capsys.readouterr().out
+    assert "lo salto" in salida
+    assert "Total: 0" in salida
+
+
 # --- descargas ---
 
 
