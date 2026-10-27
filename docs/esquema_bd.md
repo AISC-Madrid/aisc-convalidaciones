@@ -127,6 +127,23 @@ al volver a ejecutarse (la caché evita descargar de nuevo). Antes de descargar 
 `robots.txt` de la universidad. Comprobación manual y factor de créditos de Georgia Tech:
 `docs/comprobacion_gatech.md`.
 
+### `old_to_new` — código antiguo del histórico → código del plan vigente
+
+Una fila por `uc3m_codigo` distinto del histórico, no por fila del Excel. La escribe
+`python -m src.reconciliation.old_to_new` en esta misma base. Volver a ejecutarla sustituye
+solo las filas de esta tabla: no borra `subjects` ni el resto.
+
+| Columna | Tipo | Uso |
+|---|---|---|
+| `old_code` | `TEXT` | Código UC3M del histórico. Clave primaria |
+| `new_code` | `TEXT` | Código en `subjects` del curso `2026/2027`. NULL si no se resolvió |
+| `method` | `TEXT` | `code`, `exact`, `embedding` o `manual`. NULL si sigue pendiente |
+
+`code`: el código antiguo sigue en el plan vigente, aunque el nombre haya cambiado. `exact`: no está
+el código, pero el nombre normalizado coincide con un único código vigente en español. Los casos
+NULL están listados en `docs/reconciliacion_pendiente.md`. `embedding` y `manual` quedan para la
+semana 6.
+
 ## Migración desde el esquema anterior
 
 Si `data/processed/uc3m.sqlite` se creó con el esquema de la PR #14 (columna `código` con tilde) o
@@ -144,4 +161,5 @@ SELECT s.nombre FROM subjects s JOIN subject_plans p USING (codigo, curso_academ
 WHERE p.plan = '456' AND s.idioma = 'ES';
 SELECT universidad, COUNT(*), SUM(ects IS NULL) AS sin_ects FROM dest_subjects GROUP BY 1; -- asignaturas por universidad y cuántas sin ECTS
 SELECT * FROM dest_subjects WHERE universidad = 'GATECH' AND codigo_norm = 'BMED2110';
+SELECT method, COUNT(*) FROM old_to_new GROUP BY 1; -- code, exact o NULL (pendiente)
 ```
