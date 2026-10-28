@@ -315,6 +315,8 @@ Como el espacio de consultas es finito (grado × universidad), **no hace falta c
 | PDF | `reportlab` dentro de la app de Streamlit (en Windows no necesita dependencias nativas, a diferencia de `weasyprint`) | 0 € |
 | Frontend Fase 3 | Web estática (HTML/JS) en **GitHub Pages** o en la web de AISC, leyendo los mismos JSON; PDF en el navegador (`window.print()` con CSS de impresión) | 0 € |
 
+El generador `src.ui.pdf.generar_pdf(datos_alumno, convalidaciones_seleccionadas)` devuelve el documento en bytes. `datos_alumno` contiene `nombre`, `grado` y `universidad`; las convalidaciones son las filas seleccionadas del campo `resultados` del JSON y pueden obtenerse con `src.ui.seleccion.obtener_seleccion`.
+
 Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo valida `src.models.Resultados` y hay un ejemplo en `public/data/ejemplo.json`):
 
 ```json
