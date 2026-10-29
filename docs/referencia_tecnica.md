@@ -49,7 +49,7 @@ La línea paralela de Erasmus queda descartada para no dispersar al equipo mient
 - EPS: https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-eps/asignaturas_eps.xls
 - CCSSJJ: https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-ccssjj/asignaturas_ccssjj.xls
 - Humanidades: https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-fachcd/asignaturas_hcd.xls
-- Cursos 2023-24 a 2025-26, **~14.700 filas brutas** (con duplicados entre cursos). Solo 2025-26 tiene 5.198 equivalencias de 25 países, 111 universidades y 41 titulaciones; 2.494 son de la EPS.
+- Cursos 2024-25 a 2026-27, **14.522 filas brutas** (con duplicados entre cursos; XLS comprobados el 26/10/2026): 4.991 de 2024-25, 5.198 de 2025-26 y 4.333 de 2026-27. Solo 2025-26 tiene 5.198 equivalencias de 25 países, 111 universidades y 41 titulaciones; 2.494 son de la EPS.
 - Campos: país, universidad, titulación, código y nombre UC3M, ECTS, curso, tipo, y código y nombre de la asignatura destino.
 - La UC3M avisa de que son **orientativas y no vinculantes**.
 - Los `.xls` son formato Excel 97: `pandas.read_excel` necesita `xlrd`.

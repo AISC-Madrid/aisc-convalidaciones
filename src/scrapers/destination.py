@@ -183,7 +183,11 @@ def ejecutar(uni: str, db_path: Path) -> None:
         crear_tabla(con)
         total = 0
         for prefijo in cfg["departments"]:
-            html = descargar_departamento(prefijo, cfg)
+            try:
+                html = descargar_departamento(prefijo, cfg)
+            except requests.HTTPError as e:
+                print(f"{prefijo}: ERROR al descargar ({e}), lo salto")
+                continue
             asignaturas, fallos = parse_catalog(html, cfg)
             guardar(con, asignaturas, cfg)
             total += len(asignaturas)
