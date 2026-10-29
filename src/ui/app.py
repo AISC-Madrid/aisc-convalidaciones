@@ -59,7 +59,64 @@ def preparar_tabla(resultados):
 
 def main(ruta=RUTA_JSON):
     st.set_page_config(page_title="Convalidaciones · AISC", layout="wide")
+    st.markdown(
+        """
+        <style>
+               /* Cabecera rosa con texto blanco */
+        [data-testid="stExpander"] summary {
+            background-color: #EB178E;
+            color: #FFFFFF;
+            border-radius: 12px;
+            padding: 6px 16px;
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        [data-testid="stExpander"] summary p {
+            color: #FFFFFF;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Flecha blanca */
+        [data-testid="stExpander"] summary svg,
+        [data-testid="stExpander"] summary span {
+            color: #FFFFFF;
+        }
+
+        /* Botón que abre las etiquetas */
+        [data-testid="stPopoverButton"] {
+            border: 2px solid #EB178E;
+            background-color: #FDE8F3;
+            color: #202020;
+        }
+
+        [data-testid="stPopoverButton"]:hover {
+            background-color: #EB178E;
+            color: #111111;
+        }
+
+        /* Valores de los contadores de créditos */
+        [data-testid="stMetricValue"] {
+            color: #EB178E;
+        }
+
+        /* Títulos de las secciones */
+        [data-testid="stHeading"] h3 {
+            color: #EB178E;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )    
     st.title("AISC · Buscador de convalidaciones")
+    st.markdown(
+        '<div style="height: 4px; background-color: #20CCF1; '
+        'border-radius: 2px; margin-bottom: 1rem;"></div>',
+        unsafe_allow_html=True,
+    )
     st.write("Explora posibles equivalencias para tu movilidad.")
     st.caption("Las propuestas requieren la revisión del tutor.")
 
@@ -102,7 +159,6 @@ def main(ruta=RUTA_JSON):
         st.caption("Las filas con el mismo grupo pertenecen a una propuesta conjunta.")
         contenido, columna_filtros = st.columns([4, 1], gap="large")
         filtros = columna_filtros.expander("Filtros", expanded=True)
-        filtros.subheader("Filtros")
         opciones_etiqueta = ["Precedente aprobado", "Sugerencia IA"]
         with filtros.popover("Etiquetas"):
             etiquetas_seleccionadas = []
