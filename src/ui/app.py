@@ -158,12 +158,12 @@ def main(ruta=RUTA_JSON):
             with contenido:
                 seleccion = mostrar_seleccion(datos["resultados"], indices_visibles)
                 st.subheader("Propuesta en PDF")
-                nombre = st.text_input("Nombre del alumno (opcional)")
+                nombre = st.text_input("Nombre del alumno")
                 st.download_button(
                     "Generar PDF",
                     data=generar_pdf(
                         {
-                            "nombre": nombre.strip() or "(sin nombre)",
+                            "nombre": nombre.strip(),
                             "grado": datos["grado"],
                             "universidad": datos["universidad"],
                         },
@@ -171,7 +171,7 @@ def main(ruta=RUTA_JSON):
                     ),
                     file_name="propuesta_convalidacion.pdf",
                     mime="application/pdf",
-                    disabled=not seleccion,
+                    disabled=not (seleccion and nombre.strip()),
                 )
         else:
             contenido.info("No hay resultados que coincidan con los filtros seleccionados.")

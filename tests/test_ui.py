@@ -184,7 +184,7 @@ def test_seleccionar_grupo_actualiza_contadores():
     assert not app.exception
     assert [float(metrica.value) for metrica in app.metric] == [0, 0]
 
-def test_boton_pdf_solo_con_seleccion():
+def test_boton_pdf_pide_seleccion_y_nombre():
     from src.ui.app import RUTA_JSON
 
     app = AppTest.from_function(ejecutar_app, args=(str(RUTA_JSON),)).run(timeout=15)
@@ -193,6 +193,12 @@ def test_boton_pdf_solo_con_seleccion():
     assert app.get("download_button")[0].proto.disabled
 
     app.checkbox(key="propuesta_0").check().run(timeout=15)
+    assert app.get("download_button")[0].proto.disabled  # falta el nombre
+
+    app.text_input[0].set_value("  ").run(timeout=15)
+    assert app.get("download_button")[0].proto.disabled  # nombre en blanco
+
+    app.text_input[0].set_value("Ana").run(timeout=15)
 
     assert not app.exception
     assert not app.get("download_button")[0].proto.disabled
