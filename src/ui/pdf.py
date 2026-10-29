@@ -10,7 +10,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from src.ui.seleccion import calcular_ects, obtener_propuesta
 
@@ -130,7 +130,7 @@ def generar_pdf(
             ]
         )
     )
-    contenido.append(tabla)
+    contenido.extend([Spacer(1, 0.6 * cm), tabla, Spacer(1, 0.4 * cm)])
 
     if not propuestas:
         contenido.append(
