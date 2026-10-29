@@ -5,6 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 from src.models import Resultados
+from src.ui.pdf import generar_pdf
 from src.ui.seleccion_ui import mostrar_seleccion
 
 RUTA_JSON = Path(__file__).resolve().parents[2] / "public/data/ejemplo.json"
@@ -155,7 +156,23 @@ def main(ruta=RUTA_JSON):
             ]
 
             with contenido:
-                mostrar_seleccion(datos["resultados"], indices_visibles)          
+                seleccion = mostrar_seleccion(datos["resultados"], indices_visibles)
+                st.subheader("Propuesta en PDF")
+                nombre = st.text_input("Nombre del alumno (opcional)")
+                st.download_button(
+                    "Generar PDF",
+                    data=generar_pdf(
+                        {
+                            "nombre": nombre.strip() or "(sin nombre)",
+                            "grado": datos["grado"],
+                            "universidad": datos["universidad"],
+                        },
+                        seleccion,
+                    ),
+                    file_name="propuesta_convalidacion.pdf",
+                    mime="application/pdf",
+                    disabled=not seleccion,
+                )
         else:
             contenido.info("No hay resultados que coincidan con los filtros seleccionados.")
 
