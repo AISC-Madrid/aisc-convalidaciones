@@ -1,7 +1,7 @@
 # Informe del corpus — Semana 4
 
-Relacionado con la issue #34. Resultados de Georgia Tech obtenidos el 3 de noviembre
-de 2026. Pendiente de incorporar UC3M y la comparación entre ambos catálogos.
+Relacionado con la issue #34. Resultados de ambos catálogos obtenidos el 3 de
+noviembre de 2026.
 
 ## Fuente y formato
 
@@ -58,31 +58,92 @@ La mediana indica que al menos la mitad de las descripciones tiene 23 palabras
 o menos. La limpieza no dejó vacía ninguna descripción originalmente no vacía;
 esto no sustituye la revisión de que se conserve el contenido académico.
 
+## Corpus UC3M
+
+El corpus UC3M se genera con
+`src/embeddings/generar_corpus_uc3m.py`. La consulta une `subjects` con
+`subject_plans` y filtra el plan piloto `456`, el curso `2026/2027` y la ficha
+en inglés (`EN`). Usa `DISTINCT` y la unicidad de la tabla para evitar
+duplicados. El texto sigue el formato:
+
+```text
+query: {nombre}. {objetivos}. {programa}
+```
+
+Los objetivos son opcionales; el programa se conserva aunque falten objetivos.
+Cada registro indica si los objetivos o el programa estaban vacíos. Las
+longitudes se cuentan con `split()` por separado para objetivos, programa y
+texto preparado, sin interpretarlas como tokens del modelo.
+
+Con la base real disponible, el corpus del plan piloto contiene 135
+asignaturas. Los resultados son:
+
+| Medida | Objetivos | Programa | Contenido preparado* |
+|---|---:|---:|---:|
+| Campos/fichas vacías | 19 objetivos | 12 programas | 12 ambos |
+| Mínimo | 0 | 0 | 0 |
+| Mediana | 103 | 95 | 240 |
+| Máximo | 654 | 603 | 849 |
+| De 1 a 9 palabras | — | — | 0 |
+
+*El contenido preparado es el texto completo menos el prefijo `query:` y el
+nombre de la asignatura. Por tanto, suma objetivos y programa después de la
+normalización. De las 12 fichas sin programa, las 12 tienen también los
+objetivos vacíos: hay 12 fichas con ambos campos vacíos y ninguna ficha con
+programa vacío pero objetivos presentes.
+
 ## Reproducción y comprobaciones
 
 Con la base local disponible, desde la carpeta principal del repositorio:
 
 ```powershell
 python -m src.embeddings.generar_corpus_destino
-python -m pytest tests/test_embedding_texts.py
+python -m src.embeddings.generar_corpus_uc3m
+python -m pytest tests/test_embedding_texts.py tests/test_embedding_corpus_uc3m.py
 ```
 
-Ahora prepararemos el generador para poder reutilizarlo desde otros archivos. 
-Actualmente se ejecuta entero en cuanto alguien lo importa; queremos que genere 
-el corpus solo cuando se lo pidamos.
+El generador UC3M falla explícitamente si no existe `data/processed/uc3m.sqlite`
+y abre la base en modo solo lectura. La base debe obtenerse mediante el flujo
+de datos del proyecto; este trabajo no la descarga ni la modifica.
 
-Las cinco pruebas ejecutadas durante la preparación cubren la eliminación
-de una referencia cruzada, la conservación de una descripción académica,
-los valores ausentes y la construcción del texto con y sin descripción.
-Las cinco pasaron.
+Los tests cubren la construcción de textos con ficha completa y sin objetivos,
+el filtrado de plan, curso e idioma, la ausencia de duplicados y las
+estadísticas de campos vacíos y longitudes.
 
-## Pendiente: UC3M y comparación
+## Comparación UC3M–Georgia Tech
 
-Falta incorporar el corpus del plan vigente del grado piloto, los recuentos
-de campos vacíos y las longitudes de objetivos y programa. La comparación
-deberá medir también los textos completos preparados de ambos catálogos
-con el mismo criterio de conteo.
+La comparación principal usa el mismo criterio en ambos corpus: palabras del
+texto preparado excluyendo `query:` y el nombre. Para completar la revisión
+también se cuenta el texto JSONL completo con esos elementos incluidos:
 
-Todavía no se ha cuantificado la diferencia de longitudes UC3M–Georgia Tech
-ni se han calculado embeddings. Este informe es parcial hasta completar
-esa comparación.
+| Medida | UC3M | Georgia Tech |
+|---|---:|---:|
+| Asignaturas | 135 | 2.414 |
+| Contenido vacío | 12 | 81 |
+| Contenido mínimo | 0 | 0 |
+| Mediana de contenido | 240 | 23 |
+| Contenido máximo | 849 | 105 |
+| Contenido de 1 a 9 palabras | 0 | 104 |
+| Texto completo mínimo | 2 | 3 |
+| Mediana de texto completo | 243 | 27 |
+| Texto completo máximo | 856 | 111 |
+
+El texto completo se ha calculado leyendo `corpus_uc3m.jsonl` y
+`corpus_gatech.jsonl` y aplicando `len(texto.split())`; no es un recuento de
+tokens. En Georgia Tech se ejecutó el generador existente sin modificarlo y
+se calculó después esta métrica adicional a partir del JSONL generado.
+
+La asimetría es considerable: la mediana del contenido UC3M (240 palabras) es
+aproximadamente 10,4 veces la de Georgia Tech (23 palabras), y el máximo es
+849 frente a 105. Georgia Tech ofrece descripciones breves de catálogo,
+mientras que la UC3M combina objetivos y programa de la guía docente. Además,
+el 4,3 % de las fichas UC3M no tiene programa (12 de 135), frente al 3,4 % de
+descripciones vacías en Georgia Tech (81 de 2.414); en ambos casos el nombre
+permite conservar un texto preparado no vacío.
+
+Esta diferencia puede reducir la similitud si se comparan directamente textos
+de granularidad distinta. Para la semana siguiente habrá que usar chunking y
+normalización L2, manteniendo el mismo criterio de campos en ambos lados.
+Los textos UC3M más largos pueden superar el límite de contexto elegido para
+cada chunk, por lo que habrá que comprobar que la media de chunks no diluya
+los conceptos importantes. No se calculan embeddings en esta tarea.

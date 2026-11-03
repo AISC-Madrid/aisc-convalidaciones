@@ -1,4 +1,8 @@
-from src.embeddings.texts import construir_texto_destino, limpiar_descripcion
+from src.embeddings.texts import (
+    construir_texto_destino,
+    construir_texto_uc3m,
+    limpiar_descripcion,
+)
 
 
 def test_elimina_referencia_cruzada():
@@ -22,6 +26,7 @@ def test_descripcion_ausente():
     assert limpiar_descripcion(None) == ""
     assert limpiar_descripcion("") == ""
 
+
 def test_texto_destino_con_descripcion():
     texto = construir_texto_destino(
         "Linear Elasticity",
@@ -35,3 +40,42 @@ def test_texto_destino_sin_descripcion():
     texto = construir_texto_destino("Special Topics", None)
 
     assert texto == "query: Special Topics"
+
+
+def test_texto_uc3m_con_ficha_completa():
+    texto = construir_texto_uc3m(
+        "Linear Algebra",
+        "Understand vector spaces.",
+        "Matrices. Linear transformations.",
+    )
+
+    assert texto == (
+        "query: Linear Algebra. Understand vector spaces. Matrices. "
+        "Linear transformations."
+    )
+
+
+def test_texto_uc3m_sin_objetivos():
+    texto = construir_texto_uc3m(
+        "Files and Databases",
+        None,
+        "Data models. Database systems.",
+    )
+
+    assert texto == "query: Files and Databases. Data models. Database systems."
+
+
+def test_texto_uc3m_normaliza_campos_vacios_y_espacios():
+    texto = construir_texto_uc3m("  Subject  ", "  ", "First\n\nsecond")
+
+    assert texto == "query: Subject. First second."
+
+
+def test_texto_uc3m_no_duplica_punto_del_nombre_y_los_campos():
+    texto = construir_texto_uc3m(
+        "Subject.",
+        "Objective.",
+        "Programme.",
+    )
+
+    assert texto == "query: Subject. Objective. Programme."
