@@ -30,7 +30,7 @@ python -m src.sync.datos publicar uc3m-AAAA-MM-DD   # tras un scraping nuevo: su
 Desde la raíz del repositorio:
 
 ```bash
-python -m src.scrapers.uc3m --anio 2026 --plan 456      # un grado (prueba, ~7 min)
+python -m src.scrapers.uc3m --anio 2026 --plan 522      # un grado: Biomédica, el piloto (~7 min)
 python -m src.scrapers.uc3m --anio 2026                 # todos los grados activos (horas)
 python -m src.scrapers.uc3m --anio 2025 2024 2023 --solo-en   # cursos del Excel histórico
 ```
@@ -157,8 +157,10 @@ HTML de `data/raw/uc3m/` se reutiliza y la recarga no vuelve a descargar nada.
 ```sql
 SELECT curso_academico, idioma, COUNT(*) FROM subjects GROUP BY 1, 2;
 SELECT COUNT(*) FROM subjects WHERE programa IS NULL;
-SELECT s.nombre FROM subjects s JOIN subject_plans p USING (codigo, curso_academico)
-WHERE p.plan = '456' AND s.idioma = 'ES';
+-- Asignaturas del grado piloto (Biomédica = estudio 257; planes 522 vigente y 419 anterior).
+-- Se filtra por subject_plans, no por subjects.estudio: ver referencia_tecnica.md §3.1.
+SELECT DISTINCT s.codigo, s.nombre FROM subjects s JOIN subject_plans p USING (codigo, curso_academico)
+WHERE p.estudio = '257' AND p.curso_academico = '2026/2027' AND s.idioma = 'ES';
 SELECT universidad, COUNT(*), SUM(ects IS NULL) AS sin_ects FROM dest_subjects GROUP BY 1; -- asignaturas por universidad y cuántas sin ECTS
 SELECT * FROM dest_subjects WHERE universidad = 'GATECH' AND codigo_norm = 'BMED2110';
 SELECT method, COUNT(*) FROM old_to_new GROUP BY 1; -- code, exact o NULL (pendiente)
