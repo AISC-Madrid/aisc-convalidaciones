@@ -18,30 +18,30 @@ Por encima del 50 %: la semana 5 puede calibrar sin corregir el enlace antes.
 
 ## Georgia Tech
 
-86/244 (35.2%)
+239/244 (98.0%)
 
-158 de 158 no enlazadas tienen un prefijo que no está en el catálogo enlazado (BIOL, BIOS, BMED, MATH, ME, MSE, PHIL).
+0 de 5 no enlazadas tienen un prefijo que no está en el catálogo. Todas tienen su departamento cargado, pero el código no está en el catálogo 2026-27 y ningún nombre se parece. El motivo de cada una está en `docs/enlace_pendiente.md`.
 
 ## Por grado
 
 Grados con al menos 20 pares enlazados, el mínimo para
-un umbral propio en la fase 2: 1 de 13.
+un umbral propio en la fase 2: 4 de 13.
 
 | Grado | Enlazadas | Total | Tasa | Umbral propio |
 |---|---|---|---|---|
+| Doble Grado en Ingeniería Física e Ingeniería en Tecnologías Industriales | 42 | 42 | 42/42 (100.0%) | sí |
 | Grado en Ingeniería Biomédica | 39 | 39 | 39/39 (100.0%) | sí |
-| Doble Grado en Ingeniería Física e Ingeniería en Tecnologías Industriales | 16 | 42 | 16/42 (38.1%) | no |
-| Grado en Ingeniería Física | 10 | 36 | 10/36 (27.8%) | no |
-| Grado en Ingeniería en Tecnologías Industriales | 5 | 14 | 5/14 (35.7%) | no |
-| Grado en Matemática Aplicada y Computación | 5 | 11 | 5/11 (45.5%) | no |
-| Grado en Matemáticas y Computación | 4 | 10 | 4/10 (40.0%) | no |
-| Grado en Ingeniería de la Energía | 3 | 12 | 3/12 (25.0%) | no |
-| Grado en Ingeniería Aeroespacial | 2 | 16 | 2/16 (12.5%) | no |
-| Grado en Ingeniería Robótica | 2 | 14 | 2/14 (14.3%) | no |
-| Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación | 0 | 12 | 0/12 (0.0%) | no |
-| Doble Grado en Ingeniería Informática y Administración de Empresas | 0 | 9 | 0/9 (0.0%) | no |
-| Grado en Ingeniería Informática | 0 | 21 | 0/21 (0.0%) | no |
-| Grado en Ingeniería Telemática | 0 | 8 | 0/8 (0.0%) | no |
+| Grado en Ingeniería Física | 34 | 36 | 34/36 (94.4%) | sí |
+| Grado en Ingeniería Informática | 20 | 21 | 20/21 (95.2%) | sí |
+| Grado en Ingeniería Aeroespacial | 16 | 16 | 16/16 (100.0%) | no |
+| Grado en Ingeniería Robótica | 14 | 14 | 14/14 (100.0%) | no |
+| Grado en Ingeniería en Tecnologías Industriales | 14 | 14 | 14/14 (100.0%) | no |
+| Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación | 12 | 12 | 12/12 (100.0%) | no |
+| Grado en Ingeniería de la Energía | 12 | 12 | 12/12 (100.0%) | no |
+| Grado en Matemática Aplicada y Computación | 10 | 11 | 10/11 (90.9%) | no |
+| Doble Grado en Ingeniería Informática y Administración de Empresas | 9 | 9 | 9/9 (100.0%) | no |
+| Grado en Matemáticas y Computación | 9 | 10 | 9/10 (90.0%) | no |
+| Grado en Ingeniería Telemática | 8 | 8 | 8/8 (100.0%) | no |
 
 ## Tabla de calibración
 
@@ -102,12 +102,12 @@ La lectura está en `notebooks/02_enlace_gatech.ipynb`.
 | id | Grado | Código histórico | Nombre histórico | Código catálogo | Nombre catálogo | Método |
 |---|---|---|---|---|---|---|
 | 6533 | Grado en Ingeniería Biomédica | BIOS7210 | Computational Genomics | BIOL 7210 | Computational Genomics | alias |
-| 2725 | Grado en Ingeniería Física | PHYS3141 | Thermodynamics | ME 3322 | Thermodynamics | name |
-| 6523 | Doble Grado en Ingeniería Física e Ingeniería en Tecnologías Industriales | PHYS3141 | Thermodynamics | ME 3322 | Thermodynamics | name |
-| 6553 | Grado en Ingeniería Física | PHYS4782 | Quantum Information and Quantum Computing | MATH 4782 | Quantum Information and Quantum Computing | name |
+| 2662 | Grado en Ingeniería Aeroespacial | AE4699ROM | Undergraduate Research | AE 4699 | Undergraduate Research | alias |
+| 6544 | Grado en Ingeniería Física | PHYS3211 | Electronics I | PHYS 3209 | Electronics I | name |
 | 9529 | Grado en Ingeniería Física | BMED3250 | Biomedical systems and modeling | BMED 3520 | Biomedical Systems and Modeling | name |
 | 2677 | Grado en Ingeniería Biomédica | BMED3100 | Systems Physiology | BMED 3100 | Systems Physiology | code |
 | 2678 | Grado en Ingeniería Biomédica | BIOS3755 | Human Physiology | BIOS 3755 | Human Physiology | code |
 | 2679 | Grado en Ingeniería Biomédica | BMED3211 | Introduction to Bioinformatics | BMED 3211 | Introduction to Bioinformatics | code |
 | 2680 | Grado en Ingeniería Biomédica | MSE2001 | Prin&Appl-Engr Materials | MSE 2001 | Principles and Applications of Engineering Materials | code |
 | 2681 | Grado en Ingeniería Biomédica | BMED3310 | Biotransport | BMED 3310 | Biotransport | code |
+| 2682 | Grado en Ingeniería Biomédica | BMED4739 | Medical Robotics | BMED 4739 | Medical Robotics | code |

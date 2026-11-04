@@ -96,15 +96,41 @@ def test_la_tabla_solo_guarda_el_piloto_reconciliado_y_enlazado():
 
 
 def test_la_muestra_antepone_alias_y_nombre():
-    filas = [fila(id=i, link_method="code") for i in range(1, 12)]
-    filas.append(fila(id=20, link_method="alias", grado="Otro grado"))
-    filas.append(fila(id=21, link_method="name"))
+    filas = [
+        fila(id=i, link_method="code", destino_codigo=f"CS{i}", catalogo_codigo=f"CS {i}")
+        for i in range(1, 12)
+    ]
+    filas.append(
+        fila(id=20, link_method="alias", grado="Otro grado", destino_codigo="AE4699ROM")
+    )
+    filas.append(fila(id=21, link_method="name", destino_codigo="PHYS3211"))
 
     muestra = muestra_enlaces(filas)
 
     assert [fila.link_method for fila in muestra[:2]] == ["alias", "name"]
     assert len(muestra) == 10
     assert muestra[0].id == 20
+
+
+def test_la_muestra_no_repite_el_mismo_enlace_de_varios_grados():
+    filas = [
+        fila(id=1, link_method="alias", destino_codigo="AE4699ROM", catalogo_codigo="AE 4699"),
+        fila(id=2, link_method="alias", destino_codigo="AE 4699ROM", catalogo_codigo="AE 4699"),
+        fila(id=3, link_method="code", destino_codigo="CS1332", catalogo_codigo="CS 1332"),
+    ]
+
+    assert [fila.id for fila in muestra_enlaces(filas)] == [1, 3]
+
+
+def test_el_informe_nombra_los_prefijos_que_faltan_en_el_catalogo():
+    filas = (
+        fila(id=1),
+        fila(id=2, link_method="unlinked", dest_subject_id=None, destino_codigo="ECE2020"),
+    )
+
+    assert "1 de 1 no enlazadas tienen un prefijo que no está en el catálogo (ECE)" in informe(
+        filas
+    )
 
 
 def test_el_informe_anota_las_tres_tasas_y_avisa_por_debajo_del_50():

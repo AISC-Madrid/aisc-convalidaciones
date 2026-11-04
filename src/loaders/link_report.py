@@ -190,7 +190,10 @@ def sin_reconciliar(filas: Iterable[FilaEnlace]) -> tuple[FilaEnlace, ...]:
 
 
 def muestra_enlaces(filas: Iterable[FilaEnlace], n: int = 10) -> tuple[FilaEnlace, ...]:
-    """Hasta `n` enlaces, con los alias y los de nombre delante de los de código."""
+    """Hasta `n` enlaces distintos, con los alias y los de nombre delante de los de código.
+
+    Un mismo par código histórico → catálogo sale una vez aunque se repita en varios grados.
+    """
     enlazadas = [fila for fila in filas if es_enlazada(fila)]
 
     def coger(metodo: str) -> list[FilaEnlace]:
@@ -198,7 +201,13 @@ def muestra_enlaces(filas: Iterable[FilaEnlace], n: int = 10) -> tuple[FilaEnlac
         grupo.sort(key=lambda fila: (not es_piloto(fila), fila.id))
         return grupo
 
-    elegidas = coger("alias") + coger("name") + coger("code")
+    vistos: set[tuple[str, str | None]] = set()
+    elegidas = []
+    for fila in coger("alias") + coger("name") + coger("code"):
+        clave = (fila.destino_codigo.replace(" ", "").upper(), fila.catalogo_codigo)
+        if clave not in vistos:
+            vistos.add(clave)
+            elegidas.append(fila)
     return tuple(elegidas[:n])
 
 
@@ -231,10 +240,18 @@ def fuera_de_catalogo(filas: Iterable[FilaEnlace]) -> tuple[int, int]:
 def _frase_cobertura(filas: tuple[FilaEnlace, ...]) -> str:
     """Explica cuántas no enlazadas caen fuera de los departamentos cargados."""
     fuera, no_enlazadas = fuera_de_catalogo(filas)
-    presentes = ", ".join(prefijos_catalogo(filas)) or "ninguno"
+    presentes = set(prefijos_catalogo(filas))
+    ausentes = sorted(
+        {prefijo(fila.destino_codigo) for fila in filas if not es_enlazada(fila)} - presentes
+    )
+    frase = f"{fuera} de {no_enlazadas} no enlazadas tienen un prefijo que no está en el catálogo"
+    if ausentes:
+        frase += f" ({', '.join(ausentes)})"
+    resto = "Todas tienen" if fuera == 0 else "El resto tiene"
     return (
-        f"{fuera} de {no_enlazadas} no enlazadas tienen un prefijo que no está "
-        f"en el catálogo enlazado ({presentes})."
+        f"{frase}. {resto} su departamento cargado, pero el código no está en el "
+        "catálogo 2026-27 y ningún nombre se parece. El motivo de cada una está en "
+        "`docs/enlace_pendiente.md`."
     )
 
 
