@@ -170,6 +170,45 @@ def test_crear_tabla_anade_codigo_norm_a_una_tabla_antigua():
     conexion.close()
 
 
+def test_departamento_que_falla_no_para_el_resto(monkeypatch, tmp_path, capsys):
+    import sqlite3
+
+    import requests
+
+    from src.scrapers import destination
+
+    db = tmp_path / "prueba.sqlite"
+    sqlite3.connect(db).close()  # crea el fichero de BD vacío
+
+    def falla_cs(prefijo, cfg):
+        if prefijo == "CS":
+            raise requests.HTTPError("404")
+        return ""  # página sin asignaturas
+
+    monkeypatch.setattr(destination, "descargar_departamento", falla_cs)
+    fallidos = destination.ejecutar("gatech", db)
+
+    salida = capsys.readouterr().out
+    assert fallidos == ["CS"]
+    assert "CS: ERROR al descargar" in salida
+    assert "BMED: 0 asignaturas" in salida  # los demás departamentos siguen
+    assert "Departamentos sin descargar: CS" in salida
+
+
+def test_main_termina_con_error_si_falta_algun_departamento(monkeypatch, tmp_path):
+    import sys
+
+    import pytest
+
+    from src.scrapers import destination
+
+    monkeypatch.setattr(destination, "ejecutar", lambda uni, db: ["CS", "ECE"])
+    monkeypatch.setattr(sys, "argv", ["destination", "--uni", "gatech", "--db", str(tmp_path)])
+
+    with pytest.raises(SystemExit, match="faltan CS, ECE"):
+        destination.main()
+
+
 # --- descargas ---
 
 

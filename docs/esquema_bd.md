@@ -32,7 +32,7 @@ Desde la raíz del repositorio:
 ```bash
 python -m src.scrapers.uc3m --anio 2026 --plan 522      # un grado: Biomédica, el piloto (~7 min)
 python -m src.scrapers.uc3m --anio 2026                 # todos los grados activos (horas)
-python -m src.scrapers.uc3m --anio 2025 2024 2023 --solo-en   # cursos del Excel histórico
+python -m src.scrapers.uc3m --anio 2024 2025 2026 --solo-en   # cursos del Excel histórico
 ```
 
 Opciones: `--plan` (uno o varios planes), `--limite N` (máximo de asignaturas, para pruebas),
