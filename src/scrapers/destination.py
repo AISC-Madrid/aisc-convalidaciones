@@ -171,8 +171,12 @@ def guardar(con: sqlite3.Connection, asignaturas: list[dict], cfg: dict) -> None
         con.executemany(SQL_UPSERT, filas)
 
 
-def ejecutar(uni: str, db_path: Path) -> None:
-    """Descarga, lee y guarda todos los departamentos del YAML de <uni>."""
+def ejecutar(uni: str, db_path: Path) -> list[str]:
+    """Descarga, lee y guarda todos los departamentos del YAML de <uni>.
+
+    Si un departamento no se puede descargar, sigue con el resto y lo devuelve en la lista
+    de fallidos, para que `main` termine con error y no se publique un catálogo incompleto.
+    """
     cfg = cargar_config(uni)
     if not db_path.exists():
         raise SystemExit(
@@ -182,11 +186,13 @@ def ejecutar(uni: str, db_path: Path) -> None:
     try:
         crear_tabla(con)
         total = 0
+        fallidos = []
         for prefijo in cfg["departments"]:
             try:
                 html = descargar_departamento(prefijo, cfg)
             except requests.HTTPError as e:
                 print(f"{prefijo}: ERROR al descargar ({e}), lo salto")
+                fallidos.append(prefijo)
                 continue
             asignaturas, fallos = parse_catalog(html, cfg)
             guardar(con, asignaturas, cfg)
@@ -195,8 +201,11 @@ def ejecutar(uni: str, db_path: Path) -> None:
             for f in fallos:
                 print("    no se pudo leer:", f)
         print(f"Total: {total} asignaturas guardadas en {db_path}")
+        if fallidos:
+            print(f"Departamentos sin descargar: {', '.join(fallidos)}")
     finally:
         con.close()
+    return fallidos
 
 
 def main() -> None:
@@ -208,7 +217,12 @@ def main() -> None:
     )
     parser.add_argument("--db", type=Path, default=DB_POR_DEFECTO, help="ruta de la BD SQLite")
     args = parser.parse_args()
-    ejecutar(args.uni, args.db)
+    fallidos = ejecutar(args.uni, args.db)
+    if fallidos:
+        raise SystemExit(
+            f"Catálogo incompleto: faltan {', '.join(fallidos)}. "
+            "Vuelve a ejecutarlo (la caché no repite lo ya descargado) antes de publicar la BD."
+        )
 
 
 if __name__ == "__main__":
