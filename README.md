@@ -63,6 +63,33 @@ tests/           pytest; fixtures en tests/fixtures/
 notebooks/       EDA, reconciliación, benchmark, calibración
 ```
 
+## Despliegue de la web
+
+La web (Streamlit) está entera en `web/`, con un `Dockerfile` que la construye y la arranca.
+
+| Dato | Valor |
+|---|---|
+| Ruta (base directory en Coolify) | `/web` |
+| Puerto | `8501` |
+| Variables de entorno | Ninguna |
+| Base de datos | Montar el SQLite del catálogo en `/data/uc3m.sqlite` (solo lectura) |
+
+- Un push a la rama del webhook vuelve a desplegar.
+- La base de datos **no** va en git ni en la imagen, porque contiene los temarios. Si no está montada, la web arranca igual y la pantalla Catálogo muestra un aviso.
+- Los resultados se leen de `web/ejemplo.json`, que sí va en la imagen.
+- No hace falta ninguna API key, usuario ni contraseña.
+
+### Probar en local
+
+```bash
+docker build -t aisc-web web/
+docker run --rm -p 8501:8501 \
+  -v "$(pwd)/data/processed/uc3m.sqlite:/data/uc3m.sqlite:ro" \
+  aisc-web
+```
+
+Y abrir http://localhost:8501.
+
 ## Reglas cortas
 
 - Una tarea = una rama = una Pull Request con la CI en verde, que revisa Fran o la pareja que toque.
@@ -73,3 +100,4 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 Setup personal: Víctor Negueruela — Python 3.11 instalado, pytest y Ruff pasan.
 Setup personal: Ángela (@angelacea) — completado.
 Setup perosnal: ALejandra (kalejandra-dev) - completado. 
+

@@ -1,4 +1,4 @@
-"""Generación de propuestas de convalidación en PDF."""
+"""Generación de propuestas de convalidación en PDF para la aplicación web."""
 
 from collections.abc import Sequence
 from datetime import date
@@ -8,11 +8,9 @@ from typing import TypedDict
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-
-from src.ui.seleccion import calcular_ects, obtener_propuesta
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
 
 
 class DatosAlumno(TypedDict):
@@ -21,12 +19,21 @@ class DatosAlumno(TypedDict):
     universidad: str
 
 
+def calcular_ects(resultados):
+    """Suma créditos sin duplicar asignaturas dentro de una propuesta."""
+    origen = {}
+    destino = {}
+    for resultado in resultados:
+        origen[resultado["origen"]["codigo"]] = resultado["origen"]["ects"]
+        destino[resultado["destino"]["codigo"]] = resultado["destino"]["ects"]
+    return sum(origen.values()), sum(destino.values())
+
+
 def _texto_asignaturas(propuesta: Sequence[dict], lado: str) -> Paragraph:
     asignaturas = {}
     for resultado in propuesta:
         asignatura = resultado[lado]
         asignaturas[asignatura["codigo"]] = asignatura
-
     lineas = [
         f"{escape(asignatura['nombre'])} ({escape(asignatura['codigo'])})"
         for asignatura in asignaturas.values()
@@ -46,15 +53,19 @@ def _etiqueta(propuesta: Sequence[dict]) -> str:
 def _propuestas_seleccionadas(convalidaciones: Sequence[dict]) -> list[list[dict]]:
     propuestas = []
     grupos_vistos = set()
-
-    for indice, resultado in enumerate(convalidaciones):
+    for resultado in convalidaciones:
         grupo = resultado.get("grupo")
         if grupo is None:
             propuestas.append([resultado])
         elif grupo not in grupos_vistos:
-            propuestas.append(obtener_propuesta(convalidaciones, indice))
+            propuestas.append(
+                [
+                    fila
+                    for fila in convalidaciones
+                    if fila.get("grupo") == grupo
+                ]
+            )
             grupos_vistos.add(grupo)
-
     return propuestas
 
 
@@ -62,7 +73,7 @@ def generar_pdf(
     datos_alumno: DatosAlumno,
     convalidaciones_seleccionadas: Sequence[dict],
 ) -> bytes:
-    """Genera una propuesta en PDF a partir de los datos del alumno y filas seleccionadas."""
+    """Genera un PDF a partir del alumno y las propuestas seleccionadas."""
     buffer = BytesIO()
     documento = SimpleDocTemplate(
         buffer,
@@ -74,6 +85,9 @@ def generar_pdf(
         title="Propuesta de convalidación",
     )
     estilos = getSampleStyleSheet()
+    estilo_cabecera = ParagraphStyle(
+        "Cabecera", parent=estilos["BodyText"], textColor=colors.white
+    )
     contenido = [
         Paragraph("Propuesta de convalidación", estilos["Title"]),
         Paragraph(f"<b>Alumno:</b> {escape(datos_alumno['nombre'])}", estilos["BodyText"]),
@@ -84,17 +98,15 @@ def generar_pdf(
         ),
         Paragraph(f"<b>Fecha:</b> {date.today():%d/%m/%Y}", estilos["BodyText"]),
     ]
-
     encabezado = [
-        Paragraph("<b>Asignaturas UC3M</b>", estilos["BodyText"]),
-        Paragraph("<b>ECTS UC3M</b>", estilos["BodyText"]),
-        Paragraph("<b>Asignaturas destino</b>", estilos["BodyText"]),
-        Paragraph("<b>ECTS destino</b>", estilos["BodyText"]),
-        Paragraph("<b>Etiqueta</b>", estilos["BodyText"]),
+        Paragraph("<b>Asignaturas UC3M</b>", estilo_cabecera),
+        Paragraph("<b>ECTS UC3M</b>", estilo_cabecera),
+        Paragraph("<b>Asignaturas destino</b>", estilo_cabecera),
+        Paragraph("<b>ECTS destino</b>", estilo_cabecera),
+        Paragraph("<b>Etiqueta</b>", estilo_cabecera),
     ]
     filas = [encabezado]
     propuestas = _propuestas_seleccionadas(convalidaciones_seleccionadas)
-
     for propuesta in propuestas:
         ects_origen, ects_destino = calcular_ects(propuesta)
         filas.append(
@@ -130,12 +142,7 @@ def generar_pdf(
             ]
         )
     )
-    contenido.extend([Spacer(1, 0.6 * cm), tabla, Spacer(1, 0.4 * cm)])
-
-    if not propuestas:
-        contenido.append(
-            Paragraph("No hay asignaturas seleccionadas.", estilos["BodyText"])
-        )
+    contenido.append(tabla)
 
     ects_origen, ects_destino = calcular_ects(convalidaciones_seleccionadas)
     contenido.extend(
