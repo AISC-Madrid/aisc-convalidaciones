@@ -7,10 +7,16 @@ from statistics import median
 from src.embeddings.texts import construir_texto_destino, limpiar_descripcion
 
 
-def main() -> None:
+def generar_corpus(
+    ruta_bd: str | Path = "data/processed/uc3m.sqlite",
+    ruta_salida: str | Path = "data/processed/corpus_gatech.jsonl",
+) -> Path:
+    """Genera el corpus de Georgia Tech y devuelve la ruta del JSONL."""
+    ruta_bd = Path(ruta_bd).resolve()
+    ruta_salida = Path(ruta_salida)
 
-    ruta_bd = Path("data/processed/uc3m.sqlite").resolve()
-    ruta_salida = Path("data/processed/corpus_gatech.jsonl")
+    if not ruta_bd.is_file():
+        raise FileNotFoundError(f"No existe la base de datos: {ruta_bd}")
 
     with closing(sqlite3.connect(f"{ruta_bd.as_uri()}?mode=ro", uri=True)) as conexion:
         filas = conexion.execute(
@@ -21,6 +27,11 @@ def main() -> None:
             ORDER BY codigo, id
             """
         ).fetchall()
+
+    if not filas:
+        raise ValueError("No hay asignaturas de Georgia Tech para generar el corpus.")
+
+    ruta_salida.parent.mkdir(parents=True, exist_ok=True)
 
     sin_descripcion = 0
 
@@ -43,7 +54,6 @@ def main() -> None:
     print(f"Archivo generado: {ruta_salida}")
     print(f"Asignaturas exportadas: {len(filas)}")
     print(f"Sin descripción original: {sin_descripcion}")
-
 
     longitudes = []
     descripciones_cortas = []
@@ -72,6 +82,14 @@ def main() -> None:
         "Descripciones que quedaron vacías por la limpieza: "
         f"{vacias_tras_limpieza - sin_descripcion}"
     )
+
+    return ruta_salida
+
+
+def main() -> None:
+    """Ejecuta la generación con las rutas predeterminadas."""
+    generar_corpus()
+
 
 if __name__ == "__main__":
     main()

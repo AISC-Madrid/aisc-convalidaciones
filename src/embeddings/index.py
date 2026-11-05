@@ -22,7 +22,7 @@ def buscar_top_k(consulta, vectores, k: int = 5):
     if not np.isfinite(consulta).all() or not np.isfinite(vectores).all():
         raise ValueError("Los vectores deben contener números finitos.")
 
-    if isinstance(k, bool) or not isinstance(k, int) or k < 1:
+    if isinstance(k, (bool, np.bool_)) or not isinstance(k, (int, np.integer)) or k < 1:
         raise ValueError("k debe ser un entero positivo.")
 
     puntuaciones = vectores @ consulta

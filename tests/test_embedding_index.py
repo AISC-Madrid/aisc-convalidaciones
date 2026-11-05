@@ -17,6 +17,7 @@ def test_top_k_devuelve_los_vectores_correctos_en_orden():
     assert posiciones.tolist() == [2, 1]
     np.testing.assert_allclose(puntuaciones, [1.0, 0.8])
 
+
 def test_k_mayor_que_catalogo_devuelve_todos():
     posiciones, puntuaciones = buscar_top_k(
         consulta=[1, 0],
@@ -45,3 +46,14 @@ def test_rechaza_k_invalido(k):
             vectores=[[1, 0]],
             k=k,
         )
+
+
+def test_acepta_k_entero_numpy():
+    posiciones, puntuaciones = buscar_top_k(
+        consulta=[1, 0],
+        vectores=[[0, 1], [1, 0]],
+        k=np.int64(1),
+    )
+
+    assert posiciones.tolist() == [1]
+    np.testing.assert_allclose(puntuaciones, [1.0])

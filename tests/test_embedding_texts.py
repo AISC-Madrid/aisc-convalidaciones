@@ -6,14 +6,9 @@ from src.embeddings.texts import (
 
 
 def test_elimina_referencia_cruzada():
-    descripcion = (
-        "Physical realizations and experiments. "
-        "Crosslisted with PHYS 4782 ."
-    )
+    descripcion = "Physical realizations and experiments. Crosslisted with PHYS 4782 ."
 
-    assert limpiar_descripcion(descripcion) == (
-        "Physical realizations and experiments."
-    )
+    assert limpiar_descripcion(descripcion) == ("Physical realizations and experiments.")
 
 
 def test_conserva_contenido_academico():
@@ -39,7 +34,7 @@ def test_texto_destino_con_descripcion():
 def test_texto_destino_sin_descripcion():
     texto = construir_texto_destino("Special Topics", None)
 
-    assert texto == "query: Special Topics"
+    assert texto == "query: Special Topics."
 
 
 def test_texto_uc3m_con_ficha_completa():
@@ -50,8 +45,7 @@ def test_texto_uc3m_con_ficha_completa():
     )
 
     assert texto == (
-        "query: Linear Algebra. Understand vector spaces. Matrices. "
-        "Linear transformations."
+        "query: Linear Algebra. Understand vector spaces. Matrices. Linear transformations."
     )
 
 
@@ -79,3 +73,15 @@ def test_texto_uc3m_no_duplica_punto_del_nombre_y_los_campos():
     )
 
     assert texto == "query: Subject. Objective. Programme."
+
+
+def test_texto_destino_anade_punto_final():
+    texto = construir_texto_destino("Mechanics", "Stress and strain")
+
+    assert texto == "query: Mechanics. Stress and strain."
+
+
+def test_texto_destino_no_duplica_punto_del_nombre():
+    texto = construir_texto_destino("Mechanics.", "Stress and strain.")
+
+    assert texto == "query: Mechanics. Stress and strain."

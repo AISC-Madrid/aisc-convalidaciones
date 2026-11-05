@@ -33,14 +33,16 @@ def construir_texto_uc3m(
 
     return texto if texto.endswith(".") else f"{texto}."
 
+
 def construir_texto_destino(nombre: str, descripcion: str | None) -> str:
-    """Combina el nombre y la descripción limpia para el modelo."""
+    """Combina nombre y descripción limpia, con punto final."""
     nombre_limpio = nombre.strip()
     descripcion_limpia = limpiar_descripcion(descripcion)
 
-    partes = [nombre_limpio]
+    texto = f"query: {nombre_limpio}"
 
     if descripcion_limpia:
-        partes.append(descripcion_limpia)
+        separador = " " if texto.endswith(".") else ". "
+        texto += f"{separador}{descripcion_limpia}"
 
-    return f"query: {'. '.join(partes)}" 
+    return texto if texto.endswith(".") else f"{texto}."
