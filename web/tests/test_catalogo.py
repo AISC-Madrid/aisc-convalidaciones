@@ -1,7 +1,7 @@
 """Tests del catálogo: búsqueda, filtro, duplicados y BD ausente.
 
 No usan la BD real (no está en git): cada test crea un SQLite pequeño
-con el mismo esquema en una carpeta temporal `tmp_path`, que pytest borra solo al terminar.
+con el mismo esquema en una carpeta temporal.
 """
 import sqlite3
 import sys
@@ -22,28 +22,56 @@ def ruta_bd(tmp_path):
             codigo TEXT, nombre TEXT, estudio TEXT, curso_academico TEXT,
             creditos REAL, objetivos TEXT, programa TEXT, idioma TEXT, url TEXT
         );
+        CREATE TABLE subject_plans (
+            codigo TEXT, plan TEXT, estudio TEXT, curso_academico TEXT
+        );
         CREATE TABLE dest_subjects (
             id INTEGER PRIMARY KEY, universidad TEXT, codigo TEXT,
             codigo_norm TEXT, nombre TEXT, descripcion TEXT, ects REAL
         );
         INSERT INTO subjects VALUES
-            ('19903', 'Biomecánica',  '257', '2025/2026', 6, 'obj', 'prog', 'ES', 'ficha-vieja'),
-            ('19903', 'Biomechanics', '257', '2026/2027', 6, 'obj', 'prog', 'EN', 'ficha-en'),
-            ('19903', 'Biomecánica',  '257', '2026/2027', 6, 'obj', 'prog', 'ES', 'ficha-buena'),
-            ('15526', 'Cálculo I',    '257', '2026/2027', 6, 'obj', 'prog', 'ES', 'ficha-calculo'),
-            ('99999', 'De otro grado', '999', '2026/2027', 6, 'obj', 'prog', 'ES', 'otra');
-        INSERT INTO dest_subjects (universidad, codigo, nombre, descripcion, ects) VALUES
-            ('GATECH', 'BMED 2110', 'Conservation Principles in Biomedical Engineering', 'desc', 6),
-            ('OTRA',   'XXX 1000',  'De otra universidad', 'desc', 6);
+            ('19903', 'Biomecánica', '257', '2025/2026', 6,
+             'obj', 'prog', 'ES', 'ficha-vieja'),
+            ('19903', 'Biomechanics', '257', '2026/2027', 6,
+             'obj', 'prog', 'EN', 'ficha-en'),
+            ('19903', 'Biomecánica', '257', '2026/2027', 6,
+             'obj', 'prog', 'ES', 'ficha-buena'),
+            ('15526', 'Cálculo I', '257', '2026/2027', 6,
+             'obj', 'prog', 'ES', 'ficha-calculo'),
+            ('99999', 'De otro grado', '999', '2026/2027', 6,
+             'obj', 'prog', 'ES', 'otra'),
+            ('14528', 'Habilidades Profesionales', '999', '2026/2027', 6,
+             'obj', 'prog', 'ES', 'ficha-compartida'),
+            ('11111', 'Antigua de Biomédica', '257', '2023/2024', 6,
+             'obj', 'prog', 'ES', 'ficha-antigua');
+        INSERT INTO subject_plans VALUES
+            ('19903', '522', '257', '2026/2027'),
+            ('15526', '522', '257', '2026/2027'),
+            ('14528', '522', '257', '2026/2027'),
+            ('14528', '600', '999', '2026/2027'),
+            ('99999', '600', '999', '2026/2027'),
+            ('11111', '419', '257', '2023/2024');
+        INSERT INTO dest_subjects (universidad, codigo, nombre, descripcion, ects)
+        VALUES
+            ('GATECH', 'BMED 2110',
+             'Conservation Principles in Biomedical Engineering', 'desc', 6),
+            ('OTRA', 'XXX 1000', 'De otra universidad', 'desc', 6);
     """)
     con.commit()
     con.close()
     return ruta
 
 
-def test_solo_biomedica_y_gatech(ruta_bd):
+def test_solo_biomedica_del_curso_actual_y_gatech(ruta_bd):
     codigos = {a["codigo"] for a in catalogo.cargar_catalogo(ruta_bd)}
-    assert codigos == {"19903", "15526", "BMED 2110"}
+    assert codigos == {"19903", "15526", "14528", "BMED 2110"}
+
+
+def test_incluye_asignaturas_compartidas_con_otro_grado(ruta_bd):
+    cat = catalogo.cargar_catalogo(ruta_bd)
+    compartida = [a for a in cat if a["codigo"] == "14528"]
+    assert len(compartida) == 1
+    assert compartida[0]["nombre"] == "Habilidades Profesionales"
 
 
 def test_sin_duplicados_y_version_mas_reciente_en_espanol(ruta_bd):

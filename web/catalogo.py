@@ -14,6 +14,7 @@ import streamlit as st
 RUTA_BD = Path(os.environ.get("AISC_DB", "/data/uc3m.sqlite"))
 
 ESTUDIO_BIOMEDICA = "257"
+CURSO_ACTUAL = "2026/2027"
 UNIVERSIDAD_DESTINO = "GATECH"
 
 UC3M = "UC3M · Ingeniería Biomédica"
@@ -34,13 +35,19 @@ def conectar(ruta=RUTA_BD):
 _SQL_UC3M = """
 SELECT codigo, nombre, creditos, url
 FROM (
-    SELECT codigo, nombre, creditos, url,
+    SELECT s.codigo, s.nombre, s.creditos, s.url,
            ROW_NUMBER() OVER (
-               PARTITION BY codigo
-               ORDER BY curso_academico DESC, (idioma = 'ES') DESC
+               PARTITION BY s.codigo
+               ORDER BY (s.curso_academico = :curso) DESC,
+                        s.curso_academico DESC,
+                        (s.idioma = 'ES') DESC
            ) AS n
-    FROM subjects
-    WHERE estudio = ?
+    FROM subjects AS s
+    WHERE s.codigo IN (
+        SELECT codigo
+        FROM subject_plans
+        WHERE estudio = :estudio AND curso_academico = :curso
+    )
 )
 WHERE n = 1
 """
@@ -59,7 +66,9 @@ def url_gatech(codigo):
 def cargar_catalogo(ruta=RUTA_BD):
     con = conectar(ruta)
     try:
-        uc3m = con.execute(_SQL_UC3M, (ESTUDIO_BIOMEDICA,)).fetchall()
+        uc3m = con.execute(
+            _SQL_UC3M, {"estudio": ESTUDIO_BIOMEDICA, "curso": CURSO_ACTUAL}
+        ).fetchall()
         gatech = con.execute(_SQL_GATECH, (UNIVERSIDAD_DESTINO,)).fetchall()
     except sqlite3.Error as e:
         raise BDNoDisponible(f"No se puede leer la base de datos: {e}") from e
@@ -70,7 +79,13 @@ def cargar_catalogo(ruta=RUTA_BD):
         {"universidad": UC3M, "codigo": c, "nombre": n, "ects": e, "url": u}
         for c, n, e, u in uc3m
     ] + [
-        {"universidad": GATECH, "codigo": c, "nombre": n, "ects": e, "url": url_gatech(c)}
+        {
+            "universidad": GATECH,
+            "codigo": c,
+            "nombre": n,
+            "ects": e,
+            "url": url_gatech(c),
+        }
         for c, n, e in gatech
     ]
     return sorted(asignaturas, key=lambda a: (a["universidad"], a["nombre"] or ""))
