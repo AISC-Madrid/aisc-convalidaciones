@@ -8,10 +8,10 @@ from typing import TypedDict
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+
 
 class DatosAlumno(TypedDict):
     nombre: str
