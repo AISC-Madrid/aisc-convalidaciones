@@ -74,3 +74,12 @@ def test_no_descarga_sin_nombre():
 
 def test_descarga_con_seleccion_y_nombre():
     assert resultados.motivo_no_descarga([SO], "Ana") is None
+
+
+def test_clave_bloque_no_depende_de_la_posicion():
+    bloques = resultados.agrupar(FILAS)
+    claves = {resultados.clave_bloque(b) for b in bloques}
+    filtrados = resultados.filtrar(bloques, "redes")
+    assert resultados.clave_bloque(filtrados[0]) == "18215->CS 3251"
+    assert resultados.clave_bloque([CALC_1, CALC_2]) == "grupo-1"
+    assert len(claves) == len(bloques)

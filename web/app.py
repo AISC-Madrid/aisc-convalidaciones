@@ -11,6 +11,7 @@ import resultados
 import streamlit as st
 
 RUTA_EJEMPLO = Path(__file__).with_name("ejemplo.json")
+SELECCION = "propuestas_seleccionadas"
 ETIQUETAS = {
     "PRECEDENTE_APROBADO": "Precedente aprobado",
     "SUGERENCIA_IA": "Sugerencia IA",
@@ -144,8 +145,12 @@ def _pagina_resultados(ruta_json):
     bloques = preparar_bloques(datos["resultados"], texto, filtro)
     if not bloques:
         st.info("No hay propuestas que coincidan con la búsqueda y el filtro.")
-        return
+    else:
+        _tabla_resultados(bloques)
+    _seleccion_y_pdf(datos, bloques)
 
+
+def _tabla_resultados(bloques):
     st.dataframe(
         [_fila_tabla(bloque) for bloque in bloques],
         hide_index=True,
@@ -162,18 +167,39 @@ def _pagina_resultados(ruta_json):
         "La similitud no indica la probabilidad de aprobación."
     )
 
+
+def _seleccion_y_pdf(datos, bloques):
     st.subheader("Selecciona tus propuestas")
-    seleccion = []
-    for indice, bloque in enumerate(bloques):
+    # La selección se guarda por clave (no por posición) y fuera de los checkbox,
+    # para que no cambie de propuesta al buscar ni se pierda si el filtro la oculta.
+    seleccionadas = st.session_state.setdefault(SELECCION, set())
+    for bloque in bloques:
         fila = _fila_tabla(bloque)
         etiqueta = (
             f"{fila['Asignaturas UC3M'].replace(chr(10), ', ')} → "
             f"{fila['Asignaturas destino'].replace(chr(10), ', ')}"
         )
-        clave = bloque[0].grupo
-        key = f"propuesta_grupo_{clave}" if clave is not None else f"propuesta_fila_{indice}"
-        if st.checkbox(etiqueta, key=key):
-            seleccion.extend(fila.fila_original for fila in bloque)
+        clave = resultados.clave_bloque(bloque)
+        if st.checkbox(etiqueta, key=f"propuesta_{clave}", value=clave in seleccionadas):
+            seleccionadas.add(clave)
+        else:
+            seleccionadas.discard(clave)
+
+    todos = preparar_bloques(datos["resultados"])
+    seleccion = [
+        fila.fila_original
+        for bloque in todos
+        if resultados.clave_bloque(bloque) in seleccionadas
+        for fila in bloque
+    ]
+    ocultas = len(seleccionadas) - sum(
+        resultados.clave_bloque(bloque) in seleccionadas for bloque in bloques
+    )
+    if ocultas:
+        st.caption(
+            f"Tienes {ocultas} propuesta(s) seleccionada(s) que el filtro oculta; "
+            "siguen incluidas en el PDF."
+        )
 
     ects_origen, ects_destino = pdf.calcular_ects(seleccion)
     columna_origen, columna_destino = st.columns(2)

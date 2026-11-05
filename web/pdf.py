@@ -11,7 +11,7 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
-
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
 class DatosAlumno(TypedDict):
     nombre: str
@@ -85,6 +85,9 @@ def generar_pdf(
         title="Propuesta de convalidación",
     )
     estilos = getSampleStyleSheet()
+    estilo_cabecera = ParagraphStyle(
+        "Cabecera", parent=estilos["BodyText"], textColor=colors.white
+    )
     contenido = [
         Paragraph("Propuesta de convalidación", estilos["Title"]),
         Paragraph(f"<b>Alumno:</b> {escape(datos_alumno['nombre'])}", estilos["BodyText"]),
@@ -96,11 +99,11 @@ def generar_pdf(
         Paragraph(f"<b>Fecha:</b> {date.today():%d/%m/%Y}", estilos["BodyText"]),
     ]
     encabezado = [
-        Paragraph("<b>Asignaturas UC3M</b>", estilos["BodyText"]),
-        Paragraph("<b>ECTS UC3M</b>", estilos["BodyText"]),
-        Paragraph("<b>Asignaturas destino</b>", estilos["BodyText"]),
-        Paragraph("<b>ECTS destino</b>", estilos["BodyText"]),
-        Paragraph("<b>Etiqueta</b>", estilos["BodyText"]),
+        Paragraph("<b>Asignaturas UC3M</b>", estilo_cabecera),
+        Paragraph("<b>ECTS UC3M</b>", estilo_cabecera),
+        Paragraph("<b>Asignaturas destino</b>", estilo_cabecera),
+        Paragraph("<b>ECTS destino</b>", estilo_cabecera),
+        Paragraph("<b>Etiqueta</b>", estilo_cabecera),
     ]
     filas = [encabezado]
     propuestas = _propuestas_seleccionadas(convalidaciones_seleccionadas)

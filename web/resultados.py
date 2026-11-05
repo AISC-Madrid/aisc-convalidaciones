@@ -1,4 +1,4 @@
-"""Lógica de la pantalla de resultados (sin Streamlit).
+"""Lógica de la pantalla de resultados, sin Streamlit.
 
 Trabaja con «bloques»: cada grupo n:m es un bloque con todas sus filas y
 cada propuesta 1:1 es un bloque de una fila. Así un grupo nunca se separa
@@ -22,6 +22,18 @@ def agrupar(resultados):
             por_grupo[m.grupo] = [m]
             bloques.append(por_grupo[m.grupo])
     return bloques
+
+
+def clave_bloque(bloque):
+    """Identificador estable de una propuesta, que no depende de su posición en la lista.
+
+    Un grupo n:m se identifica por su número de grupo; una propuesta 1:1, por el
+    código de origen y el de destino.
+    """
+    primera = bloque[0]
+    if primera.grupo is not None:
+        return f"grupo-{primera.grupo}"
+    return f"{primera.origen.codigo}->{primera.destino.codigo}"
 
 
 def es_precedente(bloque):
