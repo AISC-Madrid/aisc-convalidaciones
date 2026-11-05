@@ -135,6 +135,56 @@ def test_curso_anterior_solo_en_y_sin_ficha(tmp_path):
     assert _filas(db, "SELECT idioma FROM descargas") == [("EN",)]
 
 
+def test_cursos_coexisten_y_conservan_el_catalogo_destino(tmp_path):
+    db = tmp_path / "uc3m.sqlite"
+    with sqlite3.connect(db) as connection:
+        connection.execute("CREATE TABLE dest_subjects (codigo TEXT, descripcion TEXT)")
+        connection.execute("INSERT INTO dest_subjects VALUES ('CS 1332', 'Contenido destino')")
+
+    for anio in (2024, 2026, 2024):
+        cargar_curso(anio, ClienteFalso(), db, planes=[900], solo_en=True)
+
+    assert _filas(db, "SELECT * FROM dest_subjects") == [("CS 1332", "Contenido destino")]
+    assert _filas(
+        db,
+        "SELECT curso_academico, idioma FROM subjects "
+        "WHERE codigo='10001' ORDER BY curso_academico",
+    ) == [("2024/2025", "ES"), ("2026/2027", "EN")]
+
+
+def test_solo_en_no_descarga_es_si_hay_programa(tmp_path):
+    cliente = ClienteFalso()
+    cargar_curso(2026, cliente, tmp_path / "uc3m.sqlite", planes=[900], solo_en=True)
+    assert (10001, 2026, "EN") in cliente.descargas
+    assert (10001, 2026, "ES") not in cliente.descargas
+    assert (10003, 2026, "ES") in cliente.descargas
+
+
+def test_solo_en_recurre_a_es_si_la_ficha_inglesa_no_tiene_programa(tmp_path):
+    class ClienteSinPrograma(ClienteFalso):
+        def descargar_ficha(self, est, plan, asig, anio, idioma):
+            html = super().descargar_ficha(est, plan, asig, anio, idioma)
+            if idioma == "EN":
+                # Una ficha válida pero sin sección de programa también necesita respaldo.
+                from bs4 import BeautifulSoup
+
+                soup = BeautifulSoup(html, "html.parser")
+                for panel in soup.select("div.panel.apartado"):
+                    heading = panel.select_one(".panel-heading")
+                    if heading and "programme" in heading.get_text().lower():
+                        panel.decompose()
+                return str(soup).encode("utf-8")
+            return html
+
+    cliente = ClienteSinPrograma()
+    db = tmp_path / "uc3m.sqlite"
+    cargar_curso(2026, cliente, db, planes=[900], solo_en=True)
+    assert (10001, 2026, "ES") in cliente.descargas
+    assert _filas(
+        db, "SELECT programa FROM subjects WHERE codigo='10001' AND idioma='ES'"
+    )[0][0]
+
+
 def test_si_fallan_todas_las_descargas_el_plan_queda_fallido(tmp_path):
     db = tmp_path / "uc3m.sqlite"
 

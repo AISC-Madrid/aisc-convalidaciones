@@ -44,12 +44,26 @@ La línea paralela de Erasmus queda descartada para no dispersar al equipo mient
 - Guías docentes en `aplicaciones.uc3m.es/cpa`: HTML estático, versiones ES y EN, con histórico por curso académico desde 2006.
 - Formato único para todas las asignaturas; se refresca en cada curso académico.
 
+#### Piloto: códigos que hay que usar
+
+El piloto es **Grado en Ingeniería Biomédica × Georgia Tech** (`docs/candidatas.md`). En la BD:
+
+| Qué | Valor | Notas |
+|---|---|---|
+| Estudio UC3M (`est`) | **`257`** | Lo que identifica el grado. Usarlo para filtrar |
+| Plan vigente | **`522`** | 129 asignaturas en 2026/2027 |
+| Plan anterior | `419` | Sigue con fichas en 2026/2027 (75, 73 compartidas con el 522) |
+| Universidad destino | `GATECH` | `dest_subjects.universidad` y `config/scrapers/gatech.yaml` |
+
+- Las asignaturas del grado se sacan de **`subject_plans`** (`estudio = '257' AND curso_academico = '2026/2027'`): 131 asignaturas entre los dos planes. **No** se filtra por `subjects.estudio`, porque guarda el estudio del plan con el que se descargó la ficha. Las asignaturas compartidas (Humanidades, transversales, `14528` Habilidades Profesionales…) tienen ahí otro estudio, y se perderían.
+- **El plan `456` no es el piloto.** Es el *Doble Grado Ciencia e Ingeniería de Datos - Ingeniería en Tecnologías de Telecomunicación* (estudio `371`). Aparece en este documento y en `esquema_bd.md` solo porque se usó para comprobar el scraper.
+
 ### 3.2. Históricos oficiales MNE
 - Página oficial: https://www.uc3m.es/secretaria-virtual/convocatoria-movilidad-no-europea
 - EPS: https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-eps/asignaturas_eps.xls
 - CCSSJJ: https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-ccssjj/asignaturas_ccssjj.xls
 - Humanidades: https://www.uc3m.es/secretaria-virtual/media/secretaria-virtual/doc/archivo/doc_mne_listado-de-asignaturas-reconocidas-en-mne-fachcd/asignaturas_hcd.xls
-- Cursos 2023-24 a 2025-26, **~14.700 filas brutas** (con duplicados entre cursos). Solo 2025-26 tiene 5.198 equivalencias de 25 países, 111 universidades y 41 titulaciones; 2.494 son de la EPS.
+- Cursos 2024-25 a 2026-27, **14.522 filas brutas** (con duplicados entre cursos; XLS comprobados el 26/10/2026): 4.991 de 2024-25, 5.198 de 2025-26 y 4.333 de 2026-27. Solo 2025-26 tiene 5.198 equivalencias de 25 países, 111 universidades y 41 titulaciones; 2.494 son de la EPS.
 - Campos: país, universidad, titulación, código y nombre UC3M, ECTS, curso, tipo, y código y nombre de la asignatura destino.
 - La UC3M avisa de que son **orientativas y no vinculantes**.
 - Los `.xls` son formato Excel 97: `pandas.read_excel` necesita `xlrd`.
@@ -150,7 +164,7 @@ Comprobado sobre fichas reales (Álgebra Lineal 15363 y un curso de Humanidades 
 |---|---|---|
 | `/cpa/findAnos.ajax` | — | Cursos disponibles (2006 → 2026) |
 | `/cpa/findPlanes.ajax` | — | ~386 planes (318 activos), con `codigo` (plan) y `estudio.codigo` (est) |
-| `/cpa/findAsignaturas.ajax` | `codPlan`, `ano` | Código y nombre de cada asignatura del plan (p. ej. 135 en el plan 456). **Sin** tipo, créditos ni curso: esos datos salen de la ficha |
+| `/cpa/findAsignaturas.ajax` | `codPlan`, `ano` | Código y nombre de cada asignatura del plan (p. ej. 135 en el plan 456, el doble grado de Datos y Teleco, que no es el piloto). **Sin** tipo, créditos ni curso: esos datos salen de la ficha |
 
 **Ficha**: `GET /cpa/generaFicha?est={est}&plan={plan}&asig={asig}&anio={año}&idioma={1=ES|2=EN}`. Es HTML estático renderizado en servidor (~14-20 KB), **en UTF-8** (algunos acentos vienen como entidades HTML, p. ej. `&Aacute;`): basta con `requests` + `BeautifulSoup4`, sin Playwright. Hay que pedirla con un `plan`/`est` que contenga la asignatura ese curso (los que devuelve `findAsignaturas`): con otro plan, la web devuelve una página vacía de ~2,8 KB sin código, que el parser rechaza y la carga cuenta como `sin_ficha`.
 
@@ -180,7 +194,7 @@ Comprobado sobre fichas reales (Álgebra Lineal 15363 y un curso de Humanidades 
 - Se scrapea **EN (`idioma=2`) y ES**, y se embebe la versión EN cuando exista. Si la EN viene vacía, se usa la ES.
 - El código `asig` se **comparte entre planes** (p. ej. 13881 aparece en varios dobles grados): se deduplica por `asig`.
 - **Parámetro `anio`**: da la ficha de cualquier curso desde 2006. Permite obtener el temario de la asignatura UC3M **del año en que se aprobó cada fila del XLS** (Pasos 2 y 4).
-- **Volumen y cortesía**: `robots.txt` no restringe `/cpa/`. Para el grado piloto son ~135 asignaturas × 2 idiomas ≈ 270 peticiones, unos 7 minutos a 1,5 s por petición y ~5 MB de caché. Todos los grados, deduplicando por `asig`, suman unos pocos miles de peticiones: una ejecución nocturna en GitHub Actions.
+- **Volumen y cortesía**: `robots.txt` no restringe `/cpa/`. Para un grado son ~130 asignaturas (131 en Biomédica, el piloto) × 2 idiomas ≈ 270 peticiones, unos 7 minutos a 1,5 s por petición y ~5 MB de caché. Todos los grados, deduplicando por `asig`, suman unos pocos miles de peticiones: una ejecución nocturna en GitHub Actions.
 - **Detección de cambios**: primero se compara la fecha de "Última actualización"; si ha cambiado, se calcula el hash SHA-256 del texto extraído (no del HTML en bruto).
 - **Longitud real**: Objetivos (~850 caracteres) + Programa (~1.400-1.700) ≈ 600-700 tokens, **por encima de 512**: hace falta trocear (Paso 3).
 
@@ -314,6 +328,8 @@ Como el espacio de consultas es finito (grado × universidad), **no hace falta c
 | Frontend MVP | Streamlit que lee los JSON; desplegado en **Streamlit Community Cloud** (gratis, desde un repo de GitHub) | 0 € |
 | PDF | `reportlab` dentro de la app de Streamlit (en Windows no necesita dependencias nativas, a diferencia de `weasyprint`) | 0 € |
 | Frontend Fase 3 | Web estática (HTML/JS) en **GitHub Pages** o en la web de AISC, leyendo los mismos JSON; PDF en el navegador (`window.print()` con CSS de impresión) | 0 € |
+
+El generador `src.ui.pdf.generar_pdf(datos_alumno, convalidaciones_seleccionadas)` devuelve el documento en bytes. `datos_alumno` contiene `nombre`, `grado` y `universidad`; las convalidaciones son las filas seleccionadas del campo `resultados` del JSON y pueden obtenerse con `src.ui.seleccion.obtener_seleccion`.
 
 Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo valida `src.models.Resultados` y hay un ejemplo en `public/data/ejemplo.json`):
 
@@ -471,7 +487,7 @@ Lo único que haría falta pagar es lo que queda fuera a propósito: una API con
 
 ## 10. Preguntas abiertas
 
-- **¿Qué grado y universidad piloto?** Se decide con el EDA del Bloque A según el criterio "pares históricos × catálogo accesible".
+- ~~**¿Qué grado y universidad piloto?**~~ Resuelto: Ingeniería Biomédica (estudio `257`, plan vigente `522`) × Georgia Tech (`GATECH`). Ver `docs/candidatas.md` y §3.1.
 - **Factor de conversión de créditos del destino**: confirmarlo con la Oficina de Relaciones Internacionales (ORI) de la UC3M o con la universidad destino.
 - **¿Repo público o privado?** Público da Actions ilimitado y encaja con una asociación, pero **no se deben publicar los temarios scrapeados** (tienen derechos de sus autores): el repo y los JSON solo llevan nombres, códigos, créditos, scores y enlaces a la fuente. La caché HTML queda en local (`.gitignore`).
 - **Hosting de la Fase 3**: preguntar a AISC qué hosting tiene su web y si admite páginas estáticas.

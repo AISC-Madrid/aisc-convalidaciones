@@ -4,7 +4,7 @@ Ejecutar desde la raíz del repositorio:
 
     python -m src.scrapers.uc3m                      # crea la BD y descarga el curso actual
     python -m src.scrapers.uc3m --anio 2026 --plan 456
-    python -m src.scrapers.uc3m --anio 2025 2024 2023 --solo-en
+    python -m src.scrapers.uc3m --anio 2024 2025 2026 --solo-en
 """
 
 import argparse

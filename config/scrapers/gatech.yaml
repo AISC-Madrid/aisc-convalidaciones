@@ -4,8 +4,9 @@ country: USA
 catalog_edition: "2026-2027"
 catalog_url: https://catalog.gatech.edu/coursesaz/{prefix}/
 
-# Prefijos de los 50 pares Georgia Tech × Biomédica del histórico (01_eda_historical.ipynb, sección 6)
-departments: [BMED, BIOS, ME, MSE, PHIL, MATH, BIOL]
+# Prefijos de los 276 pares de Georgia Tech del histórico, de todos los grados
+# (notebooks/01_eda_historical.ipynb, sección 7)
+departments: [BMED, BIOS, ME, MSE, PHIL, MATH, BIOL, AE, CEE, COE, CS, EAS, ECE, ECON, HTS, ISYE, MGT, PHYS]
 render: static                 # comprobado: el HTML trae las asignaturas sin JavaScript
 
 selectors:                     # comprobados con DevTools en /coursesaz/bmed/ (19/10/2026)

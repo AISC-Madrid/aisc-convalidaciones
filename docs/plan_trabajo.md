@@ -156,7 +156,8 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 - Pista: usa la tabla `subjects` de 1B. Ángela trae los códigos del histórico y Fran esa tabla. Empieza contando cuántos códigos del histórico existen tal cual en el plan vigente.
 
 **3B · Alejandra + Víctor. Fichas antiguas + destino terminado**
-- Entregable: (1) el scraper de 1B con el parámetro `anio`: fichas de los cursos **2025-26, 2024-25 y 2023-24** (los del Excel) en la tabla `subjects` con su curso académico, solo en EN (ES si la EN viene vacía), con caché; (2) el scraper del destino completo: todo el catálogo relevante en `dest_subjects`.
+- Entregable: (1) el scraper de 1B con el parámetro `anio`: fichas de los cursos **2024-25, 2025-26 y 2026-27** (los del Excel) en la tabla `subjects` con su curso académico, solo en EN (ES si la EN viene vacía), con caché; (2) el scraper del destino completo: todo el catálogo relevante en `dest_subjects`.
+- Aclaración de cursos (26/10/2026): los tres XLS oficiales enlazados en la referencia técnica tienen hojas `2024-2025`, `2025-2026` y `2026-2027`, con 4.991, 5.198 y 4.333 filas respectivamente entre los tres archivos. La issue #24 conserva el intervalo anterior, 2023-24 a 2025-26; se usa aquí el intervalo comprobado en los datos, también recogido en el notebook EDA.
 - Hecho cuando: los tres cursos anteriores están en la BD; el catálogo del destino está completo y 10 asignaturas más comprobadas a mano coinciden.
 - Aprendes: a extender tu propio código; a dejar correr descargas largas con caché.
 - Pista: Alejandra termina el destino (lo empezó en la Semana 2) y Víctor extiende el scraper UC3M con `anio`. Lanzad las descargas el lunes.
