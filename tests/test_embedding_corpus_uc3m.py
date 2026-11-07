@@ -12,6 +12,7 @@ def _crear_bd(ruta):
                 codigo TEXT NOT NULL,
                 nombre TEXT,
                 plan TEXT,
+                estudio TEXT,
                 curso_academico TEXT NOT NULL,
                 objetivos TEXT,
                 programa TEXT,
@@ -22,6 +23,7 @@ def _crear_bd(ruta):
             CREATE TABLE subject_plans (
                 codigo TEXT NOT NULL,
                 plan TEXT NOT NULL,
+                estudio TEXT,
                 curso_academico TEXT NOT NULL
             );
             """
@@ -29,14 +31,18 @@ def _crear_bd(ruta):
         conexion.executemany(
             """
             INSERT INTO subjects
-                (codigo, nombre, plan, curso_academico, objetivos, programa, idioma, tipo, url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (
+                    codigo, nombre, plan, estudio, curso_academico,
+                    objetivos, programa, idioma, tipo, url
+                )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 (
                     "10001",
                     "Linear Algebra",
-                    "456",
+                    "522",
+                    "257",
                     "2026/2027",
                     "Understand vector spaces.",
                     "Matrices and transformations.",
@@ -47,7 +53,8 @@ def _crear_bd(ruta):
                 (
                     "10002",
                     "Files and Databases",
-                    "456",
+                    "522",
+                    "257",
                     "2026/2027",
                     None,
                     "Data models and database systems.",
@@ -58,7 +65,8 @@ def _crear_bd(ruta):
                 (
                     "10004",
                     "Subject with objectives only",
-                    "456",
+                    "419",
+                    "257",
                     "2026/2027",
                     "Understand the topic.",
                     None,
@@ -70,6 +78,7 @@ def _crear_bd(ruta):
                     "10001",
                     "Álgebra Lineal",
                     "456",
+                    "371",
                     "2026/2027",
                     "Objetivos",
                     "Programa",
@@ -77,22 +86,31 @@ def _crear_bd(ruta):
                     "FB",
                     None,
                 ),
-                ("10003", "Other subject", "456", "2025/2026", "Other", "Other", "EN", "OP", None),
+                (
+                    "10003", "Other subject", "456", "257", "2025/2026",
+                    "Other", "Other", "EN", "OP", None
+                ),
+                (
+                    "10005", "Wrong degree", "419", "371", "2026/2027",
+                    "Other degree", "Other degree", "EN", "OP", None
+                ),
             ],
         )
         conexion.executemany(
-            "INSERT INTO subject_plans VALUES (?, ?, ?)",
+            "INSERT INTO subject_plans VALUES (?, ?, ?, ?)",
             [
-                ("10001", "456", "2026/2027"),
-                ("10002", "456", "2026/2027"),
-                ("10001", "456", "2026/2027"),
-                ("10004", "456", "2026/2027"),
-                ("10003", "456", "2025/2026"),
+                ("10001", "522", "257", "2026/2027"),
+                ("10002", "522", "257", "2026/2027"),
+                ("10001", "419", "257", "2026/2027"),
+                ("10004", "419", "257", "2026/2027"),
+                ("10003", "522", "257", "2025/2026"),
+                ("10002", "419", "371", "2026/2027"),
+                ("10005", "419", "371", "2026/2027"),
             ],
         )
 
 
-def test_genera_corpus_filtrando_plan_curso_idioma_y_sin_duplicados(tmp_path):
+def test_genera_corpus_filtrando_estudio_planes_curso_idioma_y_sin_duplicados(tmp_path):
     database_path = tmp_path / "uc3m.sqlite"
     output_path = tmp_path / "corpus_uc3m.jsonl"
     _crear_bd(database_path)
@@ -101,6 +119,8 @@ def test_genera_corpus_filtrando_plan_curso_idioma_y_sin_duplicados(tmp_path):
     registros = [json.loads(linea) for linea in ruta.read_text(encoding="utf-8").splitlines()]
 
     assert [registro["codigo"] for registro in registros] == ["10001", "10002", "10004"]
+    assert len({registro["codigo"] for registro in registros}) == len(registros)
+    assert {registro["plan"] for registro in registros} == {"522", "419"}
     assert registros[1]["texto"] == (
         "query: Files and Databases. Data models and database systems."
     )
