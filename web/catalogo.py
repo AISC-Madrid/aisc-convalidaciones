@@ -4,14 +4,14 @@ Solo expone código, nombre, ECTS y enlace. Los temarios (objetivos,
 programa, descripción) se quedan en la BD: los usa el modelo, no el alumno.
 """
 import os
-import sqlite3
 import unicodedata
-from pathlib import Path
 from urllib.parse import quote
 
+import pymysql
 import streamlit as st
 
-RUTA_BD = Path(os.environ.get("AISC_DB", "/data/uc3m.sqlite"))
+# Se conserva como argumento de compatibilidad con app.py y el caché de Streamlit.
+RUTA_BD = None
 
 ESTUDIO_BIOMEDICA = "257"
 CURSO_ACTUAL = "2026/2027"
@@ -26,10 +26,25 @@ class BDNoDisponible(Exception):
 
 
 def conectar(ruta=RUTA_BD):
-    ruta = Path(ruta)
-    if not ruta.is_file():
-        raise BDNoDisponible(f"No se encuentra la base de datos en {ruta}")
-    return sqlite3.connect(f"file:{ruta}?mode=ro", uri=True)
+    """Abre la MySQL del servidor usando las variables MYSQL_* del entorno."""
+    del ruta  # La ruta SQLite anterior ya no se utiliza.
+    requeridas = ("MYSQL_HOST", "MYSQL_DATABASE", "MYSQL_USER", "MYSQL_PASSWORD")
+    faltantes = [nombre for nombre in requeridas if not os.environ.get(nombre)]
+    if faltantes:
+        raise BDNoDisponible(f"Falta configurar: {', '.join(faltantes)}")
+    try:
+        return pymysql.connect(
+            host=os.environ["MYSQL_HOST"],
+            port=int(os.environ.get("MYSQL_PORT", "3306")),
+            database=os.environ["MYSQL_DATABASE"],
+            user=os.environ["MYSQL_USER"],
+            password=os.environ["MYSQL_PASSWORD"],
+            connect_timeout=5,
+            read_timeout=10,
+            write_timeout=10,
+        )
+    except (pymysql.MySQLError, ValueError) as e:
+        raise BDNoDisponible(f"No se puede conectar a la base de datos: {e}") from e
 
 
 _SQL_UC3M = """
@@ -46,7 +61,7 @@ FROM (
     WHERE s.codigo IN (
         SELECT codigo
         FROM subject_plans
-        WHERE estudio = :estudio AND curso_academico = :curso
+        WHERE estudio = %(estudio)s AND curso_academico = %(curso)s
     )
 )
 WHERE n = 1
@@ -55,7 +70,7 @@ WHERE n = 1
 _SQL_GATECH = """
 SELECT codigo, nombre, ects
 FROM dest_subjects
-WHERE universidad = ?
+WHERE universidad = %s
 """
 
 
@@ -66,11 +81,14 @@ def url_gatech(codigo):
 def cargar_catalogo(ruta=RUTA_BD):
     con = conectar(ruta)
     try:
-        uc3m = con.execute(
-            _SQL_UC3M, {"estudio": ESTUDIO_BIOMEDICA, "curso": CURSO_ACTUAL}
-        ).fetchall()
-        gatech = con.execute(_SQL_GATECH, (UNIVERSIDAD_DESTINO,)).fetchall()
-    except sqlite3.Error as e:
+        with con.cursor() as cursor:
+            cursor.execute(
+                _SQL_UC3M, {"estudio": ESTUDIO_BIOMEDICA, "curso": CURSO_ACTUAL}
+            )
+            uc3m = cursor.fetchall()
+            cursor.execute(_SQL_GATECH, (UNIVERSIDAD_DESTINO,))
+            gatech = cursor.fetchall()
+    except pymysql.MySQLError as e:
         raise BDNoDisponible(f"No se puede leer la base de datos: {e}") from e
     finally:
         con.close()
