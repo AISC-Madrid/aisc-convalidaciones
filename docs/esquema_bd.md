@@ -144,6 +144,23 @@ el código, pero el nombre normalizado coincide con un único código vigente en
 NULL están listados en `docs/reconciliacion_pendiente.md`. `embedding` y `manual` quedan para la
 semana 6.
 
+### `historical_matches` — columnas del enlace con el catálogo de destino
+
+Vive en `data/processed/historico.sqlite`. `python -m src.loaders.link_catalog` añade estas columnas,
+las rellena para las filas de Georgia Tech y escribe `docs/enlace_pendiente.md`. Se puede relanzar.
+Recargar el histórico rehace la tabla, así que después hay que volver a enlazar.
+
+| Columna | Tipo | Uso |
+|---|---|---|
+| `dest_subject_id` | `INTEGER` | `dest_subjects.id` de la asignatura. NULL si no se enlazó |
+| `link_method` | `TEXT` | `code`, `alias`, `name` o `unlinked`. NULL en las filas de otras universidades |
+
+`code`: el código coincide con `codigo_norm`. `alias`: coincide tras corregir una errata conocida
+(`AE4699ROM` → `AE4699`, `BIOS7210` → `BIOL7210`). `name`: el nombre normalizado supera 90 en
+`fuzz.ratio` con una única asignatura y el ordinal final es el mismo (`PHYSICS I` no es `PHYSICS II`).
+Un nombre con varios candidatos queda `unlinked`: en el catálogo hay 285 nombres repetidos, muchos de
+grado y máster (`ECE4100` y `ECE6100`).
+
 ## Migración desde el esquema anterior
 
 Si `data/processed/uc3m.sqlite` se creó con el esquema de la PR #14 (columna `código` con tilde) o
