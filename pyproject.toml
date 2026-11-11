@@ -47,5 +47,5 @@ extend-exclude = ["notebooks", "data", "public", "_privado"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "web/tests"]
 addopts = "-q"

@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+
+# La base de datos lleva temarios: la monta Barroso, nunca va en la imagen
+*.db
+*.sqlite
+*.sqlite3
+
+# Secretos
+.env
