@@ -63,7 +63,7 @@ FROM (
         FROM subject_plans
         WHERE estudio = %(estudio)s AND curso_academico = %(curso)s
     )
-)
+) AS catalogo_uc3m
 WHERE n = 1
 """
 
