@@ -139,7 +139,8 @@ flowchart TD
 
 | Componente | Dónde vive | Tamaño estimado |
 |---|---|---|
-| SQLite (asignaturas + histórico) | Local / artefacto de Actions | < 50 MB |
+| SQLite (asignaturas + histórico) | Local (`data/processed/`) | < 50 MB |
+| MySQL con el catálogo (copia de los SQLite) | Servidor (Coolify), ver abajo | ~33 MB de SQL |
 | Embeddings (10K × 384 × float32) | Local / artefacto de Actions | ~15 MB |
 | Caché HTML de scraping | Solo local (no se sube al repo) | ~200 MB |
 | Modelo `multilingual-e5-small` | Caché local / caché de Actions | ~470 MB |
@@ -147,6 +148,43 @@ flowchart TD
 | **JSON publicados (lo único en producción)** | Repo / GitHub Pages | **< 10 MB** en el MVP |
 
 Las dependencias Python (`torch` CPU ronda 1 GB instalado) solo van en las máquinas que ejecutan el pipeline, no en producción.
+
+### Base de datos del servidor (MySQL)
+
+El catálogo ya no se reparte por los Releases del repo privado: vive en una MySQL del servidor (Coolify), con phpMyAdmin al lado. Las variables de conexión son las `MYSQL_*` de `.env.example` (los secretos, nunca en el repo). La web de `web/` todavía no la usa: lee un `uc3m.sqlite` montado en `/data` (ver `README.md`). La MySQL solo es accesible dentro del servidor salvo que se active "Make it publicly available" en Coolify.
+
+**Cómo llegan los datos.** El pipeline sigue escribiendo SQLite en `data/processed/` (`uc3m.sqlite` e `historico.sqlite`). Para pasarlos a la MySQL:
+
+| Comando | Qué hace | Cuándo |
+|---|---|---|
+| `python -m src.sync.volcar_mysql exportar` | Escribe `data/processed/convalidaciones-1.sql.gz`, `-2`… (no se suben al repo), cada uno por debajo del límite de 8 MB de phpMyAdmin | Siempre funciona; luego se importan **en orden** en phpMyAdmin → `convalidaciones_db` → **Importar** |
+| `python -m src.sync.volcar_mysql subir` | Conecta con las variables `MYSQL_*` y vuelca sin fichero | Solo si la MySQL es alcanzable desde donde se ejecuta |
+
+Los dos **borran y recrean** cada tabla (`subjects`, `subject_plans`, `descargas`, `dest_subjects`, `old_to_new`, `historical_matches`). La parte 1 empieza por las tablas del principio y las siguientes continúan donde lo dejó la anterior: importar una sola deja tablas a medias.
+
+**Dónde está la verdad de cada dato.**
+
+- **Datos que produce el pipeline** (las seis tablas de arriba): la fuente es el pipeline. Una corrección se hace en el código o en sus entradas y se vuelve a exportar. Si se edita a mano en phpMyAdmin, se pierde en la siguiente importación.
+- **Datos que crean personas** (correcciones manuales, aprobaciones del tutor, propuestas guardadas): van en tablas propias que el volcado no toca. Ahí la MySQL es la copia buena y se edita directamente (phpMyAdmin o `UPDATE`/`INSERT`).
+
+**Acceso del equipo.** Nadie usa la contraseña de administración ni la de la aplicación: cada persona tiene su propio usuario MySQL con los permisos justos, creado en phpMyAdmin (**Cuentas de usuarios → Agregar cuenta de usuario**) o con SQL:
+
+```sql
+-- Solo lectura
+CREATE USER 'nombre'@'%' IDENTIFIED BY '<contraseña larga>';
+GRANT SELECT ON convalidaciones_db.* TO 'nombre'@'%';
+
+-- Lectura y edición de filas (sin borrar tablas ni gestionar usuarios)
+GRANT SELECT, INSERT, UPDATE, DELETE ON convalidaciones_db.* TO 'nombre'@'%';
+
+-- Quitar el acceso
+DROP USER 'nombre'@'%';
+```
+
+- **Ver o editar datos**: entrar en phpMyAdmin con su usuario. No hace falta nada más.
+- **Desde código o un cliente (DBeaver, VS Code…)**: la MySQL tiene que estar publicada en Coolify. Con el puerto abierto, contraseñas largas y un usuario por persona.
+- El usuario de la web (`convalidaciones_user`) solo necesita `SELECT`.
+- phpMyAdmin debe servirse por `https://` (dominio con `https://` en Coolify): por `http://` las contraseñas viajan sin cifrar.
 
 ---
 
