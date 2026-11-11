@@ -62,6 +62,7 @@ def test_catalogo_consulta_uc3m_y_gatech_y_cierra_conexion(conexion):
     assert consulta_uc3m[1] == {"estudio": "257", "curso": "2026/2027"}
     assert "%(estudio)s" in consulta_uc3m[0]
     assert "%(curso)s" in consulta_uc3m[0]
+    assert ":curso" not in consulta_uc3m[0]
     assert consulta_gatech[1] == ("GATECH",)
     assert "%s" in consulta_gatech[0]
     assert conexion.cerrada

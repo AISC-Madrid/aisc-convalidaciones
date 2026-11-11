@@ -53,7 +53,7 @@ FROM (
     SELECT s.codigo, s.nombre, s.creditos, s.url,
            ROW_NUMBER() OVER (
                PARTITION BY s.codigo
-               ORDER BY (s.curso_academico = :curso) DESC,
+               ORDER BY (s.curso_academico = %(curso)s) DESC,
                         s.curso_academico DESC,
                         (s.idioma = 'ES') DESC
            ) AS n
