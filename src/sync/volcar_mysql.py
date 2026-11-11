@@ -2,29 +2,40 @@
 
 El pipeline de los portátiles sigue escribiendo SQLite. Este comando solo se
 ejecuta donde la MySQL es alcanzable (el mismo servidor que phpMyAdmin): baja
-el último ``uc3m.sqlite`` a un directorio temporal y recrea allí sus tablas.
-Si ``historico.sqlite`` está al lado de esa copia, o en ``data/processed/``,
-también se vuelca. La caché HTML no entra.
+el último ``uc3m.sqlite`` y ``historico.sqlite`` a un directorio temporal y recrea
+sus tablas. Si el release no trae el histórico, falla en vez de dejar la MySQL sin
+los pares aprobados. La caché HTML no entra.
 
 Uso, con las variables MYSQL_* ya definidas:
 
     python -m src.sync.volcar_mysql
 """
 
+import argparse
+import gzip
 import logging
 import re
 import sqlite3
-import tempfile
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import closing
 from pathlib import Path
 
+from pymysql.converters import escape_item
+
 from src.db.lectura import ConfiguracionMysqlError, conectar, configuracion
-from src.sync.datos import RAIZ, descargar
+
+RAIZ = Path(__file__).resolve().parents[2]
+PROCESADOS = RAIZ / "data" / "processed"
+SQLITE_LOCALES = ("uc3m.sqlite", "historico.sqlite")
+SALIDA_SQL = PROCESADOS / "convalidaciones.sql.gz"
+LOTE_SQL = 100  # filas por INSERT del fichero: los temarios son largos
+# phpMyAdmin admite 8 MB por fichero; 20 MB de SQL comprimen a ~5 MB.
+MAX_BYTES_PARTE = 20 * 2**20
 
 logger = logging.getLogger(__name__)
 
 LOTE = 500
+PAQUETES_SERVIDOR = ("bd", "historico")
 LONGITUD_CLAVE = 255
 TEXTOS_LARGOS = {"objetivos", "programa", "descripcion"}
 _IDENTIFICADOR = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -168,24 +179,89 @@ def volcar(conexion, rutas: Sequence[Path]) -> dict[str, int]:
     return resumen
 
 
-def historico_junto(sqlite_principal: Path, alternativo: Path) -> Path | None:
-    """``historico.sqlite`` al lado del release, o el de ``data/processed`` si no está ahí."""
-    al_lado = sqlite_principal.parent / "historico.sqlite"
-    if al_lado.is_file():
-        return al_lado
-    if alternativo.is_file():
-        return alternativo
-    return None
-
-
-def reunir_rutas(extraidos: Sequence[Path], historico_local: Path) -> list[Path]:
-    rutas = [ruta for ruta in extraidos if ruta.suffix == ".sqlite"]
-    if not rutas:
-        raise FileNotFoundError("El release no trae ningún SQLite")
-    historico = historico_junto(rutas[0], historico_local)
-    if historico is not None and historico.resolve() not in {ruta.resolve() for ruta in rutas}:
-        rutas.append(historico)
+def rutas_locales(carpeta: Path = PROCESADOS) -> list[Path]:
+    """Los SQLite del pipeline que existan en ``carpeta``. Sin ``uc3m.sqlite`` no hay volcado."""
+    rutas = [carpeta / nombre for nombre in SQLITE_LOCALES if (carpeta / nombre).is_file()]
+    if not rutas or rutas[0].name != SQLITE_LOCALES[0]:
+        raise FileNotFoundError(f"No está {carpeta / SQLITE_LOCALES[0]}")
+    faltan = [nombre for nombre in SQLITE_LOCALES if not (carpeta / nombre).is_file()]
+    for nombre in faltan:
+        logger.warning("No está %s: sus tablas no se vuelcan", carpeta / nombre)
     return rutas
+
+
+def literal(valor) -> str:
+    """Valor de SQLite como literal de MySQL (``NULL``, número, cadena o ``X'..'``)."""
+    if isinstance(valor, bytes):
+        return f"X'{valor.hex()}'"
+    return escape_item(valor, "utf8mb4")
+
+
+def sentencias_sql(rutas: Sequence[Path], resumen: dict[str, int]) -> Iterator[str]:
+    """DROP, CREATE e INSERT de cada tabla, una sentencia completa cada vez."""
+    for ruta in rutas:
+        with closing(sqlite3.connect(ruta)) as origen:
+            for tabla in tablas_usuario(origen):
+                columnas = [
+                    exigir_identificador(fila[1])
+                    for fila in origen.execute(f"PRAGMA table_info({tabla})")
+                ]
+                yield f"\nDROP TABLE IF EXISTS {quote(tabla)};\n"
+                for sentencia in sentencias_tabla(origen, tabla):
+                    yield sentencia + ";\n"
+                lista = ", ".join(quote(columna) for columna in columnas)
+                seleccion = ", ".join(f'"{columna}"' for columna in columnas)
+                filas = origen.execute(f'SELECT {seleccion} FROM "{tabla}"')
+                total = 0
+                while lote := filas.fetchmany(LOTE_SQL):
+                    valores = ",\n".join(
+                        "(" + ", ".join(literal(v) for v in fila) + ")" for fila in lote
+                    )
+                    yield f"INSERT INTO {quote(tabla)} ({lista}) VALUES\n{valores};\n"
+                    total += len(lote)
+                resumen[tabla] = total
+                logger.info("%s: %d filas desde %s", tabla, total, ruta.name)
+
+
+def nombre_parte(destino: Path, numero: int) -> Path:
+    base = destino.name.removesuffix(".gz").removesuffix(".sql")
+    return destino.with_name(f"{base}-{numero}.sql.gz")
+
+
+def exportar_sql(
+    rutas: Sequence[Path], destino: Path, max_bytes: int = MAX_BYTES_PARTE
+) -> tuple[dict[str, int], list[Path]]:
+    """Escribe ``<destino>-1.sql.gz``, ``-2``… para importarlos en phpMyAdmin en orden.
+
+    Se corta entre sentencias cuando una parte pasa de ``max_bytes`` sin comprimir, para que
+    cada fichero quepa en el límite de subida de phpMyAdmin. Cada parte empieza con
+    ``SET NAMES utf8mb4`` y desactiva las claves foráneas mientras se importa.
+    """
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    for viejo in destino.parent.glob(nombre_parte(destino, 0).name.replace("-0.", "-*.")):
+        viejo.unlink()
+    resumen: dict[str, int] = {}
+    partes: list[Path] = []
+    salida = None
+    escritos = 0
+    try:
+        for sentencia in sentencias_sql(rutas, resumen):
+            if salida is None or (escritos > 0 and escritos + len(sentencia) > max_bytes):
+                if salida is not None:
+                    salida.write("\nSET FOREIGN_KEY_CHECKS=1;\n")
+                    salida.close()
+                partes.append(nombre_parte(destino, len(partes) + 1))
+                salida = gzip.open(partes[-1], "wt", encoding="utf-8", newline="\n")
+                salida.write("SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS=0;\n")
+                escritos = 0
+            salida.write(sentencia)
+            escritos += len(sentencia.encode("utf-8"))
+        if salida is not None:
+            salida.write("\nSET FOREIGN_KEY_CHECKS=1;\n")
+    finally:
+        if salida is not None:
+            salida.close()
+    return resumen, partes
 
 
 def abrir_escritura(environ: Mapping[str, str] | None = None):
@@ -193,33 +269,38 @@ def abrir_escritura(environ: Mapping[str, str] | None = None):
     return conectar(environ, dict_cursor=False)
 
 
-def ejecutar(
+def subir(
     environ: Mapping[str, str] | None = None,
-    descargar_release=descargar,
     abrir=abrir_escritura,
-    historico_local: Path | None = None,
+    carpeta: Path = PROCESADOS,
 ) -> dict[str, int]:
-    """Comprueba las variables, baja el release a un temporal y vuelca. No escribe en el repo."""
+    """Comprueba las variables MYSQL_* y vuelca los SQLite locales por conexión directa."""
     configuracion(environ)
-    destino_historico = (
-        RAIZ / "data/processed/historico.sqlite" if historico_local is None else historico_local
-    )
-    with tempfile.TemporaryDirectory() as tmp:
-        extraidos = descargar_release(paquetes=("bd",), raiz=Path(tmp), forzar=True)
-        rutas = reunir_rutas(extraidos, destino_historico)
-        conexion = abrir(environ)
-        try:
-            return volcar(conexion, rutas)
-        finally:
-            conexion.close()
-
-
-def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    rutas = rutas_locales(carpeta)
+    conexion = abrir(environ)
     try:
-        resumen = ejecutar()
-    except ConfiguracionMysqlError as exc:
-        raise SystemExit(str(exc)) from exc
+        return volcar(conexion, rutas)
+    finally:
+        conexion.close()
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Pasa los SQLite locales a la MySQL.")
+    sub = parser.add_subparsers(dest="accion", required=True)
+    exp = sub.add_parser("exportar", help="Escribe .sql.gz por partes para phpMyAdmin")
+    exp.add_argument("--salida", type=Path, default=SALIDA_SQL)
+    sub.add_parser("subir", help="Vuelca directamente con las variables MYSQL_*")
+    args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    if args.accion == "exportar":
+        resumen, partes = exportar_sql(rutas_locales(), args.salida)
+        for parte in partes:
+            logger.info("Escrito %s (%.1f MB)", parte, parte.stat().st_size / 2**20)
+    else:
+        try:
+            resumen = subir()
+        except ConfiguracionMysqlError as exc:
+            raise SystemExit(str(exc)) from exc
     for tabla, filas in sorted(resumen.items()):
         logger.info("%s: %d filas", tabla, filas)
 

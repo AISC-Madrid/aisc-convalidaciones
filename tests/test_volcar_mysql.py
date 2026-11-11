@@ -1,5 +1,6 @@
 """SQL del volcado a MySQL, sin abrir una base real."""
 
+import gzip
 import sqlite3
 from contextlib import closing
 from pathlib import Path
@@ -8,10 +9,12 @@ import pytest
 
 from src.db.lectura import ConfiguracionMysqlError
 from src.sync.volcar_mysql import (
-    ejecutar,
-    historico_junto,
+    exportar_sql,
+    literal,
     quote,
+    rutas_locales,
     sentencias_tabla,
+    subir,
     volcar,
 )
 
@@ -141,55 +144,39 @@ def test_volcar_copia_el_id_y_no_toca_sqlite_sequence(tmp_path):
     assert any(lote and lote[0][4] == "prog" for lote in conexion.cur.lotes)
 
 
-def test_historico_al_lado_entra_y_el_de_processed_solo_si_falta(tmp_path):
-    principal = tmp_path / "release" / "uc3m.sqlite"
-    principal.parent.mkdir()
-    principal.write_bytes(b"")
-    al_lado = principal.parent / "historico.sqlite"
-    al_lado.write_bytes(b"")
-    otro = tmp_path / "data" / "historico.sqlite"
-    otro.parent.mkdir()
-    otro.write_bytes(b"")
-
-    assert historico_junto(principal, otro) == al_lado
-    al_lado.unlink()
-    assert historico_junto(principal, otro) == otro
-    otro.unlink()
-    assert historico_junto(principal, otro) is None
+def crear_historico(path: Path) -> None:
+    with closing(sqlite3.connect(path)) as conexion, conexion:
+        conexion.execute(
+            "CREATE TABLE historical_matches (id INTEGER PRIMARY KEY, uc3m_codigo TEXT)"
+        )
+        conexion.execute("INSERT INTO historical_matches VALUES (1, '15363')")
 
 
-def test_sin_variables_no_descarga(tmp_path):
+def test_rutas_locales_toma_los_dos_sqlite_y_exige_uc3m(tmp_path):
+    with pytest.raises(FileNotFoundError, match="uc3m.sqlite"):
+        rutas_locales(tmp_path)
+    crear_sqlite(tmp_path / "uc3m.sqlite")
+    assert rutas_locales(tmp_path) == [tmp_path / "uc3m.sqlite"]
+    crear_historico(tmp_path / "historico.sqlite")
+    assert rutas_locales(tmp_path) == [tmp_path / "uc3m.sqlite", tmp_path / "historico.sqlite"]
+
+
+def test_sin_variables_no_abre_conexion(tmp_path):
     llamado = False
 
-    def descargar_falso(**kwargs):
+    def abrir(environ):
         nonlocal llamado
         llamado = True
-        return []
 
     with pytest.raises(ConfiguracionMysqlError, match="MYSQL_PASSWORD"):
-        ejecutar(
-            {},
-            descargar_release=descargar_falso,
-            historico_local=tmp_path / "no.sqlite",
-        )
+        subir({}, abrir=abrir, carpeta=tmp_path)
     assert not llamado
 
 
-def test_ejecutar_vuelca_el_temporal_y_cierra(tmp_path):
+def test_subir_vuelca_los_locales_y_cierra(tmp_path):
+    crear_sqlite(tmp_path / "uc3m.sqlite")
+    crear_historico(tmp_path / "historico.sqlite")
     conexiones = []
-
-    def descargar_falso(paquetes, raiz, forzar):
-        assert paquetes == ("bd",)
-        assert forzar is True
-        destino = raiz / "data" / "processed" / "uc3m.sqlite"
-        crear_sqlite(destino)
-        historico = destino.parent / "historico.sqlite"
-        with closing(sqlite3.connect(historico)) as conexion, conexion:
-            conexion.execute(
-                "CREATE TABLE historical_matches (id INTEGER PRIMARY KEY, uc3m_codigo TEXT)"
-            )
-            conexion.execute("INSERT INTO historical_matches VALUES (1, '15363')")
-        return [destino]
 
     def abrir(environ):
         assert environ["MYSQL_DATABASE"] == "convalidaciones_db"
@@ -197,17 +184,38 @@ def test_ejecutar_vuelca_el_temporal_y_cierra(tmp_path):
         conexiones.append(conexion)
         return conexion
 
-    resumen = ejecutar(
-        ENTORNO,
-        descargar_release=descargar_falso,
-        abrir=abrir,
-        historico_local=tmp_path / "no-esta.sqlite",
-    )
+    resumen = subir(ENTORNO, abrir=abrir, carpeta=tmp_path)
 
-    assert resumen["subjects"] == 1
-    assert resumen["historical_matches"] == 1
+    assert resumen == {"subjects": 1, "dest_subjects": 1, "historical_matches": 1}
+    assert conexiones[0].committed
     assert conexiones[0].cerrada
-    assert not (tmp_path / "data").exists()
+
+
+def test_literal_escapa_comillas_y_tipos():
+    assert literal(None) == "NULL"
+    assert literal(6) == "6"
+    assert literal(3.5) == "3.5e0"
+    assert literal("O'Neil \\ x") == r"'O\'Neil \\ x'"
+    assert literal(b"\x01\xff") == "X'01ff'"
+
+
+def test_exportar_sql_escribe_tablas_y_filas(tmp_path):
+    crear_sqlite(tmp_path / "uc3m.sqlite")
+    crear_historico(tmp_path / "historico.sqlite")
+    salida = tmp_path / "out" / "volcado.sql.gz"
+
+    resumen, partes = exportar_sql(rutas_locales(tmp_path), salida)
+
+    assert resumen == {"subjects": 1, "dest_subjects": 1, "historical_matches": 1}
+    assert partes == [tmp_path / "out" / "volcado-1.sql.gz"]
+    texto = gzip.decompress(partes[0].read_bytes()).decode("utf-8")
+    assert texto.startswith("SET NAMES utf8mb4;")
+    assert "DROP TABLE IF EXISTS `historical_matches`;" in texto
+    assert "CREATE TABLE `subjects`" in texto
+    assert "CREATE INDEX `idx_nombre` ON `subjects`" in texto
+    assert "'Álgebra'" in texto
+    assert "(7, 'GATECH', 'BMED 2110', 'Intro', 'texto', 3.5e0)" in texto
+    assert texto.rstrip().endswith("SET FOREIGN_KEY_CHECKS=1;")
 
 
 def test_texto_en_clave_va_en_varchar(tmp_path):
@@ -243,3 +251,25 @@ def test_texto_en_clave_va_en_varchar(tmp_path):
 def test_identificador_rechazado():
     with pytest.raises(ValueError):
         quote("subjects; DROP TABLE subjects")
+
+
+def test_exportar_sql_parte_entre_sentencias_y_borra_partes_viejas(tmp_path):
+    crear_sqlite(tmp_path / "uc3m.sqlite")
+    crear_historico(tmp_path / "historico.sqlite")
+    salida = tmp_path / "out" / "volcado.sql.gz"
+    salida.parent.mkdir()
+    vieja = tmp_path / "out" / "volcado-99.sql.gz"
+    vieja.write_bytes(b"")
+
+    _resumen, partes = exportar_sql(rutas_locales(tmp_path), salida, max_bytes=200)
+
+    assert len(partes) > 1
+    assert not vieja.exists()
+    textos = [gzip.decompress(parte.read_bytes()).decode("utf-8") for parte in partes]
+    for texto in textos:
+        assert texto.startswith("SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS=0;\n")
+        assert texto.rstrip().endswith("SET FOREIGN_KEY_CHECKS=1;")
+        assert texto.rstrip().endswith(";")
+    junto = "".join(textos)
+    assert junto.count("CREATE TABLE") == 3
+    assert junto.index("DROP TABLE IF EXISTS `subjects`") < junto.index("INSERT INTO `subjects`")
