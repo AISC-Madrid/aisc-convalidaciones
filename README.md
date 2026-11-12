@@ -71,21 +71,19 @@ La web (Streamlit) está entera en `web/`, con un `Dockerfile` que la construye 
 |---|---|
 | Ruta (base directory en Coolify) | `/web` |
 | Puerto | `8501` |
-| Variables de entorno | Ninguna |
-| Base de datos | Montar el SQLite del catálogo en `/data/uc3m.sqlite` (solo lectura) |
+| Variables de entorno | `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` |
+| Base de datos | MySQL del servidor; usuario de solo lectura |
 
 - Un push a la rama del webhook vuelve a desplegar.
-- La base de datos **no** va en git ni en la imagen, porque contiene los temarios. Si no está montada, la web arranca igual y la pantalla Catálogo muestra un aviso.
+- Los secretos MySQL se configuran en Coolify y no van en git ni en la imagen. Si la MySQL no está disponible, la web arranca igual y la pantalla Catálogo muestra un aviso.
 - Los resultados se leen de `web/ejemplo.json`, que sí va en la imagen.
-- No hace falta ninguna API key, usuario ni contraseña.
+- No hace falta ninguna API key; la conexión usa el usuario de solo lectura de MySQL.
 
 ### Probar en local
 
 ```bash
 docker build -t aisc-web web/
-docker run --rm -p 8501:8501 \
-  -v "$(pwd)/data/processed/uc3m.sqlite:/data/uc3m.sqlite:ro" \
-  aisc-web
+docker run --rm -p 8501:8501 --env-file .env aisc-web
 ```
 
 Y abrir http://localhost:8501.
