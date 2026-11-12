@@ -58,7 +58,7 @@ src/
 config/scrapers/ un YAML por universidad de destino
 public/data/     JSON publicados (lo único que usa la web)
 data/            Excel, caché HTML y bases de datos: solo en local, no se sube
-                 (python -m src.sync.datos descargar --todo para bajar lo ya scrapeado)
+                 (python -m src.sync.datos descargar: BD + histórico; --todo añade caché y fichas)
 tests/           pytest; fixtures en tests/fixtures/
 notebooks/       EDA, reconciliación, benchmark, calibración
 ```

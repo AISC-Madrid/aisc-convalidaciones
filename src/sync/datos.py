@@ -6,8 +6,8 @@ solo ven los miembros de la organización. Hace falta ``gh`` con sesión iniciad
 
 Ejecutar desde la raíz del repositorio:
 
-    python -m src.sync.datos descargar                    # la BD del último release
-    python -m src.sync.datos descargar --todo             # BD + caché HTML + fichas de los tests
+    python -m src.sync.datos descargar                    # uc3m.sqlite + historico.sqlite
+    python -m src.sync.datos descargar --todo             # lo anterior + caché HTML + fichas
     python -m src.sync.datos publicar uc3m-2026-10-12     # sube los datos locales como release
 """
 
@@ -40,8 +40,11 @@ class Paquete:
     patron: str | None = None  # si es carpeta: qué ficheros incluir
 
 
+BASICOS = ("bd", "historico")  # lo que necesita el pipeline; caché y fichas, con --todo
+
 PAQUETES = {
     "bd": Paquete("bd", "uc3m_sqlite.zip", "data/processed/uc3m.sqlite"),
+    "historico": Paquete("historico", "historico_sqlite.zip", "data/processed/historico.sqlite"),
     "cache": Paquete("cache", "uc3m_cache_html.zip", "data/raw/uc3m", "**/*"),
     "fixtures": Paquete("fixtures", "fixtures_uc3m_html.zip", "tests/fixtures/uc3m", "*.html"),
 }
@@ -158,24 +161,35 @@ def publicar(
 
 def descargar(
     tag: str | None = None,
-    paquetes: Sequence[str] = ("bd",),
+    paquetes: Sequence[str] = BASICOS,
     raiz: Path = RAIZ,
     forzar: bool = False,
     ejecutar: Ejecutar = _gh,
 ) -> list[Path]:
-    """Descarga los paquetes del release ``tag`` (o del último), comprueba el SHA-256 y extrae."""
+    """Descarga los paquetes del release ``tag`` (o del último), comprueba el SHA-256 y extrae.
+
+    Baja primero el manifiesto: si al release le falta un paquete, falla con su nombre antes
+    de pedir a ``gh`` un fichero que no existe.
+    """
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        assets = [MANIFIESTO, *(PAQUETES[n].asset for n in paquetes)]
-        patrones = [arg for asset in assets for arg in ("--pattern", asset)]
         ejecutar(["release", "download", *([tag] if tag else []), "--repo", REPO_DATOS,
-                  "--dir", str(tmp_path), *patrones])
+                  "--dir", str(tmp_path), "--pattern", MANIFIESTO])
         manifiesto = json.loads((tmp_path / MANIFIESTO).read_text("utf-8"))
+        faltan = [nombre for nombre in paquetes if nombre not in manifiesto["paquetes"]]
+        if faltan:
+            raise KeyError(
+                f"El release {manifiesto['tag']} no tiene {', '.join(faltan)}; "
+                "publica uno nuevo o pide solo --paquete bd"
+            )
+        patrones = [
+            arg for nombre in paquetes for arg in ("--pattern", PAQUETES[nombre].asset)
+        ]
+        ejecutar(["release", "download", manifiesto["tag"], "--repo", REPO_DATOS,
+                  "--dir", str(tmp_path), *patrones])
         extraidos = []
         for nombre in paquetes:
-            info = manifiesto["paquetes"].get(nombre)
-            if info is None:
-                raise KeyError(f"El release {manifiesto['tag']} no tiene el paquete {nombre}")
+            info = manifiesto["paquetes"][nombre]
             zip_path = tmp_path / info["asset"]
             if sha256(zip_path) != info["sha256"]:
                 raise ValueError(f"SHA-256 incorrecto en {info['asset']}: descarga corrupta")
@@ -191,8 +205,8 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     bajar = sub.add_parser("descargar", help="Baja los datos del repo privado")
     bajar.add_argument("--tag", help="Release concreto (por defecto, el último)")
-    bajar.add_argument("--paquete", nargs="+", choices=PAQUETES, default=["bd"])
-    bajar.add_argument("--todo", action="store_true", help="BD + caché HTML + fichas de los tests")
+    bajar.add_argument("--paquete", nargs="+", choices=PAQUETES, default=list(BASICOS))
+    bajar.add_argument("--todo", action="store_true", help="BD + histórico + caché + fichas")
     bajar.add_argument("--forzar", action="store_true", help="Sustituye la BD local si existe")
 
     subir = sub.add_parser("publicar", help="Sube los datos locales como un release nuevo")

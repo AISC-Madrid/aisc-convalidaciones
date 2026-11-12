@@ -151,7 +151,7 @@ Las dependencias Python (`torch` CPU ronda 1 GB instalado) solo van en las máqu
 
 ### Base de datos del servidor (MySQL)
 
-El catálogo ya no se reparte por los Releases del repo privado: vive en una MySQL del servidor (Coolify), con phpMyAdmin al lado. Las variables de conexión son las `MYSQL_*` de `.env.example` (los secretos, nunca en el repo). La web de `web/` se conecta a esa MySQL usando el usuario de solo lectura. La MySQL solo es accesible dentro del servidor salvo que se active "Make it publicly available" en Coolify.
+El catálogo ya no se reparte por los Releases del repo privado: vive en una MySQL del servidor (Coolify), con phpMyAdmin al lado. Las variables de conexión son las `MYSQL_*` de `.env.example` (los secretos, nunca en el repo). La web de `web/` se conecta a esa MySQL usando el usuario de solo lectura. La MySQL solo es accesible dentro del servidor salvo que se active "Make it publicly available" en Coolify. Los Releases de `AISC-Madrid/aisc-convalidaciones-data` quedan como copia de seguridad de los SQLite y de la caché HTML (`python -m src.sync.datos descargar`).
 
 **Cómo llegan los datos.** El pipeline sigue escribiendo SQLite en `data/processed/` (`uc3m.sqlite` e `historico.sqlite`). Para pasarlos a la MySQL:
 

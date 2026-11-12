@@ -51,6 +51,11 @@ def _repo_con_datos(raiz: Path) -> Path:
             "VALUES ('15363', '2026/2027', 'ES', 'Álgebra Lineal')")
         connection.execute(
             "INSERT INTO descargas VALUES ('2026/2027', '456', 'ES+EN', 'completo', 'hoy')")
+    historico = raiz / "data" / "processed" / "historico.sqlite"
+    with closing(sqlite3.connect(historico)) as connection, connection:
+        connection.execute(
+            "CREATE TABLE historical_matches (id INTEGER PRIMARY KEY, uc3m_codigo TEXT)")
+        connection.execute("INSERT INTO historical_matches VALUES (1, '15363')")
     cache = raiz / "data" / "raw" / "uc3m" / "2026"
     cache.mkdir(parents=True)
     (cache / "15363_ES.html").write_text("<html>ficha</html>", "utf-8")
@@ -78,6 +83,7 @@ def test_publicar_y_descargar_ida_y_vuelta(tmp_path):
     relativos = {p.relative_to(destino.resolve()).as_posix() for p in extraidos}
     assert relativos == {
         "data/processed/uc3m.sqlite",
+        "data/processed/historico.sqlite",
         "data/raw/uc3m/2026/15363_ES.html",
         "tests/fixtures/uc3m/15363_2026_ES.html",
     }
@@ -85,7 +91,7 @@ def test_publicar_y_descargar_ida_y_vuelta(tmp_path):
         assert connection.execute("SELECT nombre FROM subjects").fetchone() == ("Álgebra Lineal",)
 
 
-def test_descargar_por_defecto_solo_baja_la_bd_del_ultimo_release(tmp_path):
+def test_descargar_por_defecto_baja_bd_e_historico_del_ultimo_release(tmp_path):
     origen = _repo_con_datos(tmp_path / "origen")
     gh = GhFalso(tmp_path / "releases")
     publicar("uc3m-prueba", raiz=origen, ejecutar=gh)
@@ -93,9 +99,11 @@ def test_descargar_por_defecto_solo_baja_la_bd_del_ultimo_release(tmp_path):
 
     extraidos = descargar(raiz=destino, ejecutar=gh)
 
-    assert [p.name for p in extraidos] == ["uc3m.sqlite"]
-    descarga = gh.llamadas[-1]
-    assert descarga[:3] == ["release", "download", "--repo"]
+    assert [p.name for p in extraidos] == ["uc3m.sqlite", "historico.sqlite"]
+    manifiesto, descarga = gh.llamadas[-2:]
+    assert manifiesto[:3] == ["release", "download", "--repo"]
+    assert descarga[:3] == ["release", "download", "uc3m-prueba"]
+    assert "historico_sqlite.zip" in descarga
     assert "uc3m_cache_html.zip" not in descarga
 
 
@@ -147,3 +155,12 @@ def test_extraer_rechaza_rutas_fuera_del_repo(tmp_path):
 
     with pytest.raises(ValueError, match="fuera del repo"):
         extraer(zip_path, tmp_path / "repo")
+
+
+def test_release_sin_historico_avisa_con_el_nombre_del_paquete(tmp_path):
+    origen = _repo_con_datos(tmp_path / "origen")
+    gh = GhFalso(tmp_path / "releases")
+    publicar("uc3m-viejo", paquetes=["bd"], raiz=origen, ejecutar=gh)
+
+    with pytest.raises(KeyError, match="historico"):
+        descargar(raiz=tmp_path / "destino", ejecutar=gh)
