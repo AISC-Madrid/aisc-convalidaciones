@@ -14,6 +14,18 @@ INFORME_PATH = Path("docs/tasas_enlace.md")
 METODOS_ENLAZADOS = frozenset({"code", "alias", "name"})
 GRADO_PILOTO = "BIOMEDICA"
 MINIMO_UMBRAL_PROPIO = 20
+# Asignaturas transversales de la UC3M (#56). La UC3M las reconoce a cambio de cualquier
+# asignatura del destino, así que el par no es una equivalencia de contenido: no calibra
+# ni debe etiquetarse como precedente.
+TRANSVERSALES = frozenset(
+    {
+        "14155",  # Técnicas de búsqueda y uso de la información
+        "14528",  # Habilidades profesionales (y «… movilidad»)
+        "17597",  # Hojas de cálculo. Nivel intermedio
+        "17639",  # Hojas de cálculo. Nivel avanzado (3 ECTS)
+        "17881",  # Hojas de cálculo. Nivel avanzado (1,5 ECTS)
+    }
+)
 
 _CONSULTA = """
 SELECT
@@ -118,13 +130,20 @@ def es_enlazada(fila: FilaEnlace) -> bool:
     return fila.link_method in METODOS_ENLAZADOS and fila.dest_subject_id is not None
 
 
+def es_transversal(codigo: str | None) -> bool:
+    """Código UC3M de una asignatura transversal: no es una equivalencia de contenido."""
+    return (codigo or "") in TRANSVERSALES
+
+
 def es_calibrable(fila: FilaEnlace) -> bool:
-    """Piloto, enlazada y con código vigente en `old_to_new`."""
+    """Piloto, enlazada, con código vigente en `old_to_new` y no transversal."""
     return (
         es_piloto(fila)
         and es_enlazada(fila)
         and bool(fila.new_code)
         and bool(fila.reconciliation_method)
+        and not es_transversal(fila.uc3m_codigo)
+        and not es_transversal(fila.new_code)
     )
 
 
@@ -180,12 +199,24 @@ def asignaturas_uc3m(pares: Iterable[ParCalibracion]) -> int:
     return len({par.new_code for par in pares})
 
 
+def transversales_excluidas(filas: Iterable[FilaEnlace]) -> tuple[FilaEnlace, ...]:
+    """Enlazadas del piloto que no entran en la tabla por ser transversales."""
+    return tuple(
+        fila
+        for fila in filas
+        if es_piloto(fila) and es_enlazada(fila) and es_transversal(fila.uc3m_codigo)
+    )
+
+
 def sin_reconciliar(filas: Iterable[FilaEnlace]) -> tuple[FilaEnlace, ...]:
     """Enlazadas del piloto que no entran en la tabla porque el código UC3M sigue pendiente."""
     return tuple(
         fila
         for fila in filas
-        if es_piloto(fila) and es_enlazada(fila) and not es_calibrable(fila)
+        if es_piloto(fila)
+        and es_enlazada(fila)
+        and not es_transversal(fila.uc3m_codigo)
+        and not es_calibrable(fila)
     )
 
 
@@ -274,6 +305,7 @@ def informe(filas: Iterable[FilaEnlace]) -> str:
     con_umbral = grados_con_umbral_propio(por_grado)
     pares = tabla_calibracion(filas)
     pendientes = sin_reconciliar(filas)
+    transversales = transversales_excluidas(filas)
     if tasa_piloto.ratio < 0.5:
         viernes = (
             "Por debajo del 50 %: la semana 5 corrige el enlace antes del notebook "
@@ -332,6 +364,8 @@ def informe(filas: Iterable[FilaEnlace]) -> str:
             f"- Asignaturas UC3M distintas: {asignaturas_uc3m(pares)}",
             "- Enlazadas del piloto fuera de la tabla, con el código UC3M pendiente: "
             f"{len(pendientes)}",
+            "- Enlazadas del piloto fuera de la tabla por ser transversales "
+            f"(`TRANSVERSALES`): {len(transversales)}",
             "",
             "| Código vigente | Código antiguo | Asignatura UC3M | Reconciliación | "
             "Código histórico | Nombre histórico | Código catálogo | Nombre catálogo | "
