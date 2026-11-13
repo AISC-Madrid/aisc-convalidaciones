@@ -34,3 +34,10 @@ build/
 .DS_Store
 Thumbs.db
 out/
+
+# Claves locales (nunca al repo)
+.env
+
+# Entornos y worktrees locales
+.venv*/
+.claude/worktrees/
