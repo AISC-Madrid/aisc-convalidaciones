@@ -312,6 +312,8 @@ Es un paso crítico: sin él, los registros históricos de asignaturas que han c
 
 Un modelo con ventana de 128 tokens solo leería el nombre y el principio del temario (~una quinta parte del texto). El benchmark debe confirmar que `e5-small` con chunking mejora Recall@5; si no, se vuelve a MiniLM con chunking.
 
+Los vectores locales se guardan en `data/processed/embeddings_{uc3m,gatech}.npy`, con sus códigos y nombres alineados en los JSON correspondientes. La opción explícita `--simular` escribe en `data/processed/simulados/`; esos vectores reproducibles sirven para probar el flujo, pero no para evaluar similitudes.
+
 ---
 
 ### Paso 4 · Calibración, evaluación y matching
