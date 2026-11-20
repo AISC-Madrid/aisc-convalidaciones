@@ -138,6 +138,7 @@ def _elegir_combinacion(ruta_indice):
     if st.session_state.get("combinacion") != combinacion:
         st.session_state["combinacion"] = combinacion
         st.session_state[SELECCION] = set()
+        st.session_state["pagina"] = 1
 
     # Los JSON de resultados están en la misma carpeta que el índice.
     return indice.ruta_resultados(combinaciones, grado, universidad, Path(ruta_indice).parent)
@@ -174,9 +175,29 @@ def _pagina_resultados(ruta_indice):
     bloques = preparar_bloques(datos["resultados"], texto, filtro)
     if not bloques:
         st.info("No hay propuestas que coincidan con la búsqueda y el filtro.")
+        visibles = []
     else:
-        _tabla_resultados(bloques)
-    _seleccion_y_pdf(datos, bloques)
+        visibles = _paginacion(bloques)
+        _tabla_resultados(visibles)
+    _seleccion_y_pdf(datos, bloques, visibles)
+
+
+def _paginacion(bloques):
+    """Si hay más de una página, pinta el selector y devuelve solo los bloques de esa página."""
+    _, total = resultados.paginar(bloques, 1)
+    if total == 1:
+        return bloques
+
+    # Si una búsqueda deja menos páginas, volvemos a la 1 antes de pintar el selector.
+    if st.session_state.get("pagina", 1) > total:
+        st.session_state["pagina"] = 1
+    pagina = st.number_input(
+        f"Página (de {total})", min_value=1, max_value=total, step=1, key="pagina"
+    )
+    visibles, _ = resultados.paginar(bloques, pagina)
+    inicio = (pagina - 1) * resultados.TAMANO_PAGINA + 1
+    st.caption(f"Propuestas {inicio}-{inicio + len(visibles) - 1} de {len(bloques)}")
+    return visibles
 
 
 def _tabla_resultados(bloques):
@@ -197,12 +218,12 @@ def _tabla_resultados(bloques):
     )
 
 
-def _seleccion_y_pdf(datos, bloques):
+def _seleccion_y_pdf(datos, bloques, visibles):
     st.subheader("Selecciona tus propuestas")
     # La selección se guarda por clave (no por posición) y fuera de los checkbox,
     # para que no cambie de propuesta al buscar ni se pierda si el filtro la oculta.
     seleccionadas = st.session_state.setdefault(SELECCION, set())
-    for bloque in bloques:
+    for bloque in visibles:
         fila = _fila_tabla(bloque)
         etiqueta = (
             f"{fila['Asignaturas UC3M'].replace(chr(10), ', ')} → "

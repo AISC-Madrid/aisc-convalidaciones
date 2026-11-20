@@ -68,3 +68,17 @@ def motivo_no_descarga(seleccion, nombre_alumno):
     if not (nombre_alumno or "").strip():
         return "Escribe tu nombre: aparece en la propuesta que se entrega al tutor."
     return None
+
+
+TAMANO_PAGINA = 20
+
+
+def paginar(bloques, pagina, tamano=TAMANO_PAGINA):
+    """Devuelve los bloques de la página pedida (empieza en 1) y el número total de páginas.
+
+    Si la página está fuera de rango, se ajusta a la primera o a la última.
+    """
+    total = max(1, -(-len(bloques) // tamano))
+    pagina = min(max(int(pagina), 1), total)
+    inicio = (pagina - 1) * tamano
+    return bloques[inicio : inicio + tamano], total

@@ -147,9 +147,9 @@ RESULTADOS_SELECCION = """{
 }"""
 
 
-def _app_con_resultados(tmp_path):
+def _app_con_resultados(tmp_path, contenido=RESULTADOS_SELECCION):
     ruta_json = tmp_path / "resultados.json"
-    ruta_json.write_text(RESULTADOS_SELECCION, encoding="utf-8")
+    ruta_json.write_text(contenido, encoding="utf-8")
     ruta_indice = _indice_con(tmp_path, "resultados.json")
     script = tmp_path / "app_seleccion.py"
     script.write_text(
@@ -247,3 +247,39 @@ def test_indice_roto_muestra_error_sin_romper_la_web(tmp_path, monkeypatch):
     at = AppTest.from_file(str(WEB_DIR / "app.py")).run(timeout=10)
     assert not at.exception
     assert any("lista de grados" in error.value for error in at.error)
+    
+
+def _resultados_inventados(n):
+    return {
+        "grado": "Grado de prueba",
+        "universidad": "Uni de prueba",
+        "resultados": [
+            {
+                "origen": {"codigo": f"O{i}", "nombre": f"Asignatura {i:03d}", "ects": 6},
+                "destino": {"codigo": f"D{i}", "nombre": f"Course {i:03d}", "ects": 6},
+                "score": 0.5,
+                "etiqueta": "SUGERENCIA_IA",
+                "aviso_ects": False,
+                "grupo": None,
+            }
+            for i in range(n)
+        ],
+    }
+
+
+def test_200_resultados_se_paginan_y_la_seleccion_se_conserva(tmp_path):
+    at = _app_con_resultados(tmp_path, json.dumps(_resultados_inventados(200)))
+    assert not at.exception
+
+    tamano = app.resultados.TAMANO_PAGINA
+    propuestas = [checkbox for checkbox in at.checkbox if "→" in checkbox.label]
+    assert len(propuestas) == tamano
+    assert len(at.dataframe[0].value) == tamano
+
+    marcada = propuestas[0].label
+    propuestas[0].check().run(timeout=10)
+    at.number_input(key="pagina").set_value(2).run(timeout=10)
+
+    assert not at.exception
+    assert all(checkbox.label != marcada for checkbox in at.checkbox)
+    assert at.metric[0].value == "6"
