@@ -6,12 +6,13 @@ from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
 WEB_DIR = Path(__file__).resolve().parents[1]
+DATOS_DIR = WEB_DIR.parent / "public" / "data"
 sys.path.insert(0, str(WEB_DIR))
 import app  # noqa: E402
 
 
 def test_ejemplo_de_web_se_carga_y_agrupa_precedentes():
-    datos = app.cargar_datos(WEB_DIR / "ejemplo.json")
+    datos = app.cargar_datos(DATOS_DIR / "ejemplo.json")
     bloques = app.preparar_bloques(datos["resultados"])
 
     assert len(bloques) == 5
@@ -20,7 +21,7 @@ def test_ejemplo_de_web_se_carga_y_agrupa_precedentes():
 
 
 def test_busqueda_y_filtro_conservan_grupos_completos():
-    datos = app.cargar_datos(WEB_DIR / "ejemplo.json")
+    datos = app.cargar_datos(DATOS_DIR / "ejemplo.json")
 
     bloques = app.preparar_bloques(
         datos["resultados"],
@@ -33,7 +34,7 @@ def test_busqueda_y_filtro_conservan_grupos_completos():
 
 
 def test_generador_crea_pdf_real_con_grupo_nm_completo():
-    datos = app.cargar_datos(WEB_DIR / "ejemplo.json")
+    datos = app.cargar_datos(DATOS_DIR / "ejemplo.json")
     seleccion = [fila for fila in datos["resultados"] if fila["grupo"] == 1]
 
     propuestas = app.pdf._propuestas_seleccionadas(seleccion)

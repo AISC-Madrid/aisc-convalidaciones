@@ -10,7 +10,7 @@ import pdf
 import resultados
 import streamlit as st
 
-RUTA_EJEMPLO = Path(__file__).with_name("ejemplo.json")
+RUTA_EJEMPLO = Path(__file__).resolve().parent.parent / "public" / "data" / "ejemplo.json"
 SELECCION = "propuestas_seleccionadas"
 ETIQUETAS = {
     "PRECEDENTE_APROBADO": "Precedente aprobado",
