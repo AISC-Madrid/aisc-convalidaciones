@@ -1,0 +1,23 @@
+# Se usa al construir desde la raíz con: docker build -f web/Dockerfile .
+# Las rutas son relativas a la raíz del repo.
+
+# Todo fuera por defecto; solo entra lo que necesita la web
+*
+!web/
+!public/data/
+
+# Dentro de lo permitido, fuera lo que no hace falta
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.DS_Store
+web/tests/
+web/Dockerfile.dockerignore
+
+# La base de datos lleva temarios: nunca va en la imagen
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# Secretos
+**/.env
