@@ -6,11 +6,11 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import catalogo
+import indice
 import pdf
 import resultados
 import streamlit as st
 
-RUTA_EJEMPLO = Path(__file__).resolve().parent.parent / "public" / "data" / "ejemplo.json"
 SELECCION = "propuestas_seleccionadas"
 ETIQUETAS = {
     "PRECEDENTE_APROBADO": "Precedente aprobado",
@@ -18,7 +18,7 @@ ETIQUETAS = {
 }
 
 
-def cargar_datos(ruta=RUTA_EJEMPLO):
+def cargar_datos(ruta):
     """Carga y valida la estructura mínima que necesita la aplicación."""
     try:
         datos = json.loads(Path(ruta).read_text(encoding="utf-8"))
@@ -116,18 +116,47 @@ def _fila_tabla(bloque):
         "Aviso": "ECTS dispares" if any(fila.aviso_ects for fila in bloque) else "",
     }
 
+def _elegir_combinacion(ruta_indice):
+    """Pinta los desplegables y devuelve la ruta del JSON elegido, o None si hay error."""
+    try:
+        combinaciones = indice.cargar_indice(ruta_indice)
+    except ValueError as error:
+        st.error("No se puede cargar la lista de grados y universidades.")
+        st.caption(str(error))
+        return None
 
-def _pagina_resultados(ruta_json):
+    columna_grado, columna_universidad = st.columns(2)
+    grado = columna_grado.selectbox("Grado UC3M", indice.grados(combinaciones), key="grado")
+    universidad = columna_universidad.selectbox(
+        "Universidad de destino",
+        indice.universidades(combinaciones, grado),
+        key="universidad",
+    )
+
+    # Si cambia la combinación, la selección anterior ya no tiene sentido.
+    combinacion = (grado, universidad)
+    if st.session_state.get("combinacion") != combinacion:
+        st.session_state["combinacion"] = combinacion
+        st.session_state[SELECCION] = set()
+
+    # Los JSON de resultados están en la misma carpeta que el índice.
+    return indice.ruta_resultados(combinaciones, grado, universidad, Path(ruta_indice).parent)
+
+def _pagina_resultados(ruta_indice):
     st.subheader("Resultados")
     st.warning(
-        "Estos resultados son todavía de ejemplo y proceden de ejemplo.json. "
-        "No son equivalencias reales ni constituyen una aprobación de convalidación."
+        "Estos resultados son todavía de ejemplo: no son equivalencias reales "
+        "ni constituyen una aprobación de convalidación."
     )
+
+    ruta_json = _elegir_combinacion(ruta_indice)
+    if ruta_json is None:
+        return
 
     try:
         datos = cargar_datos(ruta_json)
     except ValueError as error:
-        st.error("No se pueden mostrar los resultados de ejemplo.")
+        st.error("No se pueden mostrar los resultados de esta combinación.")
         st.caption(str(error))
         return
 
@@ -241,7 +270,7 @@ def _seleccion_y_pdf(datos, bloques):
     )
 
 
-def main(ruta_json=RUTA_EJEMPLO, ruta_bd=catalogo.RUTA_BD):
+def main(ruta_indice=indice.RUTA_INDICE, ruta_bd=catalogo.RUTA_BD):
     st.set_page_config(page_title="Convalidaciones · AISC", layout="wide")
     st.title("AISC · Buscador de convalidaciones")
     st.caption("Explora propuestas orientativas para tu movilidad. El tutor decide.")
@@ -250,7 +279,7 @@ def main(ruta_json=RUTA_EJEMPLO, ruta_bd=catalogo.RUTA_BD):
         ["Resultados", "Catálogo", "Cómo funciona"]
     )
     with pestaña_resultados:
-        _pagina_resultados(ruta_json)
+        _pagina_resultados(ruta_indice)
     with pestaña_catalogo:
         catalogo.pagina_catalogo(ruta_bd)
     with pestaña_como_funciona:

@@ -1,5 +1,6 @@
 """Pruebas de integración de la aplicación Streamlit."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -8,7 +9,24 @@ from streamlit.testing.v1 import AppTest
 WEB_DIR = Path(__file__).resolve().parents[1]
 DATOS_DIR = WEB_DIR.parent / "public" / "data"
 sys.path.insert(0, str(WEB_DIR))
-import app  # noqa: E402
+import app  # noqa: E402 
+import indice  # noqa: E402
+
+
+def _indice_con(tmp_path, archivo):
+    """Crea en tmp_path un index.json con una sola combinación que apunta a `archivo`."""
+    ruta_indice = tmp_path / "index.json"
+    ruta_indice.write_text(
+        json.dumps(
+            {
+                "combinaciones": [
+                    {"grado": "Grado de prueba", "universidad": "Uni de prueba", "archivo": archivo}
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return ruta_indice
 
 
 def test_ejemplo_de_web_se_carga_y_agrupa_precedentes():
@@ -54,7 +72,7 @@ def test_generador_crea_pdf_real_con_grupo_nm_completo():
 
 
 def test_falta_json_muestra_error_y_catalogo_falta_de_bd(tmp_path):
-    ruta_inexistente = tmp_path / "ejemplo.json"
+    ruta_indice = _indice_con(tmp_path, "no_existe.json")
     ruta_bd_inexistente = tmp_path / "uc3m.sqlite"
     script = tmp_path / "integracion.py"
     script.write_text(
@@ -65,7 +83,7 @@ def test_falta_json_muestra_error_y_catalogo_falta_de_bd(tmp_path):
                 "import app",
                 (
                     "app.main("
-                    f"ruta_json=Path({str(ruta_inexistente)!r}), "
+                    f"ruta_indice=Path({str(ruta_indice)!r}), " 
                     f"ruta_bd=Path({str(ruta_bd_inexistente)!r})"
                     ")"
                 ),
@@ -76,7 +94,7 @@ def test_falta_json_muestra_error_y_catalogo_falta_de_bd(tmp_path):
     at = AppTest.from_file(str(script)).run()
 
     assert not at.exception
-    assert any("resultados de ejemplo" in error.value for error in at.error)
+    assert any("resultados de esta combinación" in error.value for error in at.error)
     assert any("catálogo no está disponible" in error.value for error in at.error)
 
 
@@ -132,12 +150,13 @@ RESULTADOS_SELECCION = """{
 def _app_con_resultados(tmp_path):
     ruta_json = tmp_path / "resultados.json"
     ruta_json.write_text(RESULTADOS_SELECCION, encoding="utf-8")
+    ruta_indice = _indice_con(tmp_path, "resultados.json")
     script = tmp_path / "app_seleccion.py"
     script.write_text(
         f"import sys; sys.path.insert(0, {str(WEB_DIR)!r})\n"
         "from pathlib import Path\n"
         "import app\n"
-        f"app.main(ruta_json=Path({str(ruta_json)!r}), ruta_bd=Path('no_existe.sqlite'))\n",
+        f"app.main(ruta_indice=Path({str(ruta_indice)!r}), ruta_bd=Path('no_existe.sqlite'))\n",
         encoding="utf-8",
     )
     return AppTest.from_file(str(script)).run(timeout=10)
@@ -187,3 +206,44 @@ def test_resultados_vacios_no_dan_propuestas(tmp_path):
     ruta = tmp_path / "resultados.json"
     ruta.write_text('{"grado": "G", "universidad": "U", "resultados": []}', encoding="utf-8")
     assert app.preparar_bloques(app.cargar_datos(ruta)["resultados"]) == []
+
+
+def _escribir(ruta, datos):
+    ruta.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
+
+
+def test_cambiar_de_combinacion_cambia_la_tabla(tmp_path, monkeypatch):
+    ejemplo = json.loads((DATOS_DIR / "ejemplo.json").read_text(encoding="utf-8"))
+    otro = {**ejemplo, "grado": "Grado inventado", "resultados": ejemplo["resultados"][:1]}
+    _escribir(tmp_path / "ejemplo.json", ejemplo)
+    _escribir(tmp_path / "otro.json", otro)
+    _escribir(
+        tmp_path / "index.json",
+        {
+            "combinaciones": [
+                {"grado": ejemplo["grado"], "universidad": ejemplo["universidad"],
+                 "archivo": "ejemplo.json"},
+                {"grado": "Grado inventado", "universidad": ejemplo["universidad"],
+                 "archivo": "otro.json"},
+            ]
+        },
+    )
+    monkeypatch.setattr(indice, "RUTA_INDICE", tmp_path / "index.json")
+
+    at = AppTest.from_file(str(WEB_DIR / "app.py")).run(timeout=10)
+    assert not at.exception
+    filas_ejemplo = len(at.dataframe[0].value)
+
+    at.selectbox(key="grado").set_value("Grado inventado").run(timeout=10)
+    assert not at.exception
+    assert len(at.dataframe[0].value) == 1
+    assert filas_ejemplo > 1
+
+
+def test_indice_roto_muestra_error_sin_romper_la_web(tmp_path, monkeypatch):
+    (tmp_path / "index.json").write_text("{ roto", encoding="utf-8")
+    monkeypatch.setattr(indice, "RUTA_INDICE", tmp_path / "index.json")
+
+    at = AppTest.from_file(str(WEB_DIR / "app.py")).run(timeout=10)
+    assert not at.exception
+    assert any("lista de grados" in error.value for error in at.error)
