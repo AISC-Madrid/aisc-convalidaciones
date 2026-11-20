@@ -83,3 +83,15 @@ def test_clave_bloque_no_depende_de_la_posicion():
     assert resultados.clave_bloque(filtrados[0]) == "18215->CS 3251"
     assert resultados.clave_bloque([CALC_1, CALC_2]) == "grupo-1"
     assert len(claves) == len(bloques)
+
+
+def test_paginar_reparte_en_paginas_y_ajusta_la_pagina_fuera_de_rango():
+    bloques = list(range(45))
+    assert resultados.paginar(bloques, 1, tamano=20) == (list(range(20)), 3)
+    assert resultados.paginar(bloques, 3, tamano=20) == (list(range(40, 45)), 3)
+    assert resultados.paginar(bloques, 99, tamano=20) == (list(range(40, 45)), 3)
+    assert resultados.paginar(bloques, 0, tamano=20) == (list(range(20)), 3)
+
+
+def test_paginar_sin_bloques_da_una_pagina_vacia():
+    assert resultados.paginar([], 1) == ([], 1)
