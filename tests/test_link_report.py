@@ -16,6 +16,7 @@ from src.loaders.link_report import (
     tasa,
     tasas_por_grado,
     texto_tasa,
+    transversales_excluidas,
 )
 
 
@@ -93,6 +94,25 @@ def test_la_tabla_solo_guarda_el_piloto_reconciliado_y_enlazado():
     assert asignaturas_uc3m(pares) == 1
     assert [par.uc3m_codigo for par in sin_reconciliar(filas)] == ["999"]
     assert pares[0].new_code == "20000"
+
+
+@pytest.mark.parametrize("codigo", ["14155", "14528", "17881"])
+def test_las_transversales_no_calibran(codigo):
+    filas = (
+        fila(id=1, uc3m_codigo=codigo, new_code=codigo),
+        fila(id=2, uc3m_codigo="111", new_code="20000"),
+    )
+
+    assert [par.uc3m_codigo for par in tabla_calibracion(filas)] == ["111"]
+    assert [item.id for item in transversales_excluidas(filas)] == [1]
+    assert sin_reconciliar(filas) == ()
+
+
+def test_el_informe_cuenta_las_transversales_excluidas():
+    texto = informe((fila(uc3m_codigo="14528", new_code="14528"),))
+
+    assert "Pares: 0" in texto
+    assert "por ser transversales (`TRANSVERSALES`): 1" in texto
 
 
 def test_la_muestra_antepone_alias_y_nombre():

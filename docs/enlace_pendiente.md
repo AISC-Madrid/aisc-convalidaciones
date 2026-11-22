@@ -8,5 +8,4 @@ Filas del histórico sin asignatura en el catálogo de destino. Quedan con
 | CS4320 | Introduction to Software Processes | 1 | El código no está en el catálogo y ningún nombre se parece | — |
 | CS4560 | Verification of Systems | 1 | El código no está en el catálogo y ningún nombre se parece | — |
 | CS4560 | Verification of systems | 1 | El código no está en el catálogo y ningún nombre se parece | — |
-| PHYS3211 | Electronics 1 | 1 | El código no está en el catálogo y ningún nombre se parece | — |
 | PHYS3225 | Modern Optics | 1 | El código no está en el catálogo y ningún nombre se parece | — |

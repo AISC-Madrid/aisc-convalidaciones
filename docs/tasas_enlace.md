@@ -18,9 +18,9 @@ Por encima del 50 %: la semana 5 puede calibrar sin corregir el enlace antes.
 
 ## Georgia Tech
 
-239/244 (98.0%)
+240/244 (98.4%)
 
-0 de 5 no enlazadas tienen un prefijo que no está en el catálogo. Todas tienen su departamento cargado, pero el código no está en el catálogo 2026-27 y ningún nombre se parece. El motivo de cada una está en `docs/enlace_pendiente.md`.
+0 de 4 no enlazadas tienen un prefijo que no está en el catálogo. Todas tienen su departamento cargado, pero el código no está en el catálogo 2026-27 y ningún nombre se parece. El motivo de cada una está en `docs/enlace_pendiente.md`.
 
 ## Por grado
 
@@ -31,7 +31,7 @@ un umbral propio en la fase 2: 4 de 13.
 |---|---|---|---|---|
 | Doble Grado en Ingeniería Física e Ingeniería en Tecnologías Industriales | 42 | 42 | 42/42 (100.0%) | sí |
 | Grado en Ingeniería Biomédica | 39 | 39 | 39/39 (100.0%) | sí |
-| Grado en Ingeniería Física | 34 | 36 | 34/36 (94.4%) | sí |
+| Grado en Ingeniería Física | 35 | 36 | 35/36 (97.2%) | sí |
 | Grado en Ingeniería Informática | 20 | 21 | 20/21 (95.2%) | sí |
 | Grado en Ingeniería Aeroespacial | 16 | 16 | 16/16 (100.0%) | no |
 | Grado en Ingeniería Robótica | 14 | 14 | 14/14 (100.0%) | no |
@@ -48,9 +48,10 @@ un umbral propio en la fase 2: 4 de 13.
 Pares de Biomédica reconciliados y enlazados. La semana 5 los lee con
 `tabla_calibracion(cargar_filas())`.
 
-- Pares: 39
-- Asignaturas UC3M distintas: 18
+- Pares: 36
+- Asignaturas UC3M distintas: 17
 - Enlazadas del piloto fuera de la tabla, con el código UC3M pendiente: 0
+- Enlazadas del piloto fuera de la tabla por ser transversales (`TRANSVERSALES`): 3
 
 | Código vigente | Código antiguo | Asignatura UC3M | Reconciliación | Código histórico | Nombre histórico | Código catálogo | Nombre catálogo | Método | Grupo |
 |---|---|---|---|---|---|---|---|---|---|
@@ -68,9 +69,6 @@ Pares de Biomédica reconciliados y enlazados. La semana 5 los lee con
 | 14159 | 14159 | Biología Computacional | code | BMED3211 | Introduction to Bioinformatics | BMED 3211 | Introduction to Bioinformatics | code | — |
 | 14159 | 14159 | Biología Computacional | code | BMED3520 | Biomed Sys & Modeling | BMED 3520 | Biomedical Systems and Modeling | code | 777 |
 | 14159 | 14159 | Biología Computacional | code | BMED4813 | Special Topics (Biomedical and Health Informatics) | BMED 4813 | Special Topics | code | 592 |
-| 14528 | 14528 | Habilidades Profesionales | code | BMED4602 | Capstone design | BMED 4602 | Capstone Design | code | 778 |
-| 14528 | 14528 | Habilidades Profesionales | code | ME6753 | Principles of Management for Engineering | ME 6753 | Principles of Management for Engineers | code | 778 |
-| 14528 | 14528 | Habilidades profesionales movilidad | code | PHIL3127 | Science, Technology and Human Values | PHIL 3127 | Science, Technology, and Human Values | code | — |
 | 15535 | 15535 | Estadística | code | BMED2400 | Introduction to Bioengineering Statistics | BMED 2400 | Introduction to Bioengineering Statistics | code | 593 |
 | 15535 | 15535 | Estadística | code | MATH3235 | Probability Theory | MATH 3235 | Probability Theory | code | 593 |
 | 15541 | 15541 | Ciencia e ingeniería de materiales | code | MSE2001 | Prin&Appl-Engr Materials | MSE 2001 | Principles and Applications of Engineering Materials | code | — |

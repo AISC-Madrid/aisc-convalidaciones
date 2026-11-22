@@ -3,7 +3,7 @@
 import sqlite3
 from collections.abc import Callable, Iterable
 from contextlib import closing
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from src.loaders.historical_xls import normalize_text
@@ -12,6 +12,17 @@ CURSO_VIGENTE = "2026/2027"
 HISTORICO_PATH = Path("data/processed/historico.sqlite")
 UC3M_PATH = Path("data/processed/uc3m.sqlite")
 PENDIENTES_PATH = Path("docs/reconciliacion_pendiente.md")
+
+# Decididos a mano con las fichas de la UC3M (#57). Solo se aplican si los niveles 1 y 2
+# no resuelven el código; el código vigente tiene que existir en el plan vigente.
+MANUALES = {
+    # Estadística (plan 433) → Inferencia Estadística (plan 567): mismo temario, curso y ECTS.
+    "18274": "20563",
+    # Ampliación de cálculo numérico (plan 433) → Métodos numéricos para ecuaciones
+    # diferenciales (plan 567): la parte de EDO y problemas rígidos es la mayor del temario;
+    # los autovalores están en 20561. Revisar si el tutor lo ve de otra forma.
+    "18276": "20567",
+}
 
 _TABLA = """
 CREATE TABLE IF NOT EXISTS old_to_new (
@@ -37,6 +48,7 @@ class CodigoAntiguo:
 
     old_code: str
     nombres: tuple[str, ...]
+    estudios: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -54,6 +66,7 @@ class IndiceVigente:
 
     codigos: frozenset[str]
     por_nombre: dict[str, frozenset[str]]
+    estudios: dict[str, frozenset[str]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -66,8 +79,14 @@ class Pendiente:
     candidatos: tuple[str, ...]
 
 
-def indice_vigente(asignaturas: Iterable[AsignaturaVigente]) -> IndiceVigente:
-    """Deduplica por código. El índice de nombres usa solo el español no vacío."""
+def indice_vigente(
+    asignaturas: Iterable[AsignaturaVigente],
+    estudios: dict[str, frozenset[str]] | None = None,
+) -> IndiceVigente:
+    """Deduplica por código. El índice de nombres usa solo el español no vacío.
+
+    `estudios` dice en qué estudios se imparte cada código vigente (de `subject_plans`).
+    """
     codigos: set[str] = set()
     por_nombre: dict[str, set[str]] = {}
     for asignatura in asignaturas:
@@ -81,6 +100,7 @@ def indice_vigente(asignaturas: Iterable[AsignaturaVigente]) -> IndiceVigente:
     return IndiceVigente(
         codigos=frozenset(codigos),
         por_nombre={nombre: frozenset(codes) for nombre, codes in por_nombre.items()},
+        estudios=dict(estudios or {}),
     )
 
 
@@ -95,8 +115,10 @@ def reconciliar(
     antiguos: Iterable[CodigoAntiguo],
     indice: IndiceVigente,
     nivel_2: Callable[[CodigoAntiguo, IndiceVigente], Reconciliacion | None],
+    manuales: dict[str, str] | None = None,
 ) -> tuple[Reconciliacion, ...]:
-    """Una fila por código. El nivel 1 gana; si no, solo acepta un `exact` con código nuevo."""
+    """Una fila por código. Nivel 1, luego un `exact` con código nuevo y luego `manuales`."""
+    manuales = MANUALES if manuales is None else manuales
     vistos: set[str] = set()
     salida: list[Reconciliacion] = []
     for antiguo in antiguos:
@@ -109,6 +131,14 @@ def reconciliar(
         resultado = nivel_2(antiguo, indice)
         if resultado is not None and resultado.method == "exact" and resultado.new_code:
             salida.append(Reconciliacion(antiguo.old_code, resultado.new_code, "exact"))
+        elif antiguo.old_code in manuales:
+            nuevo = manuales[antiguo.old_code]
+            if nuevo not in indice.codigos:
+                raise ValueError(
+                    f"El manual {antiguo.old_code} → {nuevo} apunta a un código que no está "
+                    "en el plan vigente: revisa MANUALES."
+                )
+            salida.append(Reconciliacion(antiguo.old_code, nuevo, "manual"))
         else:
             salida.append(Reconciliacion(antiguo.old_code, None, None))
     return tuple(salida)
@@ -132,6 +162,29 @@ def cargar_plan_vigente(
     return tuple(
         AsignaturaVigente(str(codigo), str(nombre), str(idioma)) for codigo, nombre, idioma in filas
     )
+
+
+def cargar_estudios(
+    database_path: str | Path, curso_academico: str | None = None
+) -> dict[str, frozenset[str]]:
+    """Estudios de cada código según `subject_plans`, de un curso o de todos.
+
+    Sin la tabla o sin la columna `estudio` devuelve `{}` y no se filtra por estudio.
+    """
+    consulta = "SELECT codigo, estudio FROM subject_plans WHERE estudio IS NOT NULL"
+    parametros: tuple[str, ...] = ()
+    if curso_academico is not None:
+        consulta += " AND curso_academico = ?"
+        parametros = (curso_academico,)
+    with closing(_conectar_lectura(database_path)) as connection:
+        try:
+            filas = connection.execute(consulta, parametros).fetchall()
+        except sqlite3.OperationalError:
+            return {}
+    estudios: dict[str, set[str]] = {}
+    for codigo, estudio in filas:
+        estudios.setdefault(str(codigo), set()).add(str(estudio))
+    return {codigo: frozenset(valores) for codigo, valores in estudios.items()}
 
 
 def guardar_reconciliacion(
@@ -186,9 +239,23 @@ def cargar_codigos_historico(database_path: str | Path) -> tuple[CodigoAntiguo, 
 def _coincidencias(
     antiguo: CodigoAntiguo, indice: IndiceVigente
 ) -> tuple[frozenset[str], ...]:
-    """Códigos vigentes a los que apunta cada nombre, ya normalizado."""
-    return tuple(
+    """Códigos vigentes a los que apunta cada nombre, ya normalizado.
+
+    Si se conocen los estudios del código antiguo, solo cuentan los vigentes del mismo estudio:
+    «Estadística» existe en muchos grados y no vale la de otro.
+    """
+    coincidencias = tuple(
         indice.por_nombre.get(normalize_text(nombre), frozenset()) for nombre in antiguo.nombres
+    )
+    if not antiguo.estudios:
+        return coincidencias
+    return tuple(
+        frozenset(
+            codigo
+            for codigo in conjunto
+            if indice.estudios.get(codigo, frozenset()) & antiguo.estudios
+        )
+        for conjunto in coincidencias
     )
 
 
@@ -215,7 +282,7 @@ def nivel_2(antiguo: CodigoAntiguo, indice: IndiceVigente) -> Reconciliacion | N
 
 
 def motivo_pendiente(antiguo: CodigoAntiguo, indice: IndiceVigente) -> Pendiente:
-    """Por qué no hay `exact`, y los códigos vigentes candidatos sin elegir ninguno."""
+    """Por qué no hay `exact`, y los candidatos vigentes (del mismo estudio si se sabe)."""
     coincidencias = _coincidencias(antiguo, indice)
     candidatos = tuple(sorted(set().union(*coincidencias)))
     if any(len(conjunto) > 1 for conjunto in coincidencias):
@@ -235,8 +302,9 @@ def escribir_pendientes(pendientes: Iterable[Pendiente], path: str | Path) -> No
         "# Reconciliación pendiente",
         "",
         "Códigos UC3M del histórico sin match en el plan vigente por código ni por nombre",
-        "normalizado exacto. Quedan con `new_code` y `method` vacíos. El nivel 3, por",
-        "contenido, queda para la semana 6.",
+        "normalizado exacto ni decisión manual (`MANUALES`). Quedan con `new_code` y",
+        "`method` vacíos. Los candidatos son del mismo estudio cuando se conoce. El nivel 3,",
+        "por contenido, queda para la semana 6.",
         "",
         "| Código antiguo | Nombres en el histórico | Motivo | Candidatos |",
         "|---|---|---|---|",
@@ -257,8 +325,15 @@ def ejecutar(
     curso_academico: str = CURSO_VIGENTE,
 ) -> tuple[Reconciliacion, ...]:
     """Carga las dos bases, reconcilia, guarda `old_to_new` y el markdown de pendientes."""
-    antiguos = cargar_codigos_historico(historico_path)
-    indice = indice_vigente(cargar_plan_vigente(uc3m_path, curso_academico))
+    estudios_antiguos = cargar_estudios(uc3m_path)
+    antiguos = tuple(
+        replace(antiguo, estudios=estudios_antiguos.get(antiguo.old_code, frozenset()))
+        for antiguo in cargar_codigos_historico(historico_path)
+    )
+    indice = indice_vigente(
+        cargar_plan_vigente(uc3m_path, curso_academico),
+        cargar_estudios(uc3m_path, curso_academico),
+    )
     por_codigo = {antiguo.old_code: antiguo for antiguo in antiguos}
     filas = reconciliar(antiguos, indice, nivel_2)
     guardar_reconciliacion(filas, uc3m_path)
@@ -278,8 +353,12 @@ def resumen(filas: Iterable[Reconciliacion]) -> str:
     filas = tuple(filas)
     code = sum(fila.method == "code" for fila in filas)
     exact = sum(fila.method == "exact" for fila in filas)
+    manual = sum(fila.method == "manual" for fila in filas)
     sin_resolver = sum(fila.method is None for fila in filas)
-    return f"{code} con method=code, {exact} con exact, {sin_resolver} con NULL"
+    return (
+        f"{code} con method=code, {exact} con exact, {manual} con manual, "
+        f"{sin_resolver} con NULL"
+    )
 
 
 def _conectar_lectura(database_path: str | Path) -> sqlite3.Connection:

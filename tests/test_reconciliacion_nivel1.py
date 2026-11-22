@@ -227,7 +227,7 @@ def test_ejecutar_enlaza_las_dos_bases_sin_borrar_el_resto(tmp_path):
         centinela = connection.execute("SELECT estado FROM descargas").fetchone()[0]
         subjects = connection.execute("SELECT COUNT(*) FROM subjects").fetchone()[0]
 
-    assert resumen(filas) == "1 con method=code, 1 con exact, 2 con NULL"
+    assert resumen(filas) == "1 con method=code, 1 con exact, 0 con manual, 2 con NULL"
     assert guardadas == 4
     assert centinela == "centinela"
     assert subjects == 5
@@ -247,4 +247,5 @@ def test_main_imprime_el_resumen_calculado(monkeypatch, capsys):
 
     main()
 
-    assert capsys.readouterr().out.strip() == "1 con method=code, 0 con exact, 1 con NULL"
+    salida = capsys.readouterr().out.strip()
+    assert salida == "1 con method=code, 0 con exact, 0 con manual, 1 con NULL"

@@ -21,6 +21,7 @@ UMBRAL_NOMBRE = 90
 # porque BIOS también existe como prefijo propio de Georgia Tech.
 ALIAS = ((re.compile(r"ROM$"), ""), (re.compile(r"^BIOS(?=\d)"), "BIOL"))
 _ORDINAL_FINAL = re.compile(r"\b([IVX]+|\d+)$")
+_ROMANOS = {"I": 1, "V": 5, "X": 10}
 
 MOTIVOS = {
     "fuera_de_catalogo": "El código no está en el catálogo y ningún nombre se parece",
@@ -77,9 +78,20 @@ def crear_catalogo(asignaturas: Iterable[AsignaturaDestino]) -> Catalogo:
     )
 
 
-def _ordinal(nombre: str) -> str | None:
+def _ordinal(nombre: str) -> int | None:
+    """Número final del nombre ya normalizado. `ELECTRONICS 1` y `ELECTRONICS I` dan 1."""
     coincidencia = _ORDINAL_FINAL.search(nombre)
-    return coincidencia.group(1) if coincidencia else None
+    if coincidencia is None:
+        return None
+    ordinal = coincidencia.group(1)
+    if ordinal.isdigit():
+        return int(ordinal)
+    valores = [_ROMANOS[letra] for letra in ordinal]
+    # Resta si una letra va delante de otra mayor: IV = 4, IX = 9.
+    return sum(
+        -valor if siguiente > valor else valor
+        for valor, siguiente in zip(valores, valores[1:] + [0], strict=True)
+    )
 
 
 def _candidatos_por_nombre(nombre: str, catalogo: Catalogo) -> tuple[AsignaturaDestino, ...]:

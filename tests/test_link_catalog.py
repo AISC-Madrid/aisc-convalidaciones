@@ -7,6 +7,7 @@ from src.loaders.link_catalog import (
     AsignaturaDestino,
     Enlace,
     FilaHistorico,
+    _ordinal,
     crear_catalogo,
     ejecutar,
     enlazar,
@@ -64,6 +65,23 @@ def test_nombre_por_debajo_del_umbral():
 def test_ordinal_distinto_no_enlaza_y_el_exacto_gana():
     assert enlazar(None, "Principles of Physics II", _catalogo()) == Enlace(7, "name")
     assert enlazar(None, "Principles of Physics III", _catalogo()).link_method == "unlinked"
+
+
+@pytest.mark.parametrize("nombre", ["Principles of Physics 2", "PRINCIPLES OF PHYSICS II"])
+def test_ordinal_arabigo_y_romano_son_el_mismo(nombre):
+    assert enlazar(None, nombre, _catalogo()) == Enlace(7, "name")
+
+
+def test_ordinal_arabigo_distinto_no_enlaza():
+    assert enlazar(None, "Principles of Physics 3", _catalogo()).link_method == "unlinked"
+
+
+@pytest.mark.parametrize(
+    ("nombre", "ordinal"),
+    [("A I", 1), ("A II", 2), ("A IV", 4), ("A 4", 4), ("A IX", 9), ("A XII", 12), ("A", None)],
+)
+def test_ordinal_numerico(nombre, ordinal):
+    assert _ordinal(nombre) == ordinal
 
 
 def test_nombre_repetido_en_el_catalogo_es_ambiguo():
