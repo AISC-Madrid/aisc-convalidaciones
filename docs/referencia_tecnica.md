@@ -312,6 +312,30 @@ Es un paso crítico: sin él, los registros históricos de asignaturas que han c
 
 Un modelo con ventana de 128 tokens solo leería el nombre y el principio del temario (~una quinta parte del texto). El benchmark debe confirmar que `e5-small` con chunking mejora Recall@5; si no, se vuelve a MiniLM con chunking.
 
+Los vectores locales se guardan en `data/processed/embeddings_{uc3m,gatech}.npy`, con sus códigos y nombres alineados en los JSON correspondientes. La opción explícita `--simular` escribe en `data/processed/simulados/`; esos vectores reproducibles sirven para probar el flujo, pero no para evaluar similitudes.
+
+#### Consulta adicional de Estructuras de Datos
+
+Desde la raíz del proyecto, ejecutar con el entorno del proyecto:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.embeddings.consulta_adicional
+```
+
+El comando lee en solo lectura la ficha UC3M `20605`, curso `2026/2027`, idioma `EN`, y calcula una consulta contra los embeddings de Georgia Tech ya guardados. Es una consulta adicional: esta ficha no pertenece al corpus del piloto, que se mantiene intacto. No modifica ni regenera el corpus ni los vectores.
+
+Top-5 observado:
+
+| Código | Asignatura Georgia Tech | Score | Valoración por contenido |
+|---|---|---:|---|
+| CS 1332 | Data Structures and Algorithms for Applications | 0.915515 | Fuerte |
+| CS 7295 | GPU Hardware and Software | 0.897392 | Poco relacionada |
+| CS 1371 | Computing for Engineers | 0.895784 | Parcial |
+| ECE 2028 | AI Foundations | 0.895480 | Parcial |
+| CS 6550 | Design and Analysis of Algorithms | 0.894434 | Parcial |
+
+Estas valoraciones son una revisión orientativa del contenido descrito, no equivalencias de convalidación ni precedentes aprobados.
+
 ---
 
 ### Paso 4 · Calibración, evaluación y matching
