@@ -4,6 +4,8 @@ Buscador de equivalencias de asignaturas para alumnos de la UC3M que se van de *
 
 **Web (Streamlit Community Cloud):** https://aisc-convalidacionesgit-7yxa8ytcb4kcsc9urkcb74.streamlit.app/
 
+¿Eres alumno y quieres usar la web? Lee la **[guía para alumnos](docs/README_usuario.md)**.
+
 Tareas de cada semana: [issues](../../issues), ya asignadas a cada pareja.
 
 ## Qué leer, en este orden
