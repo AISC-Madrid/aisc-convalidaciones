@@ -393,7 +393,7 @@ Como el espacio de consultas es finito (grado × universidad), **no hace falta c
 
 El generador `generar_pdf(datos_alumno, convalidaciones_seleccionadas)` de `web/pdf.py` devuelve el documento en bytes. `datos_alumno` contiene `nombre`, `grado` y `universidad`; las convalidaciones son las filas seleccionadas del campo resultados del JSON.
 
-Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo valida `src.models.Resultados` y hay un ejemplo en `web/ejemplo.json`):
+Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo valida `src.models.Resultados` y hay un ejemplo en `public/data/ejemplo.json`):
 
 ```json
 {
@@ -411,6 +411,21 @@ Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo va
 - `etiqueta`: `PRECEDENTE_APROBADO` o `SUGERENCIA_IA`.
 - `aviso_ects` es `true` si los ECTS del destino difieren más del 25 % de los de origen; en las n:m se comparan los totales del grupo (cada asignatura cuenta una vez) y todas sus filas llevan el mismo aviso. El modelo rechaza un valor incoherente.
 - `grupo`: las filas de una misma convalidación n:m llevan el mismo número; `null` en las 1:1.
+
+**Índice de combinaciones (`public/data/index.json`).** Los desplegables de grado y universidad de la web salen de aquí. Es el contrato que tiene que generar `build_static.py` (6B):
+
+```json
+{
+  "combinaciones": [
+    {"grado": "Grado en Ingeniería Biomédica", "universidad": "Georgia Institute of Technology", "archivo": "257__GATECH.json"}
+  ]
+}
+```
+
+- Una entrada por combinación que tenga resultados: no todos los grados tienen todas las universidades.
+- `archivo` es el nombre del JSON de resultados, en la misma carpeta que el índice y sin subcarpetas (la web rechaza `../`).
+- No puede haber dos entradas con el mismo grado y universidad.
+- Añadir una combinación es añadir su JSON y su línea aquí; la pantalla no se toca. Lo valida `web/indice.py`.
 
 **Por qué no hay API**: una API solo tiene sentido si hay cálculo en tiempo de consulta, y aquí no lo hay. Quitarla ahorra un servidor y trabajo en la parte web. Si en el futuro hace falta búsqueda libre ("pega el temario de tu asignatura"), entonces sí habría que servir el modelo. Esa funcionalidad queda fuera del alcance.
 

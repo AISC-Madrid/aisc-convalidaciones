@@ -1,19 +1,23 @@
-# Imagen de la web (Streamlit). Se construye con el contexto en web/:
-#   docker build -t aisc-web web/
+# Imagen de la web (Streamlit). Se construye DESDE LA RAÍZ del repo,
+# para que entren web/ y public/data/:
+#   docker build -f web/Dockerfile -t aisc-web .
 FROM python:3.11-slim
 
 # Sin ficheros .pyc y con los logs al momento (Coolify los muestra en directo)
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-WORKDIR /app
+# Misma carpeta de trabajo que antes (web/), así Streamlit se comporta igual
+WORKDIR /app/web
 
 # Primero solo las dependencias: si no cambian, Docker reutiliza esta capa
-COPY requirements.txt .
+COPY web/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Después el código de la web (lo que excluye .dockerignore no entra)
-COPY . .
+# El código de la web y los JSON publicados (lo que excluye
+# web/Dockerfile.dockerignore no entra)
+COPY web/ .
+COPY public/data/ /app/public/data/
 
 EXPOSE 8501
 

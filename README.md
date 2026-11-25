@@ -4,6 +4,8 @@ Buscador de equivalencias de asignaturas para alumnos de la UC3M que se van de *
 
 **Web (Streamlit Community Cloud):** https://aisc-convalidacionesgit-7yxa8ytcb4kcsc9urkcb74.streamlit.app/
 
+¿Eres alumno y quieres usar la web? Lee la **[guía para alumnos](docs/README_usuario.md)**.
+
 Tareas de cada semana: [issues](../../issues), ya asignadas a cada pareja.
 
 ## Qué leer, en este orden
@@ -65,24 +67,28 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 
 ## Despliegue de la web
 
-La web (Streamlit) está entera en `web/`, con un `Dockerfile` que la construye y la arranca.
+La web (Streamlit) está en `web/`, con un `Dockerfile` que la construye y la arranca. La imagen se construye **desde la raíz del repo**, porque necesita también los JSON de `public/data/`.
 
 | Dato | Valor |
 |---|---|
-| Ruta (base directory en Coolify) | `/web` |
+| Base directory en Coolify | `/` (raíz del repo) |
+| Dockerfile en Coolify | `/web/Dockerfile` |
 | Puerto | `8501` |
 | Variables de entorno | `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` |
 | Base de datos | MySQL del servidor; usuario de solo lectura |
 
 - Un push a la rama del webhook vuelve a desplegar.
 - Los secretos MySQL se configuran en Coolify y no van en git ni en la imagen. Si la MySQL no está disponible, la web arranca igual y la pantalla Catálogo muestra un aviso.
-- Los resultados se leen de `web/ejemplo.json`, que sí va en la imagen.
+- Los desplegables de grado y universidad salen de `public/data/index.json`, y los resultados de cada combinación, del JSON que indica su campo `archivo` (en la misma carpeta). Los dos van en la imagen: para añadir una combinación se sube su JSON y su línea en `index.json`, y el siguiente despliegue la muestra sin tocar código.
+- Qué entra en la imagen lo decide `web/Dockerfile.dockerignore`: solo `web/` (sin tests) y `public/data/`. Nunca entran la BD, `.env` ni `data/`.
 - No hace falta ninguna API key; la conexión usa el usuario de solo lectura de MySQL.
 
 ### Probar en local
 
+Desde la raíz del repo (fíjate en el `.` del final: es el contexto):
+
 ```bash
-docker build -t aisc-web web/
+docker build -f web/Dockerfile -t aisc-web .
 docker run --rm -p 8501:8501 --env-file .env aisc-web
 ```
 
