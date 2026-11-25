@@ -4,6 +4,11 @@
       "grado": "Grado en Ingeniería Informática",
       "universidad": "Georgia Institute of Technology",
       "archivo": "ejemplo.json"
+    },
+    {
+      "grado": "Grado en Ingeniería Biomédica", 
+      "universidad": "Georgia Institute of Technology", 
+      "archivo": "ejemplo_200.json"
     }
   ]
 }

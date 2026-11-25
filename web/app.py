@@ -1,6 +1,7 @@
 """Aplicación web de convalidaciones."""
 
 import json
+from datetime import date
 from json import JSONDecodeError
 from pathlib import Path
 from types import SimpleNamespace
@@ -53,6 +54,22 @@ def cargar_datos(ruta):
             raise ValueError("Hay una propuesta con un grupo no válido.")
 
     return datos
+
+
+def texto_cabecera(datos):
+    """Grado, universidad, fecha de generación y umbral del JSON, para la cabecera."""
+    partes = [f"{datos['grado']} · {datos['universidad']}"]
+    generado = datos.get("generado")
+    if isinstance(generado, str) and generado:
+        try:
+            generado = date.fromisoformat(generado).strftime("%d/%m/%Y")
+        except ValueError:
+            pass  # si no es una fecha ISO, se muestra tal cual
+        partes.append(f"Generado el {generado}")
+    umbral = datos.get("umbral")
+    if isinstance(umbral, (int, float)):
+        partes.append(f"Umbral de similitud: {umbral:.2f}".replace(".", ","))
+    return " · ".join(partes)
 
 
 def _objetos_resultados(filas):
@@ -161,7 +178,7 @@ def _pagina_resultados(ruta_indice):
         st.caption(str(error))
         return
 
-    st.caption(f"{datos['grado']} · {datos['universidad']}")
+    st.caption(texto_cabecera(datos))
     columna_texto, columna_filtro = st.columns([3, 1])
     texto = columna_texto.text_input(
         "Buscar por asignatura o código",
