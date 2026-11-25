@@ -29,6 +29,7 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.5",
     "jupyter>=1.0",
+    "pypdf>=4.0",
 ]
 
 [build-system]

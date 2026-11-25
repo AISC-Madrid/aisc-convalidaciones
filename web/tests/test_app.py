@@ -114,6 +114,8 @@ def test_app_muestra_aviso_ejemplo_y_no_habilita_pdf_sin_seleccion():
 
 def test_seleccion_y_nombre_habilitan_descarga_pdf():
     at = AppTest.from_file(str(WEB_DIR / "app.py")).run(timeout=10)
+    # index.json tiene dos combinaciones; este test usa la de ejemplo.json.
+    at.selectbox(key="grado").set_value("Grado en Ingeniería Informática").run(timeout=10)
     propuesta_grupo = next(checkbox for checkbox in at.checkbox if "Programación" in checkbox.label)
     propuesta_grupo.set_value(True)
     at.text_input[1].set_value("Ana")
