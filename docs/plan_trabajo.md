@@ -14,13 +14,13 @@ Vamos a construir un **buscador** que, dado un grado de la UC3M y una universida
 
 ## 2. Cómo funciona por dentro, en 5 pasos
 
-Cada paso es un script que se ejecuta en nuestros portátiles. En la web publicada no hay modelo ni servidor: solo ficheros JSON ya calculados.
+Cada paso es un script que se ejecuta en nuestros portátiles. En la web publicada no hay modelo: solo resultados ya calculados, guardados en la MySQL del servidor.
 
 1. **Recoger datos.** Descargamos las fichas de las asignaturas de la UC3M (nombre, objetivos, programa, créditos), el catálogo de la universidad de destino y los Excel oficiales con las convalidaciones aprobadas en años anteriores. → `referencia_tecnica.md` §5, Paso 1.
 2. **Enlazar.** Los Excel solo traen nombres y códigos, así que hay que casar cada fila con una asignatura real del catálogo del destino, y los códigos antiguos de la UC3M con los del plan vigente. Sin esto el histórico no sirve. → Paso 1 (enlace) y Paso 2 (reconciliación).
 3. **Convertir temarios en vectores.** Un modelo de lenguaje multilingüe (gratis, se ejecuta en CPU) convierte cada temario en un *embedding*: una lista de números tal que dos asignaturas parecidas tienen vectores parecidos, aunque estén en idiomas distintos. → Paso 3.
 4. **Calibrar y emparejar.** Miramos cuánto se parecen los pares que ya se aprobaron y fijamos el umbral a partir de ellos, no a ojo. Luego, para cada asignatura de la UC3M, buscamos las del destino más parecidas y las etiquetamos como precedente o sugerencia. → Paso 4.
-5. **Publicar.** Exportamos un JSON por combinación grado × universidad, una web en Streamlit lo lee y genera el PDF. → Paso 5.
+5. **Publicar.** Exportamos los resultados de cada combinación grado × universidad a la base de datos, se vuelcan a la MySQL del servidor y una web en Streamlit los lee y genera el PDF. → Paso 5.
 
 ## 3. Cómo trabajamos
 
@@ -91,8 +91,8 @@ Con la Semana 5 se completan las 15 parejas posibles: cada persona ha trabajado 
 | **5** | *Revisión del enlace + notebook de calibración con cosenos inventados* | **Embeddings**: encoder, embeber ambos catálogos, top-K | *Web lista para más de un JSON + README de usuario y guion de la prueba* |
 | **6** | **Calibración + evaluación**: umbral, Recall@5, 50 sugerencias a mano; reconciliación por contenido | **Matcher + export** con umbral y embeddings de fixture | *Pantalla de resultados a tamaño real (200 filas) y guion de la demo* |
 | | ◆ **Umbral calibrado y export probado** | | |
-| **7** | *Documentación técnica: README y `architecture.md`* | *Refresco (`make refresh`) y test end-to-end del pipeline* | **JSON real en el servidor**: export con el umbral de 6A, redespliegue |
-| | ◆ **JSON real disponible** | | |
+| **7** | *Documentación técnica: README y `architecture.md`* | *Refresco (`make refresh`) y test end-to-end del pipeline* | **Resultados reales en el servidor**: export a la BD con el umbral de 6A, redespliegue |
+| | ◆ **Resultados reales disponibles** | | |
 | **8** | **Prueba con 3-5 usuarios y arreglos** (todos) | | |
 | **9** | Buffer | | |
 
@@ -217,12 +217,12 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 - Pista: Víctor se queda (el notebook es el de la semana 5); Mercedes trae los embeddings.
 
 **6B · Ángela + Héctor. Matcher y export** (#40)
-- Entregable: `src/matching/matcher.py` (top-10 por coseno, umbral como argumento, `PRECEDENTE_APROBADO` que se muestra siempre / `SUGERENCIA_IA`, aviso si los ECTS difieren más del 25 %) y `src/export/build_static.py`, que genera `public/data/<grado>__<uni>.json` e `index.json`. Se prueba con umbral 0,7 y embeddings de fixture.
-- Hecho cuando: los tests cubren precedente, sugerencia y aviso de ECTS, y un JSON de fixture valida con `Match`.
+- Entregable: `src/matching/matcher.py` (top-10 por coseno, umbral como argumento, `PRECEDENTE_APROBADO` que se muestra siempre / `SUGERENCIA_IA`, aviso si los ECTS difieren más del 25 %) y el export, que guarda los resultados de cada grado × universidad en una tabla de la BD y los vuelca a la MySQL del servidor con `src.sync.volcar_mysql`. Se prueba con umbral 0,7 y embeddings de fixture.
+- Hecho cuando: los tests cubren precedente, sugerencia y aviso de ECTS, y las filas de fixture validan con `Match`.
 - Pista: Ángela se queda (trae los embeddings); Héctor entra. Las reglas están en `referencia_tecnica.md` §5, Paso 4.
 
 **6C · Alejandra + Fran. La pantalla de resultados, a tamaño real** (#41) *(no bloquea a nadie)*
-- Entregable: un JSON inventado de 200 resultados cargado en el servidor; la cabecera muestra `generado` y `umbral`; test end-to-end (cargar, filtrar, seleccionar un grupo, sacar el PDF); guion de la demo de 5 minutos.
+- Entregable: 200 resultados inventados en la tabla de resultados de la MySQL del servidor, leídos por la web; la cabecera muestra `generado` y `umbral`; test end-to-end (cargar, filtrar, seleccionar un grupo, sacar el PDF); guion de la demo de 5 minutos.
 - Hecho cuando: la tabla de 200 filas se mueve bien en el servidor, el PDF descarga y el guion está en `docs/`.
 - Pista: Alejandra se queda en la web; Fran entra en ella.
 
@@ -234,12 +234,12 @@ Formato de cada tarea: **Entregable** · **Hecho cuando** · **Qué aprendes** �
 - Pista: Víctor se queda en datos; Alejandra trae la web.
 
 **7B · Héctor + Mercedes. Refresco y test del pipeline** (#43) *(no bloquea a nadie)*
-- Entregable: `test_e2e.py` que recorre el pipeline con datos pequeños en un directorio temporal y `make refresh`, que vuelve a scrapear, recalcula y regenera los JSON; cobertura hacia el 70 % en embeddings, matching y export.
+- Entregable: `test_e2e.py` que recorre el pipeline con datos pequeños en un directorio temporal y `make refresh`, que vuelve a scrapear, recalcula y regenera los resultados en la BD; cobertura hacia el 70 % en embeddings, matching y export.
 - Hecho cuando: `make refresh` corre sobre el fixture y `pytest --cov` publica el número; si no llega al 70 %, el hueco queda en una issue para la semana 9.
 - Pista: Héctor se queda (cerró el matcher); Mercedes llega de la calibración.
 
-**7C · Fran + Ángela. JSON real en el servidor** (#44)
-- Entregable: ejecutar el export de 6B con el umbral de 6A y dejar `public/data/<grado>__<uni>.json` e `index.json` en el repo y en el servidor; quitar el aviso de datos de ejemplo; ajustes que pida el dato real.
+**7C · Fran + Ángela. Resultados reales en el servidor** (#44)
+- Entregable: ejecutar el export de 6B con el umbral de 6A y volcar los resultados a la MySQL del servidor; quitar el aviso de datos de ejemplo; ajustes que pida el dato real.
 - Hecho cuando: en la URL del servidor un alumno elige Ingeniería Biomédica y Georgia Tech, ve los resultados reales, abre una ficha y descarga el PDF.
 - Pista: Fran se queda en la web; Ángela programó el export y lo lanza con el número de 6A.
 
