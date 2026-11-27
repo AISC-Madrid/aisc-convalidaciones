@@ -1,17 +1,20 @@
-"""Genera public/data/ejemplo_200.json: 200 resultados INVENTADOS para probar la web.
+"""Guarda 200 resultados INVENTADOS en la base de datos para probar la web.
 
-Sirve para ver la pantalla de resultados con el volumen del dato real antes de tenerlo: 
-paginación, filtros, nombres muy largos en la tabla y en el PDF y varios
-grupos n:m. Se sustituye por el JSON real del export más adelante (misma combinación en
-index.json, otro archivo).
+Sirve para ver la pantalla de resultados con el volumen del dato real antes de tenerlo:
+paginación, filtros, nombres muy largos en la tabla y en el PDF y varios grupos n:m.
+Se escriben en las tablas ``combinaciones`` y ``resultados`` de
+``data/processed/resultados.sqlite`` (las mismas que usa el export real) y de ahí se llevan
+a la MySQL del servidor. El export real del piloto sustituye esta combinación.
 
 Uso, desde la raíz del repo:
     python scripts/generar_ejemplo_200.py
+    python -m src.sync.volcar_mysql exportar --solo-resultados
+    # y se importa data/processed/resultados-1.sql.gz en phpMyAdmin
 
-La semilla es fija: si no cambias el código, el JSON sale idéntico.
+La semilla es fija: si no cambias el código, los resultados salen idénticos.
 """
 
-import json
+import argparse
 import random
 import sys
 from pathlib import Path
@@ -19,9 +22,9 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ))
 
+from src.export.resultados_bd import RUTA_RESULTADOS, guardar_en  # noqa: E402
 from src.models.match import Resultados, ects_dispares  # noqa: E402
 
-SALIDA = RAIZ / "public" / "data" / "ejemplo_200.json"
 SEMILLA = 41  # número de la issue
 TOTAL_FILAS = 200
 UMBRAL = 0.71
@@ -188,11 +191,14 @@ def generar(semilla=SEMILLA):
     return datos
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--salida", type=Path, default=RUTA_RESULTADOS)
+    args = parser.parse_args(argv)
     datos = generar()
-    SALIDA.write_text(json.dumps(datos, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    guardar_en(args.salida, Resultados.model_validate(datos))
     grupos = {f["grupo"] for f in datos["resultados"] if f["grupo"] is not None}
-    print(f"{SALIDA.relative_to(RAIZ)}: {len(datos['resultados'])} filas, {len(grupos)} grupos n:m")
+    print(f"{args.salida}: {len(datos['resultados'])} filas, {len(grupos)} grupos n:m")
 
 
 if __name__ == "__main__":

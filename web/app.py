@@ -1,13 +1,10 @@
 """Aplicación web de convalidaciones."""
 
-import json
 from datetime import date
-from json import JSONDecodeError
-from pathlib import Path
 from types import SimpleNamespace
 
+import bd_resultados
 import catalogo
-import indice
 import pdf
 import resultados
 import streamlit as st
@@ -19,45 +16,8 @@ ETIQUETAS = {
 }
 
 
-def cargar_datos(ruta):
-    """Carga y valida la estructura mínima que necesita la aplicación."""
-    try:
-        datos = json.loads(Path(ruta).read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, JSONDecodeError) as error:
-        raise ValueError(f"No se puede leer el archivo de resultados: {error}") from error
-
-    if not isinstance(datos, dict):
-        raise ValueError("El contenido debe ser un objeto JSON.")
-    if not isinstance(datos.get("grado"), str) or not isinstance(datos.get("universidad"), str):
-        raise ValueError("Faltan el grado o la universidad en el archivo de resultados.")
-    filas = datos.get("resultados")
-    if not isinstance(filas, list):
-        raise ValueError("El archivo de resultados no contiene una lista de propuestas.")
-
-    for fila in filas:
-        if not isinstance(fila, dict):
-            raise ValueError("Hay una propuesta con un formato no válido.")
-        if fila.get("etiqueta") not in ETIQUETAS:
-            raise ValueError("Hay una propuesta con una etiqueta no reconocida.")
-        if not isinstance(fila.get("score"), (int, float)):
-            raise ValueError("Hay una propuesta sin una puntuación numérica.")
-        for lado in ("origen", "destino"):
-            asignatura = fila.get(lado)
-            if not isinstance(asignatura, dict) or not all(
-                isinstance(asignatura.get(campo), str) for campo in ("codigo", "nombre")
-            ):
-                raise ValueError(f"Hay una asignatura de {lado} con un formato no válido.")
-            if not isinstance(asignatura.get("ects"), (int, float)):
-                raise ValueError(f"Faltan los ECTS de una asignatura de {lado}.")
-        grupo = fila.get("grupo")
-        if grupo is not None and not isinstance(grupo, (int, str)):
-            raise ValueError("Hay una propuesta con un grupo no válido.")
-
-    return datos
-
-
 def texto_cabecera(datos):
-    """Grado, universidad, fecha de generación y umbral del JSON, para la cabecera."""
+    """Grado, universidad, fecha de generación y umbral de los resultados, para la cabecera."""
     partes = [f"{datos['grado']} · {datos['universidad']}"]
     generado = datos.get("generado")
     if isinstance(generado, str) and generado:
@@ -67,7 +27,7 @@ def texto_cabecera(datos):
             pass  # si no es una fecha ISO, se muestra tal cual
         partes.append(f"Generado el {generado}")
     umbral = datos.get("umbral")
-    if isinstance(umbral, (int, float)):
+    if isinstance(umbral, (int, float)) and not isinstance(umbral, bool):
         partes.append(f"Umbral de similitud: {umbral:.2f}".replace(".", ","))
     return " · ".join(partes)
 
@@ -133,20 +93,25 @@ def _fila_tabla(bloque):
         "Aviso": "ECTS dispares" if any(fila.aviso_ects for fila in bloque) else "",
     }
 
-def _elegir_combinacion(ruta_indice):
-    """Pinta los desplegables y devuelve la ruta del JSON elegido, o None si hay error."""
+def _elegir_combinacion():
+    """Pinta los desplegables y devuelve (grado, universidad), o None si no hay datos."""
     try:
-        combinaciones = indice.cargar_indice(ruta_indice)
-    except ValueError as error:
-        st.error("No se puede cargar la lista de grados y universidades.")
-        st.caption(str(error))
+        combinaciones = bd_resultados.combinaciones()
+    except catalogo.BDNoDisponible as error:
+        st.error("Los resultados no están disponibles ahora mismo. Inténtalo más tarde.")
+        st.caption(f"Detalle técnico: {error}")
+        return None
+    if not combinaciones:
+        st.info("Todavía no hay resultados publicados para ningún grado.")
         return None
 
     columna_grado, columna_universidad = st.columns(2)
-    grado = columna_grado.selectbox("Grado UC3M", indice.grados(combinaciones), key="grado")
+    grado = columna_grado.selectbox(
+        "Grado UC3M", bd_resultados.grados(combinaciones), key="grado"
+    )
     universidad = columna_universidad.selectbox(
         "Universidad de destino",
-        indice.universidades(combinaciones, grado),
+        bd_resultados.universidades(combinaciones, grado),
         key="universidad",
     )
 
@@ -156,24 +121,23 @@ def _elegir_combinacion(ruta_indice):
         st.session_state["combinacion"] = combinacion
         st.session_state[SELECCION] = set()
         st.session_state["pagina"] = 1
+    return combinacion
 
-    # Los JSON de resultados están en la misma carpeta que el índice.
-    return indice.ruta_resultados(combinaciones, grado, universidad, Path(ruta_indice).parent)
 
-def _pagina_resultados(ruta_indice):
+def _pagina_resultados():
     st.subheader("Resultados")
     st.warning(
         "Estos resultados son todavía de ejemplo: no son equivalencias reales "
         "ni constituyen una aprobación de convalidación."
     )
 
-    ruta_json = _elegir_combinacion(ruta_indice)
-    if ruta_json is None:
+    combinacion = _elegir_combinacion()
+    if combinacion is None:
         return
 
     try:
-        datos = cargar_datos(ruta_json)
-    except ValueError as error:
+        datos = bd_resultados.cargar(*combinacion)
+    except (catalogo.BDNoDisponible, bd_resultados.SinResultados) as error:
         st.error("No se pueden mostrar los resultados de esta combinación.")
         st.caption(str(error))
         return
@@ -308,7 +272,7 @@ def _seleccion_y_pdf(datos, bloques, visibles):
     )
 
 
-def main(ruta_indice=indice.RUTA_INDICE, ruta_bd=catalogo.RUTA_BD):
+def main(ruta_bd=catalogo.RUTA_BD):
     st.set_page_config(page_title="Convalidaciones · AISC", layout="wide")
     st.title("AISC · Buscador de convalidaciones")
     st.caption("Explora propuestas orientativas para tu movilidad. El tutor decide.")
@@ -317,7 +281,7 @@ def main(ruta_indice=indice.RUTA_INDICE, ruta_bd=catalogo.RUTA_BD):
         ["Resultados", "Catálogo", "Cómo funciona"]
     )
     with pestaña_resultados:
-        _pagina_resultados(ruta_indice)
+        _pagina_resultados()
     with pestaña_catalogo:
         catalogo.pagina_catalogo(ruta_bd)
     with pestaña_como_funciona:

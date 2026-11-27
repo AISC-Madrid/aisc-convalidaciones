@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from src.models import HistoricalMatch, Match, Resultados, Subject
 
-EJEMPLO = Path(__file__).parents[1] / "public" / "data" / "ejemplo.json"
+EJEMPLO = Path(__file__).parent / "fixtures" / "resultados" / "ejemplo.json"
 
 
 def _match(**cambios):

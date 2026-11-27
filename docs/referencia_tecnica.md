@@ -109,7 +109,7 @@ flowchart TD
     end
 
     subgraph PASO5["Paso 5 · Publicación + Interfaz"]
-        E1["Export precalculado\n(JSON por grado × uni)"]
+        E1["Export precalculado\n(resultados en la BD)"]
         E2["UI Streamlit\n(Community Cloud)"]
         E3["PDF (reportlab)"]
     end
@@ -133,7 +133,7 @@ flowchart TD
     E2 --> E3
 ```
 
-**Offline vs. producción**: los Pasos 1-4 y el export (E1) se ejecutan **offline** en un portátil o en GitHub Actions. Producción (E2-E3) solo lee JSON: no carga el modelo, no necesita `torch` y cabe en un plan gratuito. El nodo **A4** (enlace XLS ↔ catálogo destino) es del que dependen tanto la calibración como la etiqueta `PRECEDENTE_APROBADO`.
+**Offline vs. producción**: los Pasos 1-4 y el export (E1) se ejecutan **offline** en un portátil o en GitHub Actions. Producción (E2-E3) solo lee de la MySQL los resultados ya calculados: no carga el modelo, no necesita `torch` y cabe en un plan gratuito. El nodo **A4** (enlace XLS ↔ catálogo destino) es del que dependen tanto la calibración como la etiqueta `PRECEDENTE_APROBADO`.
 
 ### Almacenamiento
 
@@ -145,7 +145,7 @@ flowchart TD
 | Caché HTML de scraping | Solo local (no se sube al repo) | ~200 MB |
 | Modelo `multilingual-e5-small` | Caché local / caché de Actions | ~470 MB |
 | + Chromium de Playwright (solo si el destino es SPA) | Local / Actions | +~300 MB |
-| **JSON publicados (lo único en producción)** | Repo / GitHub Pages | **< 10 MB** en el MVP |
+| **Resultados (`combinaciones` + `resultados`, lo único que lee la web)** | `data/processed/resultados.sqlite` → MySQL del servidor | **< 10 MB** en el MVP |
 
 Las dependencias Python (`torch` CPU ronda 1 GB instalado) solo van en las máquinas que ejecutan el pipeline, no en producción.
 
@@ -160,11 +160,11 @@ El catálogo ya no se reparte por los Releases del repo privado: vive en una MyS
 | `python -m src.sync.volcar_mysql exportar` | Escribe `data/processed/convalidaciones-1.sql.gz`, `-2`… (no se suben al repo), cada uno por debajo del límite de 8 MB de phpMyAdmin | Siempre funciona; luego se importan **en orden** en phpMyAdmin → `convalidaciones_db` → **Importar** |
 | `python -m src.sync.volcar_mysql subir` | Conecta con las variables `MYSQL_*` y vuelca sin fichero | Solo si la MySQL es alcanzable desde donde se ejecuta |
 
-Los dos **borran y recrean** cada tabla (`subjects`, `subject_plans`, `descargas`, `dest_subjects`, `old_to_new`, `historical_matches`). La parte 1 empieza por las tablas del principio y las siguientes continúan donde lo dejó la anterior: importar una sola deja tablas a medias.
+Los dos **borran y recrean** cada tabla (`subjects`, `subject_plans`, `descargas`, `dest_subjects`, `old_to_new`, `historical_matches` y, de `resultados.sqlite`, `combinaciones` y `resultados`). Con `--solo-resultados` solo van las dos de resultados, a `data/processed/resultados-1.sql.gz`, sin tocar el catálogo ni sus `.sql.gz`. La parte 1 empieza por las tablas del principio y las siguientes continúan donde lo dejó la anterior: importar una sola deja tablas a medias.
 
 **Dónde está la verdad de cada dato.**
 
-- **Datos que produce el pipeline** (las seis tablas de arriba): la fuente es el pipeline. Una corrección se hace en el código o en sus entradas y se vuelve a exportar. Si se edita a mano en phpMyAdmin, se pierde en la siguiente importación.
+- **Datos que produce el pipeline** (las tablas de arriba): la fuente es el pipeline. Una corrección se hace en el código o en sus entradas y se vuelve a exportar. Si se edita a mano en phpMyAdmin, se pierde en la siguiente importación.
 - **Datos que crean personas** (correcciones manuales, aprobaciones del tutor, propuestas guardadas): van en tablas propias que el volcado no toca. Ahí la MySQL es la copia buena y se edita directamente (phpMyAdmin o `UPDATE`/`INSERT`).
 
 **Acceso del equipo.** Nadie usa la contraseña de administración ni la de la aplicación: cada persona tiene su propio usuario MySQL con los permisos justos, creado en phpMyAdmin (**Cuentas de usuarios → Agregar cuenta de usuario**) o con SQL:
@@ -382,50 +382,50 @@ El MVP propone pares 1:1. Las convalidaciones n:m del histórico se muestran agr
 
 ### Paso 5 · Publicación + Interfaz
 
-Como el espacio de consultas es finito (grado × universidad), **no hace falta calcular nada cuando el alumno busca**: el pipeline genera un JSON por combinación y la interfaz solo lo lee.
+Como el espacio de consultas es finito (grado × universidad), **no hace falta calcular nada cuando el alumno busca**: el pipeline guarda los resultados de cada combinación en la base de datos y la interfaz solo los lee. **La web no lee ningún JSON**: su única fuente es la MySQL del servidor.
 
 | Componente | Tecnología | Coste |
 |---|---|---|
-| Export | `src/export/build_static.py` → `public/data/<grado>__<uni>.json` + `index.json` (lista de grados y universidades) | 0 € |
-| Frontend MVP | Streamlit que lee los JSON; desplegado en **Streamlit Community Cloud** (gratis, desde un repo de GitHub) | 0 € |
+| Export | `src/export/resultados_bd.py` (`guardar`) → tablas `combinaciones` y `resultados` de `data/processed/resultados.sqlite` → MySQL con `python -m src.sync.volcar_mysql exportar --solo-resultados` | 0 € |
+| Frontend MVP | Streamlit en el servidor (Coolify) que lee esas tablas con el usuario de solo lectura (`web/bd_resultados.py`) | 0 € |
 | PDF | `reportlab` dentro de la app de Streamlit (en Windows no necesita dependencias nativas, a diferencia de `weasyprint`) | 0 € |
-| Frontend Fase 3 | Web estática (HTML/JS) en **GitHub Pages** o en la web de AISC, leyendo los mismos JSON; PDF en el navegador (`window.print()` con CSS de impresión) | 0 € |
 
-El generador `generar_pdf(datos_alumno, convalidaciones_seleccionadas)` de `web/pdf.py` devuelve el documento en bytes. `datos_alumno` contiene `nombre`, `grado` y `universidad`; las convalidaciones son las filas seleccionadas del campo resultados del JSON.
+El generador `generar_pdf(datos_alumno, convalidaciones_seleccionadas)` de `web/pdf.py` devuelve el documento en bytes. `datos_alumno` contiene `nombre`, `grado` y `universidad`; las convalidaciones son las filas seleccionadas de los resultados de la combinación.
 
-Esquema del JSON (contrato entre el pipeline y la interfaz, cerrado en 1C; lo valida `src.models.Resultados` y hay un ejemplo en `public/data/ejemplo.json`):
+**Contrato de los resultados.** Lo valida `src.models.Resultados`, y `guardar` no escribe nada que no lo cumpla. Hay un ejemplo pequeño en `tests/fixtures/resultados/ejemplo.json`, que solo usan los tests. Esta es la forma en que `web/bd_resultados.cargar()` se lo da a la pantalla:
 
-```json
+```python
 {
   "grado": "...", "universidad": "...", "generado": "2026-10-20", "modelo": "multilingual-e5-small",
   "umbral": 0.71,
   "resultados": [
     {"origen": {"codigo": "...", "nombre": "...", "ects": 6, "tipo": "OB", "url": "..."},
      "destino": {"codigo": "...", "nombre": "...", "ects": 6.0, "url": "..."},
-     "score": 0.87, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": false, "grupo": null}
+     "score": 0.87, "etiqueta": "PRECEDENTE_APROBADO", "aviso_ects": False, "grupo": None}
   ]
 }
 ```
 
 - `origen` es la asignatura UC3M; `tipo` (`FB`/`OB`/`OP`/`HUM`) y `url` (ficha UC3M) son opcionales.
 - `etiqueta`: `PRECEDENTE_APROBADO` o `SUGERENCIA_IA`.
-- `aviso_ects` es `true` si los ECTS del destino difieren más del 25 % de los de origen; en las n:m se comparan los totales del grupo (cada asignatura cuenta una vez) y todas sus filas llevan el mismo aviso. El modelo rechaza un valor incoherente.
-- `grupo`: las filas de una misma convalidación n:m llevan el mismo número; `null` en las 1:1.
+- `aviso_ects` es verdadero si los ECTS del destino difieren más del 25 % de los de origen; en las n:m se comparan los totales del grupo (cada asignatura cuenta una vez) y todas sus filas llevan el mismo aviso. El modelo rechaza un valor incoherente. La tabla de la web y el PDF lo muestran como «ECTS dispares».
+- `grupo`: las filas de una misma convalidación n:m llevan el mismo número; `NULL` en las 1:1.
 
-**Índice de combinaciones (`public/data/index.json`).** Los desplegables de grado y universidad de la web salen de aquí. Es el contrato que tiene que generar `build_static.py` (6B):
+**Tablas.**
 
-```json
-{
-  "combinaciones": [
-    {"grado": "Grado en Ingeniería Biomédica", "universidad": "Georgia Institute of Technology", "archivo": "257__GATECH.json"}
-  ]
-}
-```
+| Tabla | Una fila por | Columnas |
+|---|---|---|
+| `combinaciones` | grado × universidad | `id`, `grado`, `universidad` (únicos juntos), `generado` (fecha ISO), `modelo`, `umbral` |
+| `resultados` | propuesta | `id`, `combinacion_id` (con índice), `origen_codigo`, `origen_nombre`, `origen_ects`, `origen_tipo`, `origen_url`, `destino_codigo`, `destino_nombre`, `destino_ects`, `destino_url`, `score`, `etiqueta`, `aviso_ects` (0/1), `grupo` |
 
-- Una entrada por combinación que tenga resultados: no todos los grados tienen todas las universidades.
-- `archivo` es el nombre del JSON de resultados, en la misma carpeta que el índice y sin subcarpetas (la web rechaza `../`).
-- No puede haber dos entradas con el mismo grado y universidad.
-- Añadir una combinación es añadir su JSON y su línea aquí; la pantalla no se toca. Lo valida `web/indice.py`.
+- Los desplegables de grado y universidad salen de `combinaciones`: solo aparecen las combinaciones que tienen resultados.
+- Nombres y créditos se guardan tal como estaban al calcular, para que un resultado no cambie si se vuelve a scrapear el catálogo. Ningún temario.
+- Volver a guardar una combinación sustituye sus filas, sin duplicar. Añadir una combinación es guardarla y volcarla: la pantalla no se toca.
+- El export de 6B (`matcher.py`) llama a `guardar`: no crea tablas propias.
+- La imagen de la web no lleva `src/`, así que `web/bd_resultados.py` repite la lista de columnas; un test comprueba que coincide con la de `src/export/resultados_bd.py`.
+- La web cachea las lecturas 10 minutos: tras importar un volcado nuevo, los cambios tardan como mucho eso en verse.
+
+**Publicar resultados nuevos**: `python scripts/generar_ejemplo_200.py` (o el export real) → `python -m src.sync.volcar_mysql exportar --solo-resultados` → importar `data/processed/resultados-1.sql.gz` en phpMyAdmin → `convalidaciones_db` → **Importar**. No hace falta redesplegar la web.
 
 **Por qué no hay API**: una API solo tiene sentido si hay cálculo en tiempo de consulta, y aquí no lo hay. Quitarla ahorra un servidor y trabajo en la parte web. Si en el futuro hace falta búsqueda libre ("pega el temario de tu asignatura"), entonces sí habría que servir el modelo. Esa funcionalidad queda fuera del alcance.
 
@@ -456,7 +456,7 @@ convalidaciones-aisc/
 ├── .gitignore                 # excluye data/raw (caché HTML) y data/processed
 ├── .github/workflows/
 │   ├── ci.yml                 # lint + pytest
-│   └── refresh.yml            # re-scraping + regeneración de JSON (Fase 2)
+│   └── refresh.yml            # re-scraping + regeneración de resultados (Fase 2)
 ├── config/
 │   ├── settings.yaml
 │   └── scrapers/<uni>.yaml
@@ -468,9 +468,8 @@ convalidaciones-aisc/
 │   ├── reconciliation/    # old_to_new.py
 │   ├── embeddings/        # encoder.py (chunking + L2), index.py
 │   ├── matching/          # calibration.py, evaluation.py, matcher.py
-│   ├── export/            # build_static.py (JSON por grado × uni)
+│   ├── export/            # resultados_bd.py (resultados por grado × uni a la BD)
 │   └── ui/                # app.py (Streamlit), pdf.py (reportlab)
-├── public/data/           # JSON publicados (lo único que usa producción)
 ├── data/
 │   ├── historical/  raw/  processed/
 ├── tests/
@@ -497,8 +496,8 @@ El módulo `matching/graph.py` (NetworkX) se añade en la Fase 4.
 | Scraper UC3M para todos los grados | Mismo scraper con más planes; deduplicar por `asig` |
 | Reconciliación + enlace para todos los grados | Revisión manual de la franja dudosa |
 | Recalibrar por grado (≥ 20 pares enlazados) o fallback global de la universidad | Mismo notebook, parametrizado |
-| Selector multi-grado en la UI | Lee `index.json` |
-| Workflow `refresh.yml` (GitHub Actions, `schedule`) | Re-scraping + regeneración de JSON; 0 € |
+| Selector multi-grado en la UI | Lee la tabla `combinaciones` |
+| Workflow `refresh.yml` (GitHub Actions, `schedule`) | Re-scraping + regeneración de los resultados en la BD; 0 € |
 
 ### Fase 3 · Más universidades
 | Tarea | Detalle |

@@ -50,6 +50,11 @@ def _etiqueta(propuesta: Sequence[dict]) -> str:
     return ", ".join(nombres[etiqueta] for etiqueta in etiquetas)
 
 
+def _aviso(propuesta: Sequence[dict]) -> str:
+    """«ECTS dispares» si los créditos difieren más de un 25 % (en n:m, los del grupo)."""
+    return "ECTS dispares" if any(r.get("aviso_ects") for r in propuesta) else ""
+
+
 def _propuestas_seleccionadas(convalidaciones: Sequence[dict]) -> list[list[dict]]:
     propuestas = []
     grupos_vistos = set()
@@ -104,6 +109,7 @@ def generar_pdf(
         Paragraph("<b>Asignaturas destino</b>", estilo_cabecera),
         Paragraph("<b>ECTS destino</b>", estilo_cabecera),
         Paragraph("<b>Etiqueta</b>", estilo_cabecera),
+        Paragraph("<b>Aviso</b>", estilo_cabecera),
     ]
     filas = [encabezado]
     propuestas = _propuestas_seleccionadas(convalidaciones_seleccionadas)
@@ -116,12 +122,13 @@ def generar_pdf(
                 _texto_asignaturas(propuesta, "destino"),
                 f"{ects_destino:g}",
                 Paragraph(escape(_etiqueta(propuesta)), estilos["BodyText"]),
+                Paragraph(_aviso(propuesta), estilos["BodyText"]),
             ]
         )
 
     tabla = Table(
         filas,
-        colWidths=[7.5 * cm, 2.2 * cm, 8.2 * cm, 2.2 * cm, 6.8 * cm],
+        colWidths=[7.5 * cm, 2.2 * cm, 8.2 * cm, 2.2 * cm, 3.9 * cm, 2.9 * cm],
         repeatRows=1,
         hAlign="LEFT",
     )

@@ -13,7 +13,7 @@ Tareas de cada semana: [issues](../../issues), ya asignadas a cada pareja.
 1. **[`docs/plan_trabajo.md`](docs/plan_trabajo.md)** — qué construimos, cómo trabajamos y qué hace cada pareja cada semana. **Empieza por aquí.**
 2. **[`docs/Presentacion - Plan de trabajo.pdf`](docs/Presentacion%20-%20Plan%20de%20trabajo.pdf)** — lo mismo en 12 slides, para la reunión de arranque.
 3. **[`docs/Guia - IA gratis para estudiantes.pdf`](docs/Guia%20-%20IA%20gratis%20para%20estudiantes.pdf)** — cómo instalar y usar OpenCode, Copilot Student, Antigravity y Google AI Plus, que son las herramientas con las que programamos.
-4. **[`docs/referencia_tecnica.md`](docs/referencia_tecnica.md)** — para consultar cuando te toque una tarea: endpoints de la UC3M, esquema del JSON, decisiones técnicas.
+4. **[`docs/referencia_tecnica.md`](docs/referencia_tecnica.md)** — para consultar cuando te toque una tarea: endpoints de la UC3M, tablas de resultados, decisiones técnicas.
 
 ## Equipo
 
@@ -55,10 +55,9 @@ src/
   reconciliation/ old_to_new.py
   embeddings/    encoder.py, index.py
   matching/      calibration.py, evaluation.py, matcher.py
-  export/        build_static.py  →  public/data/*.json
+  export/        resultados_bd.py →  tablas combinaciones y resultados (BD)
   ui/            app.py (Streamlit), pdf.py (reportlab)
 config/scrapers/ un YAML por universidad de destino
-public/data/     JSON publicados (lo único que usa la web)
 data/            Excel, caché HTML y bases de datos: solo en local, no se sube
                  (python -m src.sync.datos descargar: BD + histórico; --todo añade caché y fichas)
 tests/           pytest; fixtures en tests/fixtures/
@@ -67,7 +66,7 @@ notebooks/       EDA, reconciliación, benchmark, calibración
 
 ## Despliegue de la web
 
-La web (Streamlit) está en `web/`, con un `Dockerfile` que la construye y la arranca. La imagen se construye **desde la raíz del repo**, porque necesita también los JSON de `public/data/`.
+La web (Streamlit) está en `web/`, con un `Dockerfile` que la construye y la arranca. La imagen se construye **desde la raíz del repo** y solo lleva el código de `web/`: el catálogo y los resultados los lee de la MySQL del servidor.
 
 | Dato | Valor |
 |---|---|
@@ -78,9 +77,9 @@ La web (Streamlit) está en `web/`, con un `Dockerfile` que la construye y la ar
 | Base de datos | MySQL del servidor; usuario de solo lectura |
 
 - Un push a la rama del webhook vuelve a desplegar.
-- Los secretos MySQL se configuran en Coolify y no van en git ni en la imagen. Si la MySQL no está disponible, la web arranca igual y la pantalla Catálogo muestra un aviso.
-- Los desplegables de grado y universidad salen de `public/data/index.json`, y los resultados de cada combinación, del JSON que indica su campo `archivo` (en la misma carpeta). Los dos van en la imagen: para añadir una combinación se sube su JSON y su línea en `index.json`, y el siguiente despliegue la muestra sin tocar código.
-- Qué entra en la imagen lo decide `web/Dockerfile.dockerignore`: solo `web/` (sin tests) y `public/data/`. Nunca entran la BD, `.env` ni `data/`.
+- Los secretos MySQL se configuran en Coolify y no van en git ni en la imagen. Si la MySQL no está disponible, la web arranca igual y las pantallas Resultados y Catálogo muestran un aviso.
+- Los desplegables de grado y universidad salen de la tabla `combinaciones` de la MySQL, y los resultados, de la tabla `resultados`. No hay JSON. Para publicar resultados nuevos se importan en phpMyAdmin (`python -m src.sync.volcar_mysql exportar --solo-resultados`): no hace falta redesplegar.
+- Qué entra en la imagen lo decide `web/Dockerfile.dockerignore`: solo `web/` (sin tests). Nunca entran la BD, `.env` ni `data/`.
 - No hace falta ninguna API key; la conexión usa el usuario de solo lectura de MySQL.
 
 ### Probar en local

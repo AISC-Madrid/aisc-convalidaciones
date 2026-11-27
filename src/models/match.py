@@ -34,7 +34,7 @@ class Match(BaseModel):
 
 
 class Resultados(BaseModel):
-    """Un fichero public/data/<grado>__<uni>.json completo."""
+    """Los resultados de un grado × universidad (tablas combinaciones y resultados de la BD)."""
 
     grado: str
     universidad: str
