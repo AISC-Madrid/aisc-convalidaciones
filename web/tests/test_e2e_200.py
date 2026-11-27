@@ -39,25 +39,24 @@ def datos(tmp_path, publicar):
     return leidos
 
 
-def _app(tmp_path):
-    """Arranca la web real, guardando en tmp_path el PDF que genere para poder abrirlo."""
+def _app(tmp_path, monkeypatch):
+    """Arranca la web real, guardando en tmp_path el PDF que genere para poder abrirlo.
+
+    El espía se pone con monkeypatch (el módulo pdf es el mismo que usa la app), así que se
+    quita solo al acabar el test y no se apila en cada rerun.
+    """
+    import pdf
+
     salida = tmp_path / "propuesta.pdf"
-    script = tmp_path / "app_e2e.py"
-    script.write_text(
-        f"import sys; sys.path.insert(0, {str(WEB_DIR)!r})\n"
-        "from pathlib import Path\n"
-        "import pdf\n"
-        "_original = pdf.generar_pdf\n"
-        "def _espia(*args, **kwargs):\n"
-        "    contenido = _original(*args, **kwargs)\n"
-        f"    Path({str(salida)!r}).write_bytes(contenido)\n"
-        "    return contenido\n"
-        "pdf.generar_pdf = _espia\n"
-        "import app\n"
-        "app.main()\n",
-        encoding="utf-8",
-    )
-    at = AppTest.from_file(str(script), default_timeout=20).run()
+    original = pdf.generar_pdf
+
+    def espia(*args, **kwargs):
+        contenido = original(*args, **kwargs)
+        salida.write_bytes(contenido)
+        return contenido
+
+    monkeypatch.setattr(pdf, "generar_pdf", espia)
+    at = AppTest.from_file(str(WEB_DIR / "app.py"), default_timeout=20).run()
     return at, salida
 
 
@@ -65,8 +64,8 @@ def _boton_pdf(at):
     return next(b for b in at.get("download_button") if b.label == "Descargar propuesta PDF")
 
 
-def test_cabecera_muestra_fecha_y_umbral(tmp_path, datos):
-    at, _ = _app(tmp_path)
+def test_cabecera_muestra_fecha_y_umbral(tmp_path, monkeypatch, datos):
+    at, _ = _app(tmp_path, monkeypatch)
 
     assert not at.exception
     cabecera = " ".join(caption.value for caption in at.caption)
@@ -74,27 +73,27 @@ def test_cabecera_muestra_fecha_y_umbral(tmp_path, datos):
     assert "Umbral de similitud: 0,71" in cabecera
 
 
-def test_200_resultados_se_paginan(tmp_path, datos):
+def test_200_resultados_se_paginan(tmp_path, monkeypatch, datos):
     filas = datos["resultados"]
     grupos = {f["grupo"] for f in filas if f["grupo"] is not None}
     en_grupo = sum(f["grupo"] is not None for f in filas)
     bloques = len(filas) - en_grupo + len(grupos)
 
-    at, _ = _app(tmp_path)
+    at, _ = _app(tmp_path, monkeypatch)
 
     assert len(filas) == 200
     assert len(at.dataframe[0].value) == 20
     assert any(f"de {bloques}" in caption.value for caption in at.caption)
 
 
-def test_cargar_filtrar_seleccionar_grupo_y_sacar_pdf(tmp_path, datos):
+def test_cargar_filtrar_seleccionar_grupo_y_sacar_pdf(tmp_path, monkeypatch, datos):
     # El grupo 1 tiene los nombres más largos: es el caso difícil para el PDF.
     grupo = [f for f in datos["resultados"] if f["grupo"] == 1]
     codigos_origen = {f["origen"]["codigo"] for f in grupo}
     codigos_destino = {f["destino"]["codigo"] for f in grupo}
     buscar = sorted(codigos_destino)[0]
 
-    at, salida = _app(tmp_path)
+    at, salida = _app(tmp_path, monkeypatch)
 
     # Filtrar: solo precedentes y búsqueda por un código de destino del grupo.
     next(s for s in at.selectbox if s.label == "Tipo de resultado").set_value(
