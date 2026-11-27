@@ -1,22 +1,42 @@
-"""Test end-to-end de la pantalla de resultados con el JSON inventado de 200 filas (#41).
+"""Test end-to-end de la pantalla de resultados con los 200 resultados inventados (#41).
 
 Recorre lo mismo que hará un alumno en el servidor: cargar, filtrar, seleccionar un grupo
-n:m y descargar el PDF. Usa el index.json y el ejemplo_200.json reales de public/data.
+n:m y descargar el PDF. Los resultados son los que ``scripts/generar_ejemplo_200.py`` guarda
+en la BD, pasados por el mismo camino que en producción: SQLite → filas → web. Solo la
+conexión a la MySQL se sustituye (fixture ``publicar``).
 """
 
-import json
-from pathlib import Path
+import importlib.util
+import sqlite3
 
+import pytest
+from conftest import RAIZ, WEB_DIR
 from pypdf import PdfReader
 from streamlit.testing.v1 import AppTest
 
-WEB_DIR = Path(__file__).resolve().parents[1]
-DATOS_DIR = WEB_DIR.parent / "public" / "data"
+from src.export import resultados_bd
+
 GRADO = "Grado en Ingeniería Biomédica"
+UNIVERSIDAD = "Georgia Institute of Technology"
 
 
-def _datos():
-    return json.loads((DATOS_DIR / "ejemplo_200.json").read_text(encoding="utf-8"))
+def _generador():
+    ruta = RAIZ / "scripts" / "generar_ejemplo_200.py"
+    spec = importlib.util.spec_from_file_location("generar_ejemplo_200", ruta)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+@pytest.fixture
+def datos(tmp_path, publicar):
+    """Genera los 200 resultados, los guarda en un SQLite y los publica tal como se leen."""
+    ruta = tmp_path / "resultados.sqlite"
+    _generador().main(["--salida", str(ruta)])
+    with sqlite3.connect(ruta) as conexion:
+        leidos = resultados_bd.leer(conexion, GRADO, UNIVERSIDAD).model_dump(mode="json")
+    publicar(leidos)
+    return leidos
 
 
 def _app(tmp_path):
@@ -34,11 +54,10 @@ def _app(tmp_path):
         "    return contenido\n"
         "pdf.generar_pdf = _espia\n"
         "import app\n"
-        "app.main(ruta_bd=Path('no_existe.sqlite'))\n",
+        "app.main()\n",
         encoding="utf-8",
     )
     at = AppTest.from_file(str(script), default_timeout=20).run()
-    at.selectbox(key="grado").set_value(GRADO).run()
     return at, salida
 
 
@@ -46,7 +65,7 @@ def _boton_pdf(at):
     return next(b for b in at.get("download_button") if b.label == "Descargar propuesta PDF")
 
 
-def test_cabecera_muestra_fecha_y_umbral_del_json(tmp_path):
+def test_cabecera_muestra_fecha_y_umbral(tmp_path, datos):
     at, _ = _app(tmp_path)
 
     assert not at.exception
@@ -55,8 +74,7 @@ def test_cabecera_muestra_fecha_y_umbral_del_json(tmp_path):
     assert "Umbral de similitud: 0,71" in cabecera
 
 
-def test_200_resultados_se_paginan(tmp_path):
-    datos = _datos()
+def test_200_resultados_se_paginan(tmp_path, datos):
     filas = datos["resultados"]
     grupos = {f["grupo"] for f in filas if f["grupo"] is not None}
     en_grupo = sum(f["grupo"] is not None for f in filas)
@@ -69,8 +87,7 @@ def test_200_resultados_se_paginan(tmp_path):
     assert any(f"de {bloques}" in caption.value for caption in at.caption)
 
 
-def test_cargar_filtrar_seleccionar_grupo_y_sacar_pdf(tmp_path):
-    datos = _datos()
+def test_cargar_filtrar_seleccionar_grupo_y_sacar_pdf(tmp_path, datos):
     # El grupo 1 tiene los nombres más largos: es el caso difícil para el PDF.
     grupo = [f for f in datos["resultados"] if f["grupo"] == 1]
     codigos_origen = {f["origen"]["codigo"] for f in grupo}
@@ -80,7 +97,9 @@ def test_cargar_filtrar_seleccionar_grupo_y_sacar_pdf(tmp_path):
     at, salida = _app(tmp_path)
 
     # Filtrar: solo precedentes y búsqueda por un código de destino del grupo.
-    at.selectbox[2].set_value("Precedentes aprobados").run()
+    next(s for s in at.selectbox if s.label == "Tipo de resultado").set_value(
+        "Precedentes aprobados"
+    ).run()
     next(t for t in at.text_input if t.label.startswith("Buscar")).set_value(buscar).run()
     propuesta = next(c for c in at.checkbox if buscar in c.label)
     # El grupo sale como una sola propuesta con todas sus asignaturas.
@@ -89,8 +108,8 @@ def test_cargar_filtrar_seleccionar_grupo_y_sacar_pdf(tmp_path):
     # Seleccionar el grupo entero y poner el nombre.
     propuesta.check().run()
     next(t for t in at.text_input if t.label == "Nombre del alumno").set_value(
-        # nombre largo, con tilde, guión para probar PDF
-        "María de los Ángeles Fernández-Villaverde Rodríguez" 
+        # nombre largo, con tilde y guion, para probar el PDF
+        "María de los Ángeles Fernández-Villaverde Rodríguez"
     ).run()
 
     assert not at.exception

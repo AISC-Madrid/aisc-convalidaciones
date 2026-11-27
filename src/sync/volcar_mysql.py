@@ -1,14 +1,15 @@
-"""Copia el SQLite del release privado a la MySQL del servidor.
+"""Pasa los SQLite locales del pipeline a la MySQL del servidor.
 
-El pipeline de los portátiles sigue escribiendo SQLite. Este comando solo se
-ejecuta donde la MySQL es alcanzable (el mismo servidor que phpMyAdmin): baja
-el último ``uc3m.sqlite`` y ``historico.sqlite`` a un directorio temporal y recrea
-sus tablas. Si el release no trae el histórico, falla en vez de dejar la MySQL sin
-los pares aprobados. La caché HTML no entra.
+El pipeline de los portátiles escribe SQLite en ``data/processed``: ``uc3m.sqlite``
+(catálogo), ``historico.sqlite`` (pares aprobados) y ``resultados.sqlite`` (lo que muestra
+la web, de ``src.export.resultados_bd``). Cada tabla se borra y se recrea en la MySQL.
+La caché HTML no entra.
 
-Uso, con las variables MYSQL_* ya definidas:
+Uso:
 
-    python -m src.sync.volcar_mysql
+    python -m src.sync.volcar_mysql exportar                    # .sql.gz para phpMyAdmin
+    python -m src.sync.volcar_mysql exportar --solo-resultados  # solo los resultados
+    python -m src.sync.volcar_mysql subir                       # directo, con MYSQL_*
 """
 
 import argparse
@@ -26,8 +27,11 @@ from src.db.lectura import ConfiguracionMysqlError, conectar, configuracion
 
 RAIZ = Path(__file__).resolve().parents[2]
 PROCESADOS = RAIZ / "data" / "processed"
-SQLITE_LOCALES = ("uc3m.sqlite", "historico.sqlite")
+# resultados.sqlite lo escribe src.export.resultados_bd: lo que lee la web.
+SQLITE_LOCALES = ("uc3m.sqlite", "historico.sqlite", "resultados.sqlite")
 SALIDA_SQL = PROCESADOS / "convalidaciones.sql.gz"
+# Con --solo-resultados va a otro nombre: exportar borra las partes viejas del mismo nombre.
+SALIDA_RESULTADOS = PROCESADOS / "resultados.sql.gz"
 LOTE_SQL = 100  # filas por INSERT del fichero: los temarios son largos
 # phpMyAdmin admite 8 MB por fichero; 20 MB de SQL comprimen a ~5 MB.
 MAX_BYTES_PARTE = 20 * 2**20
@@ -190,6 +194,14 @@ def rutas_locales(carpeta: Path = PROCESADOS) -> list[Path]:
     return rutas
 
 
+def ruta_resultados(carpeta: Path = PROCESADOS) -> list[Path]:
+    """Solo ``resultados.sqlite``: para actualizar los resultados sin tocar el catálogo."""
+    ruta = carpeta / SQLITE_LOCALES[-1]
+    if not ruta.is_file():
+        raise FileNotFoundError(f"No está {ruta}")
+    return [ruta]
+
+
 def literal(valor) -> str:
     """Valor de SQLite como literal de MySQL (``NULL``, número, cadena o ``X'..'``)."""
     if isinstance(valor, bytes):
@@ -273,10 +285,11 @@ def subir(
     environ: Mapping[str, str] | None = None,
     abrir=abrir_escritura,
     carpeta: Path = PROCESADOS,
+    rutas=rutas_locales,
 ) -> dict[str, int]:
     """Comprueba las variables MYSQL_* y vuelca los SQLite locales por conexión directa."""
     configuracion(environ)
-    rutas = rutas_locales(carpeta)
+    rutas = rutas(carpeta)
     conexion = abrir(environ)
     try:
         return volcar(conexion, rutas)
@@ -288,17 +301,25 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Pasa los SQLite locales a la MySQL.")
     sub = parser.add_subparsers(dest="accion", required=True)
     exp = sub.add_parser("exportar", help="Escribe .sql.gz por partes para phpMyAdmin")
-    exp.add_argument("--salida", type=Path, default=SALIDA_SQL)
-    sub.add_parser("subir", help="Vuelca directamente con las variables MYSQL_*")
+    exp.add_argument("--salida", type=Path, default=None)
+    sub_subir = sub.add_parser("subir", help="Vuelca directamente con las variables MYSQL_*")
+    for opciones in (exp, sub_subir):
+        opciones.add_argument(
+            "--solo-resultados",
+            action="store_true",
+            help="Solo las tablas de resultados.sqlite (combinaciones y resultados)",
+        )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    elegir = ruta_resultados if args.solo_resultados else rutas_locales
     if args.accion == "exportar":
-        resumen, partes = exportar_sql(rutas_locales(), args.salida)
+        salida = args.salida or (SALIDA_RESULTADOS if args.solo_resultados else SALIDA_SQL)
+        resumen, partes = exportar_sql(elegir(), salida)
         for parte in partes:
             logger.info("Escrito %s (%.1f MB)", parte, parte.stat().st_size / 2**20)
     else:
         try:
-            resumen = subir()
+            resumen = subir(rutas=elegir)
         except ConfiguracionMysqlError as exc:
             raise SystemExit(str(exc)) from exc
     for tabla, filas in sorted(resumen.items()):

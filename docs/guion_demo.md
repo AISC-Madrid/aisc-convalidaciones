@@ -1,8 +1,8 @@
 # Guion de la demo (5 minutos) · pantalla de resultados
 
-Demo sobre la web del servidor con el **JSON inventado de 200 resultados**.
-Más adelante ese JSON se sustituye por el real, en la misma combinación y en el mismo
-servidor, así que este guion sirve también para entonces.
+Demo sobre la web del servidor con **200 resultados inventados**, guardados en la MySQL del
+servidor igual que lo estarán los reales. Más adelante se sustituyen por los del pipeline, en
+la misma combinación y en el mismo servidor, así que este guion sirve también para entonces.
 
 >"URL a cambiar cuando se elija nombre del dominio."
 
@@ -63,20 +63,30 @@ Señalad el aviso amarillo: los datos de hoy son de ejemplo.
 
 - **Hoy:** la pantalla aguanta el volumen real (200 resultados, nombres largos, grupos n:m)
   y el PDF sale.
-- **Semana 7:** cambiamos este JSON por el real del pipeline y quitamos el aviso de ejemplo.
+- **Semana 7:** cargamos en la misma tabla los resultados reales del pipeline y quitamos el
+  aviso de ejemplo. La web no cambia: lee de la base de datos.
 - **Semana 8:** prueba con 3-5 alumnos.
 - Preguntas.
 
 ## Si algo falla en directo
 
 - **La web no carga:** recargad; si el servidor estaba dormido tarda unos segundos. Plan B:
-  `streamlit run web/app.py` en local con el mismo JSON.
+  `streamlit run web/app.py` en local, con las variables `MYSQL_*` de un usuario de solo
+  lectura (la MySQL tiene que estar publicada en Coolify).
+- **Sale «Los resultados no están disponibles»:** la web no llega a la MySQL o faltan las tablas
+  `combinaciones` y `resultados`. Comprobad en phpMyAdmin que están importadas.
 - **El botón del PDF está gris:** falta marcar alguna propuesta o escribir el nombre (la web
   lo dice encima del botón).
 
-## Cómo regenerar el JSON de ejemplo
+## Cómo cargar los 200 resultados en el servidor
 
 ```bash
-python scripts/generar_ejemplo_200.py   # reescribe public/data/ejemplo_200.json
-pytest tests/test_ejemplo_200.py web/tests/test_e2e_200.py
+python scripts/generar_ejemplo_200.py                      # data/processed/resultados.sqlite
+python -m src.sync.volcar_mysql exportar --solo-resultados # data/processed/resultados-1.sql.gz
 ```
+
+Después, en phpMyAdmin: `convalidaciones_db` → **Importar** → `resultados-1.sql.gz`. Solo
+recrea las tablas `combinaciones` y `resultados`; el catálogo no se toca. No hace falta
+redesplegar: la web lo ve en 10 minutos como mucho (caché).
+
+Para comprobarlo antes en local: `pytest tests/test_ejemplo_200.py web/tests/test_e2e_200.py`.

@@ -1,5 +1,4 @@
-# Imagen de la web (Streamlit). Se construye DESDE LA RAÍZ del repo,
-# para que entren web/ y public/data/:
+# Imagen de la web (Streamlit). Se construye DESDE LA RAÍZ del repo:
 #   docker build -f web/Dockerfile -t aisc-web .
 FROM python:3.11-slim
 
@@ -14,10 +13,9 @@ WORKDIR /app/web
 COPY web/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# El código de la web y los JSON publicados (lo que excluye
-# web/Dockerfile.dockerignore no entra)
+# Solo el código de la web: los resultados y el catálogo se leen de la MySQL
+# (lo que excluye web/Dockerfile.dockerignore no entra)
 COPY web/ .
-COPY public/data/ /app/public/data/
 
 EXPOSE 8501
 

@@ -8,10 +8,14 @@ from pathlib import Path
 import pytest
 
 from src.db.lectura import ConfiguracionMysqlError
+from src.export import resultados_bd
+from src.models import Resultados
 from src.sync.volcar_mysql import (
     exportar_sql,
     literal,
+    main,
     quote,
+    ruta_resultados,
     rutas_locales,
     sentencias_tabla,
     subir,
@@ -273,3 +277,70 @@ def test_exportar_sql_parte_entre_sentencias_y_borra_partes_viejas(tmp_path):
     junto = "".join(textos)
     assert junto.count("CREATE TABLE") == 3
     assert junto.index("DROP TABLE IF EXISTS `subjects`") < junto.index("INSERT INTO `subjects`")
+
+
+EJEMPLO_RESULTADOS = Path(__file__).parent / "fixtures" / "resultados" / "ejemplo.json"
+
+
+def crear_resultados(ruta: Path) -> Resultados:
+    datos = Resultados.model_validate_json(EJEMPLO_RESULTADOS.read_text(encoding="utf-8"))
+    resultados_bd.guardar_en(ruta, datos)
+    return datos
+
+
+def test_rutas_locales_incluye_los_resultados(tmp_path):
+    crear_sqlite(tmp_path / "uc3m.sqlite")
+    crear_resultados(tmp_path / "resultados.sqlite")
+    assert rutas_locales(tmp_path) == [tmp_path / "uc3m.sqlite", tmp_path / "resultados.sqlite"]
+
+
+def test_ruta_resultados_no_necesita_el_catalogo(tmp_path):
+    with pytest.raises(FileNotFoundError, match="resultados.sqlite"):
+        ruta_resultados(tmp_path)
+    crear_resultados(tmp_path / "resultados.sqlite")
+    assert ruta_resultados(tmp_path) == [tmp_path / "resultados.sqlite"]
+
+
+def test_exportar_resultados_crea_las_tablas_de_la_web(tmp_path):
+    datos = crear_resultados(tmp_path / "resultados.sqlite")
+
+    resumen, partes = exportar_sql(ruta_resultados(tmp_path), tmp_path / "resultados.sql.gz")
+
+    assert resumen == {"combinaciones": 1, "resultados": len(datos.resultados)}
+    texto = gzip.decompress(partes[0].read_bytes()).decode("utf-8")
+    assert "CREATE TABLE `combinaciones`" in texto
+    assert "CREATE TABLE `resultados`" in texto
+    # El UNIQUE (grado, universidad) necesita VARCHAR en MySQL.
+    assert "`grado` VARCHAR(255) NOT NULL" in texto
+    assert "UNIQUE KEY" in texto
+    assert "CREATE INDEX `idx_resultados_combinacion` ON `resultados`" in texto
+    assert "'PRECEDENTE_APROBADO'" in texto
+
+
+def test_solo_resultados_no_pisa_el_volcado_del_catalogo(tmp_path, monkeypatch):
+    import src.sync.volcar_mysql as volcado
+
+    crear_resultados(tmp_path / "resultados.sqlite")
+    catalogo_viejo = tmp_path / "convalidaciones-1.sql.gz"
+    catalogo_viejo.write_bytes(b"no tocar")
+    monkeypatch.setattr(volcado, "PROCESADOS", tmp_path)
+    monkeypatch.setattr(volcado, "SALIDA_SQL", tmp_path / "convalidaciones.sql.gz")
+    monkeypatch.setattr(volcado, "SALIDA_RESULTADOS", tmp_path / "resultados.sql.gz")
+    monkeypatch.setattr(volcado, "ruta_resultados", lambda: ruta_resultados(tmp_path))
+
+    main(["exportar", "--solo-resultados"])
+
+    assert (tmp_path / "resultados-1.sql.gz").is_file()
+    assert catalogo_viejo.read_bytes() == b"no tocar"
+
+
+def test_subir_solo_resultados(tmp_path):
+    crear_resultados(tmp_path / "resultados.sqlite")
+    conexion = ConexionFalsa()
+
+    resumen = subir(
+        ENTORNO, abrir=lambda environ: conexion, carpeta=tmp_path, rutas=ruta_resultados
+    )
+
+    assert set(resumen) == {"combinaciones", "resultados"}
+    assert conexion.committed

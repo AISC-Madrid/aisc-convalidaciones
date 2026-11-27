@@ -58,3 +58,34 @@ def test_grupo_es_una_sola_propuesta_aunque_sus_filas_no_vayan_seguidas():
         [parte_a, parte_b],
         [individual],
     ]
+
+def _completa(codigo, ects_origen, ects_destino, aviso, grupo=None):
+    return {
+        "origen": {"codigo": codigo, "nombre": f"Asignatura {codigo}", "ects": ects_origen},
+        "destino": {"codigo": f"D{codigo}", "nombre": f"Course {codigo}", "ects": ects_destino},
+        "score": 0.8,
+        "etiqueta": "SUGERENCIA_IA",
+        "aviso_ects": aviso,
+        "grupo": grupo,
+    }
+
+
+def test_aviso_de_ects_dispares():
+    assert pdf._aviso([_completa("1", 6, 3, True)]) == "ECTS dispares"
+    assert pdf._aviso([_completa("1", 6, 6, False)]) == ""
+    # En las n:m basta con que lo lleve el grupo.
+    assert pdf._aviso([_completa("1", 3, 9, True, 1), _completa("2", 3, 9, True, 1)]) != ""
+
+
+def test_el_pdf_muestra_el_aviso_de_ects():
+    import io
+
+    from pypdf import PdfReader
+
+    contenido = pdf.generar_pdf(
+        {"nombre": "Ana", "grado": "G", "universidad": "U"},
+        [_completa("1", 6, 3, True), _completa("2", 6, 6, False)],
+    )
+    texto = " ".join(p.extract_text() for p in PdfReader(io.BytesIO(contenido)).pages)
+    assert "Aviso" in texto
+    assert texto.count("ECTS dispares") == 1

@@ -4,7 +4,6 @@
 # Todo fuera por defecto; solo entra lo que necesita la web
 *
 !web/
-!public/data/
 
 # Dentro de lo permitido, fuera lo que no hace falta
 **/__pycache__/
